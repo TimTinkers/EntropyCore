@@ -8,5 +8,6 @@
 	<classpathentry exported="true" kind="lib" path="libs/mini2Dx-dependency-injection.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/mini2Dx-ecs.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/mini2Dx-tiled.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/tween-engine-api.jar" sourcepath="libs/tween-engine-api-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
