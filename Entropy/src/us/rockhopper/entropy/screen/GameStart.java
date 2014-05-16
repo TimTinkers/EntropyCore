@@ -92,7 +92,7 @@ public class GameStart implements Screen {
 					(int) (Gdx.graphics.getHeight() / 1.5f),
 					Gdx.graphics.getHeight(), false);
 
-		world = new World(new Vector2(0, -9.81f), true);
+		world = new World(new Vector2(0, 0), true);
 		debugRenderer = new Box2DDebugRenderer();
 		batch = new SpriteBatch();
 

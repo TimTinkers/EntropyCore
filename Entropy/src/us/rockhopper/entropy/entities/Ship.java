@@ -1,10 +1,7 @@
 package us.rockhopper.entropy.entities;
 
-import java.awt.Point;
-
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -28,24 +25,11 @@ import com.badlogic.gdx.physics.box2d.World;
 public class Ship extends InputAdapter implements ContactFilter,
 		ContactListener {
 
-	private Point previousPosition;
-	private Point currentPosition;
-	private double rotation;
-	private Sprite sprite;
-	private double speed = 0.003;
-	private double friction = 0.99999999;
-	private double vy;
-	private double vx;
-	private double rotv;
-	private double currentSpeed;
-	private double maxSpeed = 10;
-	private double rotMaxSpeed = 2;
-
 	private Body body;
 	private Fixture fixture;
 	public final float WIDTH, HEIGHT;
 	private Vector2 velocity = new Vector2();
-	private float movementForce = 500, jumpPower = 45;
+	private float movementForce = 50, jumpPower = 45;
 
 	public Ship(World world, float x, float y, float width) {
 		WIDTH = width;
@@ -105,19 +89,17 @@ public class Ship extends InputAdapter implements ContactFilter,
 	@Override
 	public boolean keyDown(int keycode) {
 		switch (keycode) {
-		case Keys.UP:
-			// Variables vx and vy are doubles that store the acceleration to be
-			// added.
-			vy += Math.sin(Math.toRadians(rotation - 90)) * speed;
-			vx += Math.cos(Math.toRadians(rotation - 90)) * speed;
-			// Note the 90 being subtracted: this is to properly orient the
-			// ship.
+		case Keys.W:
+			velocity.y = movementForce;
 			break;
-		case Keys.LEFT:
-			rotv += speed - 0.005;
+		case Keys.A:
+			velocity.x = -movementForce;
 			break;
-		case Keys.RIGHT:
-			rotv -= speed - 0.005;
+		case Keys.D:
+			velocity.x = movementForce;
+			break;
+		case Keys.S:
+			velocity.y = -movementForce;
 			break;
 		default:
 			return false;
@@ -127,11 +109,18 @@ public class Ship extends InputAdapter implements ContactFilter,
 
 	@Override
 	public boolean keyUp(int keycode) {
-		if (keycode == Keys.A || keycode == Keys.D)
+		switch (keycode) {
+		case Keys.A:
+		case Keys.D:
 			velocity.x = 0;
-		else
+			return true;
+		case Keys.W:
+		case Keys.S:
+			velocity.y = 0;
+			return true;
+		default:
 			return false;
-		return true;
+		}
 	}
 
 	public float getRestitution() {
