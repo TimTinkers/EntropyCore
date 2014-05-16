@@ -70,21 +70,7 @@ public class Ship extends InputAdapter implements ContactFilter,
 	}
 
 	public void update() {
-		// Adjust the position and rotation of the ship accordingly.
-		rotation += rotv;
-		currentPosition.x += vx;
-		currentPosition.y += vy;
-		sprite.setRotation((float) rotation);
-
-		// Limit the maximum speed.
-		currentSpeed = Math.sqrt((vx * vx) + (vy * vy));
-		if (currentSpeed >= maxSpeed) {
-			vx *= maxSpeed / currentSpeed;
-			vy *= maxSpeed / currentSpeed;
-		}
-		if (rotv >= rotMaxSpeed) {
-			rotv *= rotMaxSpeed / rotv;
-		}
+		body.applyForceToCenter(velocity, true);
 	}
 
 	@Override
