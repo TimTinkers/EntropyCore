@@ -1,7 +1,11 @@
 package us.rockhopper.entropy.entities;
 
+import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
+
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -12,9 +16,11 @@ import com.badlogic.gdx.physics.box2d.ContactImpulse;
 import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.Joint;
 import com.badlogic.gdx.physics.box2d.Manifold;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.physics.box2d.joints.WeldJointDef;
 
 /**
  * The class for the player-controlled Ship.
@@ -22,26 +28,30 @@ import com.badlogic.gdx.physics.box2d.World;
  * @author Tim Clancy
  * @version 5.16.14
  */
-public class Ship extends InputAdapter implements ContactFilter,
+public class SampleShip extends InputAdapter implements ContactFilter,
 		ContactListener {
 
+	private World world;
 	private Body body;
+	private Body body2;
 	private Fixture fixture;
 	public final float WIDTH, HEIGHT;
-	private Vector2 velocity = new Vector2();
+	private Vector2 velocity= new Vector2(), velocityTurn = new Vector2();
 	private float movementForce = 50, jumpPower = 45;
+	private Joint joint;
 
-	public Ship(World world, float x, float y, float width) {
+	public SampleShip(World world, float x, float y, float width, float height) {
 		WIDTH = width;
-		HEIGHT = width * 2;
+		HEIGHT = height;
+		this.world = world;
 
 		BodyDef bodyDef = new BodyDef();
 		bodyDef.type = BodyType.DynamicBody;
 		bodyDef.position.set(x, y);
-		bodyDef.fixedRotation = true;
+		bodyDef.fixedRotation = false;
 
 		PolygonShape shape = new PolygonShape();
-		shape.setAsBox(width / 2, HEIGHT / 2);
+		shape.setAsBox(width / 2, height / 2);
 
 		FixtureDef fixtureDef = new FixtureDef();
 		fixtureDef.shape = shape;
@@ -49,12 +59,32 @@ public class Ship extends InputAdapter implements ContactFilter,
 		fixtureDef.friction = .8f;
 		fixtureDef.density = 3;
 
+		Sprite shipSprite = new Sprite(new Texture("assets/img/sampleShip.png"));
+		Sprite thrusterSprite = new Sprite(new Texture(
+				"assets/img/thruster.png"));
+
 		body = world.createBody(bodyDef);
-		fixture = body.createFixture(fixtureDef);
+		body.createFixture(fixtureDef).setUserData(new Box2DSprite(shipSprite));
+
+		BodyDef bodyDef2 = new BodyDef();
+		bodyDef2.type = BodyType.DynamicBody;
+		bodyDef2.position.set(x, y - height);
+		bodyDef2.fixedRotation = false;
+
+		body2 = world.createBody(bodyDef2);
+		body2.createFixture(fixtureDef).setUserData(
+				new Box2DSprite(thrusterSprite));
+
+		WeldJointDef weldJointDef = new WeldJointDef();
+		weldJointDef.initialize(body, body2, new Vector2(x, y - height));
+		joint = world.createJoint(weldJointDef);
+
+		shape.dispose();
 	}
 
 	public void update() {
-		body.applyForceToCenter(velocity, true);
+		body2.applyForceToCenter(velocity, true);
+		body.applyForceToCenter(velocityTurn, true);
 	}
 
 	@Override
@@ -93,13 +123,16 @@ public class Ship extends InputAdapter implements ContactFilter,
 			velocity.y = movementForce;
 			break;
 		case Keys.A:
-			velocity.x = -movementForce;
+			velocityTurn.x = -movementForce;
 			break;
 		case Keys.D:
-			velocity.x = movementForce;
+			velocityTurn.x = movementForce;
 			break;
 		case Keys.S:
 			velocity.y = -movementForce;
+			break;
+		case Keys.E:
+			world.destroyJoint(joint);
 			break;
 		default:
 			return false;
@@ -112,7 +145,7 @@ public class Ship extends InputAdapter implements ContactFilter,
 		switch (keycode) {
 		case Keys.A:
 		case Keys.D:
-			velocity.x = 0;
+			velocityTurn.x = 0;
 			return true;
 		case Keys.W:
 		case Keys.S:

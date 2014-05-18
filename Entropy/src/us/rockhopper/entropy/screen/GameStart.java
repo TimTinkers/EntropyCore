@@ -1,6 +1,7 @@
 package us.rockhopper.entropy.screen;
 
-import us.rockhopper.entropy.entities.Ship;
+import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
+import us.rockhopper.entropy.entities.SampleShip;
 
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Game;
@@ -11,9 +12,7 @@ import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Body;
@@ -23,7 +22,6 @@ import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.ChainShape;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.World;
-import com.badlogic.gdx.utils.Array;
 
 public class GameStart implements Screen {
 
@@ -35,11 +33,9 @@ public class GameStart implements Screen {
 	private final float TIMESTEP = 1 / 60f;
 	private final int VELOCITYITERATIONS = 8, POSITIONITERATIONS = 3;
 
-	private Ship ship;
+	private SampleShip ship;
 
 	private Vector3 bottomLeft, bottomRight;
-
-	private Array<Body> tmpBodies = new Array<Body>();
 
 	@Override
 	public void render(float delta) {
@@ -48,12 +44,10 @@ public class GameStart implements Screen {
 
 		if (ship.getBody().getPosition().x < bottomLeft.x)
 			ship.getBody().setTransform(bottomRight.x,
-					ship.getBody().getPosition().y,
-					ship.getBody().getAngle());
+					ship.getBody().getPosition().y, ship.getBody().getAngle());
 		else if (ship.getBody().getPosition().x > bottomRight.x)
 			ship.getBody().setTransform(bottomLeft.x,
-					ship.getBody().getPosition().y,
-					ship.getBody().getAngle());
+					ship.getBody().getPosition().y, ship.getBody().getAngle());
 
 		ship.update();
 		world.step(TIMESTEP, VELOCITYITERATIONS, POSITIONITERATIONS);
@@ -64,16 +58,7 @@ public class GameStart implements Screen {
 
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
-		world.getBodies(tmpBodies);
-		for (Body body : tmpBodies)
-			if (body.getUserData() instanceof Sprite) {
-				Sprite sprite = (Sprite) body.getUserData();
-				sprite.setPosition(
-						body.getPosition().x - sprite.getWidth() / 2,
-						body.getPosition().y - sprite.getHeight() / 2);
-				sprite.setRotation(body.getAngle() * MathUtils.radiansToDegrees);
-				sprite.draw(batch);
-			}
+		Box2DSprite.draw(batch, world);
 		batch.end();
 
 		debugRenderer.render(world, camera.combined);
@@ -99,7 +84,7 @@ public class GameStart implements Screen {
 		camera = new OrthographicCamera(Gdx.graphics.getWidth() / 25,
 				Gdx.graphics.getHeight() / 25);
 
-		ship = new Ship(world, 0, 1, 1);
+		ship = new SampleShip(world, 0, 1, 32 / 4, 25 / 4);
 		world.setContactFilter(ship);
 		world.setContactListener(ship);
 
