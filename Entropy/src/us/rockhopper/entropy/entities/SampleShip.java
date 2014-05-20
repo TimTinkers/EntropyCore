@@ -36,8 +36,8 @@ public class SampleShip extends InputAdapter implements ContactFilter,
 	private Body body2;
 	private Fixture fixture;
 	public final float WIDTH, HEIGHT;
-	private Vector2 velocity= new Vector2(), velocityTurn = new Vector2();
-	private float movementForce = 50, jumpPower = 45;
+	private Vector2 velocity = new Vector2(), velocityTurn = new Vector2();
+	private float movementForce = 50;
 	private Joint joint;
 
 	public SampleShip(World world, float x, float y, float width, float height) {
@@ -103,16 +103,6 @@ public class SampleShip extends InputAdapter implements ContactFilter,
 	}
 
 	@Override
-	public void postSolve(Contact contact, ContactImpulse impulse) {
-		if (contact.getFixtureA() == fixture
-				|| contact.getFixtureB() == fixture)
-			if (contact.getWorldManifold().getPoints()[0].y <= body
-					.getPosition().y - HEIGHT / 2)
-				body.applyLinearImpulse(0, jumpPower, body.getWorldCenter().x,
-						body.getWorldCenter().y, true);
-	}
-
-	@Override
 	public void endContact(Contact contact) {
 	}
 
@@ -170,5 +160,9 @@ public class SampleShip extends InputAdapter implements ContactFilter,
 
 	public Fixture getFixture() {
 		return fixture;
+	}
+
+	@Override
+	public void postSolve(Contact contact, ContactImpulse impulse) {
 	}
 }
