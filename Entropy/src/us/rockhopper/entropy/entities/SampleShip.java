@@ -1,6 +1,10 @@
 package us.rockhopper.entropy.entities;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
+import us.rockhopper.entropy.utility.Triggerable;
 
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
@@ -26,21 +30,26 @@ import com.badlogic.gdx.physics.box2d.joints.WeldJointDef;
  * The class for the player-controlled Ship.
  * 
  * @author Tim Clancy
- * @version 5.16.14
+ * @author Ian Tang
+ * @version 5.20.14
  */
 public class SampleShip extends InputAdapter implements ContactFilter,
 		ContactListener {
 
+	private HashMap<Integer, ArrayList<Triggerable>> keyActions = new HashMap<Integer, ArrayList<Triggerable>>();
 	private World world;
 	private Body body;
-	private Body body2;
+	private Thruster thruster;
 	private Fixture fixture;
 	public final float WIDTH, HEIGHT;
 	private Vector2 velocity = new Vector2(), velocityTurn = new Vector2();
 	private float movementForce = 50;
 	private Joint joint;
+	private ArrayList<Triggerable> triggers;
 
-	public SampleShip(World world, float x, float y, float width, float height) {
+	public SampleShip(World world, float x, float y, float width, float height,
+			ArrayList<Triggerable> triggers) {
+		this.triggers = triggers;
 		WIDTH = width;
 		HEIGHT = height;
 		this.world = world;
@@ -71,19 +80,39 @@ public class SampleShip extends InputAdapter implements ContactFilter,
 		bodyDef2.position.set(x, y - height);
 		bodyDef2.fixedRotation = false;
 
-		body2 = world.createBody(bodyDef2);
-		body2.createFixture(fixtureDef).setUserData(
+		thruster = (Thruster) world.createBody(bodyDef2);
+		thruster.createFixture(fixtureDef).setUserData(
 				new Box2DSprite(thrusterSprite));
+		thruster.setCanReverse(false).setStrength(19).setForward(Keys.W)
+				.setBackward(Keys.S);
 
 		WeldJointDef weldJointDef = new WeldJointDef();
-		weldJointDef.initialize(body, body2, new Vector2(x, y - height));
+		weldJointDef.initialize(body, thruster, new Vector2(x, y - height));
 		joint = world.createJoint(weldJointDef);
 
 		shape.dispose();
+
+		// Record triggers
+		for (Triggerable trigger : triggers) {
+			for (int i = 0; i < trigger.getKeys().length; ++i) {
+				if (!keyActions.containsKey(trigger.getKeys()[i])) {
+					ArrayList<Triggerable> triggerList = new ArrayList<>();
+					triggerList.add(trigger);
+					keyActions.put(trigger.getKeys()[i], triggerList);
+				} else {
+					ArrayList<Triggerable> triggerList = keyActions.get(trigger
+							.getKeys()[i]);
+					triggerList.add(trigger);
+					keyActions.put(trigger.getKeys()[i], triggerList);
+				}
+			}
+		}
 	}
 
 	public void update() {
-		body2.applyForceToCenter(velocity, true);
+		for (Triggerable trigger : triggers) {
+			trigger.update();
+		}
 		body.applyForceToCenter(velocityTurn, true);
 	}
 
@@ -108,40 +137,24 @@ public class SampleShip extends InputAdapter implements ContactFilter,
 
 	@Override
 	public boolean keyDown(int keycode) {
-		switch (keycode) {
-		case Keys.W:
-			velocity.y = movementForce;
-			break;
-		case Keys.A:
-			velocityTurn.x = -movementForce;
-			break;
-		case Keys.D:
-			velocityTurn.x = movementForce;
-			break;
-		case Keys.S:
-			velocity.y = -movementForce;
-			break;
-		case Keys.E:
-			world.destroyJoint(joint);
-			break;
-		default:
+		if (keyActions.containsKey(keycode)) {
+			for (Triggerable trigger : keyActions.get(keycode)) {
+				trigger.trigger(keycode);
+			}
+			return true;
+		} else {
 			return false;
 		}
-		return true;
 	}
 
 	@Override
 	public boolean keyUp(int keycode) {
-		switch (keycode) {
-		case Keys.A:
-		case Keys.D:
-			velocityTurn.x = 0;
+		if (keyActions.containsKey(keycode)) {
+			for (Triggerable trigger : keyActions.get(keycode)) {
+				trigger.unTrigger(keycode);
+			}
 			return true;
-		case Keys.W:
-		case Keys.S:
-			velocity.y = 0;
-			return true;
-		default:
+		} else {
 			return false;
 		}
 	}

@@ -108,34 +108,6 @@ public class GameStart implements Screen {
 			}
 
 		}, ship));
-
-		BodyDef bodyDef = new BodyDef();
-		FixtureDef fixtureDef = new FixtureDef();
-
-		// GROUND
-		// body definition
-		bodyDef.type = BodyType.StaticBody;
-		bodyDef.position.set(0, 0);
-
-		// ground shape
-		ChainShape groundShape = new ChainShape();
-		bottomLeft = new Vector3(0, Gdx.graphics.getHeight(), 0);
-		bottomRight = new Vector3(Gdx.graphics.getWidth(), bottomLeft.y, 0);
-		camera.unproject(bottomLeft);
-		camera.unproject(bottomRight);
-
-		groundShape.createChain(new float[] { bottomLeft.x, bottomLeft.y,
-				bottomRight.x, bottomRight.y });
-
-		// fixture definition
-		fixtureDef.shape = groundShape;
-		fixtureDef.friction = .5f;
-		fixtureDef.restitution = 0;
-
-		Body ground = world.createBody(bodyDef);
-		ground.createFixture(fixtureDef);
-
-		groundShape.dispose();
 	}
 
 	@Override

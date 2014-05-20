@@ -8,5 +8,10 @@
 	<classpathentry exported="true" kind="lib" path="libs/gdx-box2d.jar" sourcepath="libs/gdx-box2d-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/libgdx-utils.jar" sourcepath="libs/libgdx-utils-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/libgdx-utils-box2d.jar" sourcepath="libs/libgdx-utils-box2d-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gson-2.2.4.jar" sourcepath="libs/gson-2.2.4-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/C:/Users/Timothy/git/EntropyCore/Entropy/libs/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
