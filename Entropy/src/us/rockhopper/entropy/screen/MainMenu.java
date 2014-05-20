@@ -56,18 +56,18 @@ public class MainMenu implements Screen {
 
 		Gdx.input.setInputProcessor(stage);
 
-		skin = new Skin(Gdx.files.internal("assets/ui/menuSkin.json"),
-				new TextureAtlas("assets/ui/atlas.pack"));
+		skin = new Skin(Gdx.files.internal("assets/ui/uiskin.json"),
+				new TextureAtlas("assets/ui/uiskin.pack"));
 
 		table = new Table(skin);
 		table.setFillParent(true);
 
 		// creating heading
-		Label heading = new Label("Entropy", skin, "big");
+		Label heading = new Label("Entropy", skin, "default");
 		heading.setFontScale(2);
 
 		// creating buttons
-		TextButton buttonPlay = new TextButton("PLAY", skin, "big");
+		TextButton buttonPlay = new TextButton("PLAY", skin, "default");
 		buttonPlay.addListener(new ClickListener() {
 
 			@Override
@@ -103,7 +103,7 @@ public class MainMenu implements Screen {
 		});
 		buttonSettings.pad(15);
 
-		TextButton buttonExit = new TextButton("EXIT", skin, "big");
+		TextButton buttonExit = new TextButton("EXIT", skin, "default");
 		buttonExit.addListener(new ClickListener() {
 
 			@Override
