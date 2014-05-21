@@ -3,8 +3,10 @@ package us.rockhopper.entropy.screen;
 import javax.swing.JFileChooser;
 
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
-import us.rockhopper.entropy.entities.SampleShip;
+import us.rockhopper.entropy.entities.BasicShip;
+import us.rockhopper.entropy.utility.BasicShipInstanceCreator;
 import us.rockhopper.entropy.utility.FileIO;
+import us.rockhopper.entropy.utility.TextureDataInstanceCreator;
 
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Game;
@@ -15,11 +17,13 @@ import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.TextureData;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class GameStart implements Screen {
 
@@ -33,7 +37,7 @@ public class GameStart implements Screen {
 	private final float TIMESTEP = 1 / 60f;
 	private final int VELOCITYITERATIONS = 8, POSITIONITERATIONS = 3;
 
-	private SampleShip ship;
+	private BasicShip ship;
 
 	@Override
 	public void render(float delta) {
@@ -75,10 +79,15 @@ public class GameStart implements Screen {
 		camera = new OrthographicCamera(Gdx.graphics.getWidth() / 25,
 				Gdx.graphics.getHeight() / 25);
 
-		Gson gson = new Gson();
 		String filePath = defaultFolder + "\\EntropyShips\\" + "sample.json";
 		String shipJSON = FileIO.read(filePath);
-		ship = gson.fromJson(shipJSON, SampleShip.class);
+		System.out.println(shipJSON);
+		
+		GsonBuilder gsonBuilder = new GsonBuilder();
+	    gsonBuilder.registerTypeAdapter(BasicShip.class, new BasicShipInstanceCreator()).registerTypeAdapter(TextureData.class, new TextureDataInstanceCreator());
+	    Gson gson = gsonBuilder.create();
+	    ship = gson.fromJson(shipJSON, BasicShip.class);
+		
 		ship.setWorld(world);
 		ship.create();
 		Gdx.input.setInputProcessor(new InputMultiplexer(new InputAdapter() {

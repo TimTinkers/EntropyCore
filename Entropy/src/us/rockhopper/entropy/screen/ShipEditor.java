@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import javax.swing.JFileChooser;
 
-import us.rockhopper.entropy.entities.SampleShip;
+import us.rockhopper.entropy.entities.BasicShip;
 import us.rockhopper.entropy.utility.FileIO;
 import us.rockhopper.entropy.utility.Part;
 
@@ -15,7 +15,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
-import com.google.gson.Gson;
+import com.badlogic.gdx.utils.Json;
 
 public class ShipEditor implements Screen {
 
@@ -48,17 +48,12 @@ public class ShipEditor implements Screen {
 		ArrayList<Part> parts = new ArrayList<>();
 		parts.add(partCockpit);
 		parts.add(partThruster);
-		SampleShip ship = new SampleShip(new Vector2(0, 0), 32 / 2, 32 / 2,
-				parts);
-		Gson gson = new Gson();
-		String shipJSON = gson.toJson(ship);
+		BasicShip ship = new BasicShip(new Vector2(0, 0), 32 / 2, 32 / 2, parts);
+
+		Json json = new Json();
+		String shipJSON = json.prettyPrint(ship);
 		FileIO.write(defaultFolder + "\\EntropyShips\\" + "sample.json",
 				shipJSON);
-		// Where does the world come into play? The ship editor should pass all
-		// parameters along to the GameStart class for use of its world, and
-		// therefore serialization of the ship? Or maybe the world doesn't
-		// matter, and it would be more elegant to simply put a getter and
-		// setter on it to be adjusted later?
 		((Game) Gdx.app.getApplicationListener()).setScreen(new GameStart());
 	}
 

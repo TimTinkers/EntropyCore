@@ -24,7 +24,7 @@ import com.badlogic.gdx.physics.box2d.joints.WeldJointDef;
  * @author Ian Tang
  * @version 5.21.14
  */
-public class SampleShip extends InputAdapter {
+public class BasicShip extends InputAdapter {
 
 	private World world;
 	private Vector2 cockpitPosition;
@@ -33,6 +33,10 @@ public class SampleShip extends InputAdapter {
 	private ArrayList<Triggerable> triggers;
 	private ArrayList<Part> parts;
 	private HashMap<Integer, ArrayList<Triggerable>> keyActions = new HashMap<Integer, ArrayList<Triggerable>>();
+
+	public BasicShip() {
+		throw new RuntimeException("This is an unused constructor.");
+	}
 
 	/**
 	 * Creates a ship object, which contains all information it would need to
@@ -50,7 +54,7 @@ public class SampleShip extends InputAdapter {
 	 *            All parts on the ship. The first Part in this list MUST be the
 	 *            Cockpit of the ship.
 	 */
-	public SampleShip(Vector2 cockpitPosition, int width, int height,
+	public BasicShip(Vector2 cockpitPosition, int width, int height,
 			ArrayList<Triggerable> triggers, ArrayList<Part> parts) {
 		this.cockpitPosition = cockpitPosition;
 		this.triggers = triggers;
@@ -73,7 +77,7 @@ public class SampleShip extends InputAdapter {
 	 *            All parts on the ship. The first Part in this list MUST be the
 	 *            Cockpit of the ship.
 	 */
-	public SampleShip(Vector2 cockpitPosition, int width, int height,
+	public BasicShip(Vector2 cockpitPosition, int width, int height,
 			ArrayList<Part> parts) {
 		this.cockpitPosition = cockpitPosition;
 		this.parts = parts;

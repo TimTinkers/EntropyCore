@@ -23,7 +23,8 @@ public class FileIO {
 			List<String> lines = Files.readLines(new File(filePath),
 					Charsets.UTF_8);
 			for (String line : lines) {
-				jsonString.concat(line);
+				System.out.println(line);
+				jsonString += line;
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
