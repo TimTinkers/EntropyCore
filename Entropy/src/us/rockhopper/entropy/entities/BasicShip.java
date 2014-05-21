@@ -16,6 +16,8 @@ import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.physics.box2d.joints.WeldJointDef;
+import com.badlogic.gdx.utils.Json;
+import com.badlogic.gdx.utils.JsonValue;
 
 /**
  * The class for the player-controlled Ship.
@@ -24,7 +26,7 @@ import com.badlogic.gdx.physics.box2d.joints.WeldJointDef;
  * @author Ian Tang
  * @version 5.21.14
  */
-public class BasicShip extends InputAdapter {
+public class BasicShip extends InputAdapter implements Json.Serializable {
 
 	private World world;
 	private Vector2 cockpitPosition;
@@ -235,5 +237,21 @@ public class BasicShip extends InputAdapter {
 				}
 			}
 		}
+	}
+
+	@Override
+	public void write(Json json) {
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void read(Json json, JsonValue jsonData) {
+		world = json.readValue(World.class, jsonData);
+		cockpitPosition = json.readValue(Vector2.class, jsonData);
+		width = jsonData.getInt("width");
+		height = jsonData.getInt("height");
+		parts = json.readValue("triggers", ArrayList.class, Triggerable.class, jsonData);
+		parts = json.readValue("parts", ArrayList.class, Part.class, jsonData);
+		keyActions = json.readValue("keyActions", HashMap.class, ArrayList.class, jsonData);
 	}
 }
