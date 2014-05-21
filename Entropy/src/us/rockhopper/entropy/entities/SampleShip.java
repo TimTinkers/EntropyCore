@@ -4,24 +4,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
+import us.rockhopper.entropy.utility.Part;
 import us.rockhopper.entropy.utility.Triggerable;
 
-import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
-import com.badlogic.gdx.physics.box2d.Contact;
-import com.badlogic.gdx.physics.box2d.ContactFilter;
-import com.badlogic.gdx.physics.box2d.ContactImpulse;
-import com.badlogic.gdx.physics.box2d.ContactListener;
-import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
-import com.badlogic.gdx.physics.box2d.Joint;
-import com.badlogic.gdx.physics.box2d.Manifold;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.physics.box2d.joints.WeldJointDef;
@@ -31,110 +22,81 @@ import com.badlogic.gdx.physics.box2d.joints.WeldJointDef;
  * 
  * @author Tim Clancy
  * @author Ian Tang
- * @version 5.20.14
+ * @version 5.21.14
  */
-public class SampleShip extends InputAdapter implements ContactFilter,
-		ContactListener {
+public class SampleShip extends InputAdapter {
 
-	private HashMap<Integer, ArrayList<Triggerable>> keyActions = new HashMap<Integer, ArrayList<Triggerable>>();
 	private World world;
-	private Body body;
-	private Thruster thruster;
-	private Fixture fixture;
-	public final float WIDTH, HEIGHT;
-	private Vector2 velocity = new Vector2(), velocityTurn = new Vector2();
-	private float movementForce = 50;
-	private Joint joint;
+	private Vector2 cockpitPosition;
+	private int width;
+	private int height;
 	private ArrayList<Triggerable> triggers;
+	private ArrayList<Part> parts;
+	private HashMap<Integer, ArrayList<Triggerable>> keyActions = new HashMap<Integer, ArrayList<Triggerable>>();
 
-	public SampleShip(World world, float x, float y, float width, float height,
-			ArrayList<Triggerable> triggers) {
+	/**
+	 * Creates a ship object, which contains all information it would need to
+	 * later render itself.
+	 * 
+	 * @param cockpitPosition
+	 *            The Vector2 position of the cockpit.
+	 * @param width
+	 *            The width of the ship.
+	 * @param height
+	 *            The height of the ship.
+	 * @param triggers
+	 *            Any parts on the ship which implement Triggerable.
+	 * @param parts
+	 *            All parts on the ship. The first Part in this list MUST be the
+	 *            Cockpit of the ship.
+	 */
+	public SampleShip(Vector2 cockpitPosition, int width, int height,
+			ArrayList<Triggerable> triggers, ArrayList<Part> parts) {
+		this.cockpitPosition = cockpitPosition;
 		this.triggers = triggers;
-		WIDTH = width;
-		HEIGHT = height;
-		this.world = world;
-
-		BodyDef bodyDef = new BodyDef();
-		bodyDef.type = BodyType.DynamicBody;
-		bodyDef.position.set(x, y);
-		bodyDef.fixedRotation = false;
-
-		PolygonShape shape = new PolygonShape();
-		shape.setAsBox(width / 2, height / 2);
-
-		FixtureDef fixtureDef = new FixtureDef();
-		fixtureDef.shape = shape;
-		fixtureDef.restitution = 0;
-		fixtureDef.friction = .8f;
-		fixtureDef.density = 3;
-
-		Sprite shipSprite = new Sprite(new Texture("assets/img/sampleShip.png"));
-		Sprite thrusterSprite = new Sprite(new Texture(
-				"assets/img/thruster.png"));
-
-		body = world.createBody(bodyDef);
-		body.createFixture(fixtureDef).setUserData(new Box2DSprite(shipSprite));
-
-		BodyDef bodyDef2 = new BodyDef();
-		bodyDef2.type = BodyType.DynamicBody;
-		bodyDef2.position.set(x, y - height);
-		bodyDef2.fixedRotation = false;
-
-		thruster = (Thruster) world.createBody(bodyDef2);
-		thruster.createFixture(fixtureDef).setUserData(
-				new Box2DSprite(thrusterSprite));
-		thruster.setCanReverse(false).setStrength(19).setForward(Keys.W)
-				.setBackward(Keys.S);
-
-		WeldJointDef weldJointDef = new WeldJointDef();
-		weldJointDef.initialize(body, thruster, new Vector2(x, y - height));
-		joint = world.createJoint(weldJointDef);
-
-		shape.dispose();
-
-		// Record triggers
-		for (Triggerable trigger : triggers) {
-			for (int i = 0; i < trigger.getKeys().length; ++i) {
-				if (!keyActions.containsKey(trigger.getKeys()[i])) {
-					ArrayList<Triggerable> triggerList = new ArrayList<>();
-					triggerList.add(trigger);
-					keyActions.put(trigger.getKeys()[i], triggerList);
-				} else {
-					ArrayList<Triggerable> triggerList = keyActions.get(trigger
-							.getKeys()[i]);
-					triggerList.add(trigger);
-					keyActions.put(trigger.getKeys()[i], triggerList);
-				}
-			}
-		}
+		this.parts = parts;
+		this.width = width;
+		this.height = height;
 	}
 
+	/**
+	 * Creates a ship object, which contains all information it would need to
+	 * later render itself.
+	 * 
+	 * @param cockpitPosition
+	 *            The Vector2 position of the cockpit.
+	 * @param width
+	 *            The width of the ship.
+	 * @param height
+	 *            The height of the ship.
+	 * @param parts
+	 *            All parts on the ship. The first Part in this list MUST be the
+	 *            Cockpit of the ship.
+	 */
+	public SampleShip(Vector2 cockpitPosition, int width, int height,
+			ArrayList<Part> parts) {
+		this.cockpitPosition = cockpitPosition;
+		this.parts = parts;
+		this.width = width;
+		this.height = height;
+	}
+
+	/**
+	 * When the ship is told to update, each of its parts does.
+	 */
 	public void update() {
-		for (Triggerable trigger : triggers) {
-			trigger.update();
+		for (Part part : parts) {
+			part.update();
 		}
-		body.applyForceToCenter(velocityTurn, true);
 	}
 
-	@Override
-	public boolean shouldCollide(Fixture fixtureA, Fixture fixtureB) {
-		if (fixtureA == fixture || fixtureB == fixture)
-			return body.getLinearVelocity().y < 0;
-		return false;
-	}
-
-	@Override
-	public void beginContact(Contact contact) {
-	}
-
-	@Override
-	public void preSolve(Contact contact, Manifold oldManifold) {
-	}
-
-	@Override
-	public void endContact(Contact contact) {
-	}
-
+	/**
+	 * When a key is pressed, all triggerables associated with the key are told
+	 * that one of their keys have been pressed.
+	 * 
+	 * @param keycode
+	 *            the key which was released.
+	 */
 	@Override
 	public boolean keyDown(int keycode) {
 		if (keyActions.containsKey(keycode)) {
@@ -147,6 +109,13 @@ public class SampleShip extends InputAdapter implements ContactFilter,
 		}
 	}
 
+	/**
+	 * When a key is released, all triggerables associated with the key are told
+	 * that one of their keys has been released.
+	 * 
+	 * @param keycode
+	 *            the key which was released.
+	 */
 	@Override
 	public boolean keyUp(int keycode) {
 		if (keyActions.containsKey(keycode)) {
@@ -159,23 +128,108 @@ public class SampleShip extends InputAdapter implements ContactFilter,
 		}
 	}
 
-	public float getRestitution() {
-		return fixture.getRestitution();
+	/**
+	 * Sets the world for the ship. Must be done before calling create().
+	 * 
+	 * @param world
+	 *            The Box2D world for this ship.
+	 */
+	public void setWorld(World world) {
+		this.world = world;
 	}
 
-	public void setRestitution(float restitution) {
-		fixture.setRestitution(restitution);
+	public int getWidth() {
+		return this.width;
 	}
 
-	public Body getBody() {
-		return body;
+	public int getHeight() {
+		return this.height;
 	}
 
-	public Fixture getFixture() {
-		return fixture;
+	public Vector2 getCockpitPosition() {
+		return this.cockpitPosition;
 	}
 
-	@Override
-	public void postSolve(Contact contact, ContactImpulse impulse) {
+	/**
+	 * The ship is created: all of its parts are created in the world that has
+	 * been set for it, the parts are welded together according to their
+	 * placement in the ship editor, and all triggers are associated with their
+	 * keys.
+	 */
+	public void create() {
+		// Things that don't need to change.
+		Body body;
+		BodyDef bodyDef = new BodyDef();
+		bodyDef.type = BodyType.DynamicBody;
+		bodyDef.fixedRotation = false;
+
+		FixtureDef fixtureDef = new FixtureDef();
+		fixtureDef.restitution = 0;
+		fixtureDef.friction = 0f;
+
+		WeldJointDef weldJointDef = new WeldJointDef();
+
+		// The cockpit is the root of the ship, and then the rest of the parts
+		// are positioned accordingly.
+		Cockpit cockpit = new Cockpit(parts.get(0));
+		bodyDef.position.set(cockpitPosition.x, cockpitPosition.y);
+		PolygonShape shape = new PolygonShape();
+		shape.setAsBox(cockpit.getWidth() / 2, cockpit.getHeight() / 2);
+		fixtureDef.density = cockpit.getDensity();
+		fixtureDef.shape = shape;
+		body = world.createBody(bodyDef);
+		body.createFixture(fixtureDef).setUserData(
+				new Box2DSprite(cockpit.getSprite()));
+		cockpit.setBody(body);
+		shape.dispose();
+
+		// Creating and attaching remaining parts to Ship.
+		for (Part part : parts) {
+			bodyDef.position.set(cockpitPosition.x
+					+ part.getRelativePosition().x,
+					cockpitPosition.y + part.getRelativePosition().y);
+			shape = new PolygonShape();
+			shape.setAsBox(part.getWidth() / 2, part.getHeight() / 2);
+			fixtureDef.density = part.getDensity();
+			fixtureDef.shape = shape;
+			body = world.createBody(bodyDef);
+			body.createFixture(fixtureDef).setUserData(
+					new Box2DSprite(part.getSprite()));
+			part.setBody(body);
+			shape.dispose();
+		}
+
+		// Weld all adjacent parts together.
+		for (Part part : parts) {
+			if (part.getAdjacent() != null && !part.getAdjacent().isEmpty()) {
+				for (Part adjacent : part.getAdjacent()) {
+					weldJointDef.initialize(adjacent.getBody(), part.getBody(),
+							new Vector2(
+									(part.getBody().getPosition().x + adjacent
+											.getBody().getPosition().x) / 2,
+									(part.getBody().getPosition().y + adjacent
+											.getBody().getPosition().y) / 2));
+					world.createJoint(weldJointDef);
+				}
+			}
+		}
+
+		// Record triggers
+		if (triggers != null && !triggers.isEmpty()) {
+			for (Triggerable trigger : triggers) {
+				for (int i = 0; i < trigger.getKeys().length; ++i) {
+					if (!keyActions.containsKey(trigger.getKeys()[i])) {
+						ArrayList<Triggerable> triggerList = new ArrayList<>();
+						triggerList.add(trigger);
+						keyActions.put(trigger.getKeys()[i], triggerList);
+					} else {
+						ArrayList<Triggerable> triggerList = keyActions
+								.get(trigger.getKeys()[i]);
+						triggerList.add(trigger);
+						keyActions.put(trigger.getKeys()[i], triggerList);
+					}
+				}
+			}
+		}
 	}
 }

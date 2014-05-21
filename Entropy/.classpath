@@ -13,5 +13,6 @@
 			<attribute name="javadoc_location" value="file:/C:/Users/Timothy/git/EntropyCore/Entropy/libs/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry exported="true" kind="lib" path="libs/guava-17.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

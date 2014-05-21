@@ -1,17 +1,23 @@
 package us.rockhopper.entropy.entities;
 
-import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.World;
+import java.util.ArrayList;
 
-public class Thruster extends Body {
+import us.rockhopper.entropy.utility.Part;
+import us.rockhopper.entropy.utility.Triggerable;
+
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.math.Vector2;
+
+public class Thruster extends Part implements Triggerable{
 
 	private int strength;
 	private int forwardKey;
 	private int backwardKey;
 	private boolean canReverse;
 
-	protected Thruster(World world, long addr) {
-		super(world, addr);
+	protected Thruster(Vector2 relativePosition, int height, int width,
+			float density, Sprite sprite, ArrayList<Part> adjacent) {
+		super(relativePosition, height, width, density, sprite, adjacent);
 	}
 
 	public Thruster setStrength(int strength) {
@@ -35,6 +41,23 @@ public class Thruster extends Body {
 	}
 
 	public void update() {
+	}
 
+	@Override
+	public int[] getKeys() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void trigger(int key) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void unTrigger(int key) {
+		// TODO Auto-generated method stub
+		
 	}
 }

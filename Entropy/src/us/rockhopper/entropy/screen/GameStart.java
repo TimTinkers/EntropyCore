@@ -1,7 +1,10 @@
 package us.rockhopper.entropy.screen;
 
+import javax.swing.JFileChooser;
+
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
 import us.rockhopper.entropy.entities.SampleShip;
+import us.rockhopper.entropy.utility.FileIO;
 
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Game;
@@ -14,17 +17,14 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
-import com.badlogic.gdx.physics.box2d.ChainShape;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.World;
+import com.google.gson.Gson;
 
 public class GameStart implements Screen {
 
+	private String defaultFolder = new JFileChooser().getFileSystemView()
+			.getDefaultDirectory().toString();
 	private World world;
 	private Box2DDebugRenderer debugRenderer;
 	private SpriteBatch batch;
@@ -35,25 +35,16 @@ public class GameStart implements Screen {
 
 	private SampleShip ship;
 
-	private Vector3 bottomLeft, bottomRight;
-
 	@Override
 	public void render(float delta) {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-		if (ship.getBody().getPosition().x < bottomLeft.x)
-			ship.getBody().setTransform(bottomRight.x,
-					ship.getBody().getPosition().y, ship.getBody().getAngle());
-		else if (ship.getBody().getPosition().x > bottomRight.x)
-			ship.getBody().setTransform(bottomLeft.x,
-					ship.getBody().getPosition().y, ship.getBody().getAngle());
-
 		ship.update();
 		world.step(TIMESTEP, VELOCITYITERATIONS, POSITIONITERATIONS);
 
-		camera.position.y = ship.getBody().getPosition().y > camera.position.y ? ship
-				.getBody().getPosition().y : camera.position.y;
+		camera.position.y = ship.getCockpitPosition().y > camera.position.y ? ship
+				.getCockpitPosition().y : camera.position.y;
 		camera.update();
 
 		batch.setProjectionMatrix(camera.combined);
@@ -84,10 +75,12 @@ public class GameStart implements Screen {
 		camera = new OrthographicCamera(Gdx.graphics.getWidth() / 25,
 				Gdx.graphics.getHeight() / 25);
 
-		ship = new SampleShip(world, 0, 1, 32 / 4, 25 / 4);
-		world.setContactFilter(ship);
-		world.setContactListener(ship);
-
+		Gson gson = new Gson();
+		String filePath = defaultFolder + "\\EntropyShips\\" + "sample.json";
+		String shipJSON = FileIO.read(filePath);
+		ship = gson.fromJson(shipJSON, SampleShip.class);
+		ship.setWorld(world);
+		ship.create();
 		Gdx.input.setInputProcessor(new InputMultiplexer(new InputAdapter() {
 
 			@Override

@@ -6,6 +6,4 @@ public interface Triggerable {
 	public void trigger(int key);
 
 	public void unTrigger(int key);
-
-	public void update();
 }
