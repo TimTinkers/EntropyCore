@@ -6,7 +6,6 @@ import java.util.HashMap;
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
 import us.rockhopper.entropy.utility.Layout;
 import us.rockhopper.entropy.utility.Part;
-import us.rockhopper.entropy.utility.Triggerable;
 
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Texture;
@@ -35,36 +34,9 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 	private Vector2 cockpitPosition;
 	private int width;
 	private int height;
-	private ArrayList<Triggerable> triggers;
-	private ArrayList<Part> parts;
+	private ArrayList<Part> parts = new ArrayList<Part>();
 	private Layout setup;
-	private HashMap<Integer, ArrayList<Triggerable>> keyActions = new HashMap<Integer, ArrayList<Triggerable>>();
-
-	/**
-	 * Creates a ship object, which contains all information it would need to
-	 * later render itself.
-	 * 
-	 * @param cockpitPosition
-	 *            The Vector2 position of the cockpit.
-	 * @param width
-	 *            The width of the ship.
-	 * @param height
-	 *            The height of the ship.
-	 * @param triggers
-	 *            Any parts on the ship which implement Triggerable.
-	 * @param parts
-	 *            All parts on the ship. The first Part in this list MUST be the
-	 *            Cockpit of the ship.
-	 */
-	public BasicShip(Vector2 cockpitPosition, int width, int height,
-			ArrayList<Triggerable> triggers, ArrayList<Part> parts, Layout setup) {
-		this.cockpitPosition = cockpitPosition;
-		this.triggers = triggers;
-		this.parts = parts;
-		this.width = width;
-		this.height = height;
-		this.setup = setup;
-	}
+	private HashMap<Integer, ArrayList<Part>> keyActions = new HashMap<Integer, ArrayList<Part>>();
 
 	/**
 	 * Creates a ship object, which contains all information it would need to
@@ -107,8 +79,11 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 	 */
 	@Override
 	public boolean keyDown(int keycode) {
+		System.out.println("KEY PRESSED");
 		if (keyActions.containsKey(keycode)) {
-			for (Triggerable trigger : keyActions.get(keycode)) {
+			for (Part trigger : keyActions.get(keycode)) {
+				System.out.println("The keyaction hashmap contains the code "
+						+ keycode);
 				trigger.trigger(keycode);
 			}
 			return true;
@@ -127,7 +102,7 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 	@Override
 	public boolean keyUp(int keycode) {
 		if (keyActions.containsKey(keycode)) {
-			for (Triggerable trigger : keyActions.get(keycode)) {
+			for (Part trigger : keyActions.get(keycode)) {
 				trigger.unTrigger(keycode);
 			}
 			return true;
@@ -231,18 +206,20 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		}
 
 		// Record triggers
-		if (triggers != null && !triggers.isEmpty()) {
-			for (Triggerable trigger : triggers) {
-				for (int i = 0; i < trigger.getKeys().length; ++i) {
-					if (!keyActions.containsKey(trigger.getKeys()[i])) {
-						ArrayList<Triggerable> triggerList = new ArrayList<>();
-						triggerList.add(trigger);
-						keyActions.put(trigger.getKeys()[i], triggerList);
-					} else {
-						ArrayList<Triggerable> triggerList = keyActions
-								.get(trigger.getKeys()[i]);
-						triggerList.add(trigger);
-						keyActions.put(trigger.getKeys()[i], triggerList);
+		if (!parts.isEmpty()) {
+			for (Part trigger : parts) {
+				if (trigger.getKeys() != null) {
+					for (int i = 0; i < trigger.getKeys().length; ++i) {
+						if (!keyActions.containsKey(trigger.getKeys()[i])) {
+							ArrayList<Part> triggerList = new ArrayList<>();
+							triggerList.add(trigger);
+							keyActions.put(trigger.getKeys()[i], triggerList);
+						} else {
+							ArrayList<Part> triggerList = keyActions
+									.get(trigger.getKeys()[i]);
+							triggerList.add(trigger);
+							keyActions.put(trigger.getKeys()[i], triggerList);
+						}
 					}
 				}
 			}
@@ -260,7 +237,7 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		cockpitPosition = json.readValue(Vector2.class, jsonData);
 		width = jsonData.getInt("width");
 		height = jsonData.getInt("height");
-		parts = json.readValue("triggers", ArrayList.class, Triggerable.class,
+		parts = json.readValue("triggers", ArrayList.class, Part.class,
 				jsonData);
 		parts = json.readValue("parts", ArrayList.class, Part.class, jsonData);
 		keyActions = json.readValue("keyActions", HashMap.class,

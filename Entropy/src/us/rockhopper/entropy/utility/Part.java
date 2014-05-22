@@ -87,9 +87,15 @@ public abstract class Part {
 		return this.id;
 	}
 
-	public abstract void update();
-
 	public Vector2 getGridPositionVector() {
 		return this.gridPosition;
 	}
+
+	public abstract void update();
+
+	public abstract int[] getKeys();
+
+	public abstract void trigger(int key);
+
+	public abstract void unTrigger(int key);
 }

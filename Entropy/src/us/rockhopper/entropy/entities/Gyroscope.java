@@ -4,31 +4,34 @@ import us.rockhopper.entropy.utility.Part;
 
 import com.badlogic.gdx.math.Vector2;
 
-public class Cockpit extends Part {
+public class Gyroscope extends Part {
 
-	public Cockpit(Vector2 relativePosition, int height, int width,
+	public Gyroscope(Vector2 gridPosition, int height, int width,
 			float density, String sprite) {
-		super(relativePosition, height, width, density, sprite);
+		super(gridPosition, height, width, density, sprite);
 	}
 
-	public Cockpit(Part part) {
-		super(part.getGridPositionVector(), part.getHeight(), part.getWidth(),
-				part.getDensity(), part.getSprite());
-	}
-
+	@Override
 	public void update() {
+		// TODO Auto-generated method stub
 	}
 
 	@Override
 	public int[] getKeys() {
+		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void trigger(int key) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void unTrigger(int key) {
+		// TODO Auto-generated method stub
+		
 	}
+
 }

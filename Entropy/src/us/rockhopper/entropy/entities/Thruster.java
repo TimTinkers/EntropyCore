@@ -1,20 +1,22 @@
 package us.rockhopper.entropy.entities;
 
 import us.rockhopper.entropy.utility.Part;
-import us.rockhopper.entropy.utility.Triggerable;
 
 import com.badlogic.gdx.math.Vector2;
 
-public class Thruster extends Part implements Triggerable {
+public class Thruster extends Part {
 
 	private int strength;
 	private int forwardKey;
-	private int backwardKey;
+	private int reverseKey;
 	private boolean canReverse;
+	private boolean shouldForward;
+	private boolean shouldReverse;
 
 	public Thruster(Vector2 relativePosition, int height, int width,
 			float density, String sprite) {
 		super(relativePosition, height, width, density, sprite);
+		shouldForward = false;
 	}
 
 	public Thruster setStrength(int strength) {
@@ -27,8 +29,8 @@ public class Thruster extends Part implements Triggerable {
 		return this;
 	}
 
-	public Thruster setBackward(int key) {
-		this.backwardKey = key;
+	public Thruster setReverse(int key) {
+		this.reverseKey = key;
 		return this;
 	}
 
@@ -38,23 +40,36 @@ public class Thruster extends Part implements Triggerable {
 	}
 
 	public void update() {
-		System.out.println("UPDATING THRUSTER");
-		this.getBody().applyForceToCenter(new Vector2(1, 1), true);
+		if (shouldForward) {
+			this.getBody().applyForceToCenter(new Vector2(0, 1 * strength),
+					true);
+		} else if (canReverse && shouldReverse) {
+			this.getBody().applyForceToCenter(new Vector2(0, -1 * strength),
+					true);
+		}
 	}
 
 	@Override
 	public int[] getKeys() {
-		// TODO Auto-generated method stub
-		return null;
+		int[] keys = { forwardKey, reverseKey };
+		return keys;
 	}
 
 	@Override
 	public void trigger(int key) {
-		System.out.println("BUTTON PRESSED");
+		if (key == forwardKey) {
+			shouldForward = true;
+		} else if (key == reverseKey) {
+			shouldReverse = true;
+		}
 	}
 
 	@Override
 	public void unTrigger(int key) {
-		System.out.println("BUTTON RELEASED");
+		if (key == forwardKey) {
+			shouldForward = false;
+		} else if (key == reverseKey) {
+			shouldReverse = false;
+		}
 	}
 }

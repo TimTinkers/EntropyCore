@@ -11,10 +11,10 @@ import us.rockhopper.entropy.utility.FileIO;
 import us.rockhopper.entropy.utility.Layout;
 import us.rockhopper.entropy.utility.Part;
 import us.rockhopper.entropy.utility.PartClassAdapter;
-import us.rockhopper.entropy.utility.Triggerable;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.math.Vector2;
@@ -23,7 +23,6 @@ import com.google.gson.GsonBuilder;
 public class ShipEditor implements Screen {
 
 	ArrayList<Part> parts = new ArrayList<Part>();
-	ArrayList<Triggerable> triggers = new ArrayList<Triggerable>();
 	private String defaultFolder = new JFileChooser().getFileSystemView()
 			.getDefaultDirectory().toString();
 
@@ -40,12 +39,12 @@ public class ShipEditor implements Screen {
 
 	@Override
 	public void show() {
-		//Declare textures
+		// Declare textures
 		Cockpit partCockpit = new Cockpit(new Vector2(1, 2), 1, 1, 0.8f,
 				"assets/img/sampleShip.png");
 		Thruster partThruster = new Thruster(new Vector2(1, 1), 1, 1, 0.8f,
-				"assets/img/thruster.png");
-		
+				"assets/img/thruster.png").setForward(Keys.W)
+				.setReverse(Keys.S).setCanReverse(true).setStrength(5);
 		parts.add(partCockpit);
 		parts.add(partThruster);
 		Layout setup = new Layout(4, 4);
@@ -58,7 +57,7 @@ public class ShipEditor implements Screen {
 		// Serialize and write to file
 		GsonBuilder gson = new GsonBuilder();
 		gson.registerTypeAdapter(Part.class, new PartClassAdapter());
-		String shipJSON = gson.create().toJson(ship);
+		String shipJSON = gson.setPrettyPrinting().create().toJson(ship);
 		FileIO.write(defaultFolder + "\\EntropyShips\\" + "sample.json",
 				shipJSON);
 
