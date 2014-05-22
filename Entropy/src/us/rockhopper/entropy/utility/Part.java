@@ -1,29 +1,28 @@
 package us.rockhopper.entropy.utility;
 
-import java.util.ArrayList;
+import java.util.UUID;
 
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 
 public class Part {
 
 	private Vector2 relativePosition;
+	private final UUID id;
 	private int height;
 	private int width;
 	private float density;
-	private Sprite sprite;
-	private ArrayList<Part> adjacent;
+	private String sprite;
 	private Body body;
 
 	public Part(Vector2 relativePosition, int height, int width, float density,
-			Sprite sprite, ArrayList<Part> adjacent) {
+			String sprite) {
 		this.relativePosition = relativePosition;
 		this.height = height;
 		this.width = width;
 		this.density = density;
 		this.sprite = sprite;
-		this.adjacent = adjacent;
+		this.id = UUID.randomUUID();
 	}
 
 	public Part setRelativePosition(Vector2 vector) {
@@ -62,22 +61,13 @@ public class Part {
 		return density;
 	}
 
-	public Part setTexture(Sprite texture) {
+	public Part setTexture(String texture) {
 		this.sprite = texture;
 		return this;
 	}
 
-	public Sprite getSprite() {
+	public String getSprite() {
 		return sprite;
-	}
-
-	public Part addAdjacentPart(Part adjacent) {
-		this.adjacent.add(adjacent);
-		return this;
-	}
-
-	public ArrayList<Part> getAdjacent() {
-		return adjacent;
 	}
 
 	public Body getBody() {
@@ -87,6 +77,10 @@ public class Part {
 	public Part setBody(Body body) {
 		this.body = body;
 		return this;
+	}
+
+	public UUID getUUID() {
+		return this.id;
 	}
 
 	public void update() {

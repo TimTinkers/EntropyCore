@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
+import us.rockhopper.entropy.utility.Layout;
 import us.rockhopper.entropy.utility.Part;
 import us.rockhopper.entropy.utility.Triggerable;
 
 import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -34,11 +37,8 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 	private int height;
 	private ArrayList<Triggerable> triggers;
 	private ArrayList<Part> parts;
+	private Layout setup;
 	private HashMap<Integer, ArrayList<Triggerable>> keyActions = new HashMap<Integer, ArrayList<Triggerable>>();
-
-	public BasicShip() {
-		throw new RuntimeException("This is an unused constructor.");
-	}
 
 	/**
 	 * Creates a ship object, which contains all information it would need to
@@ -57,12 +57,13 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 	 *            Cockpit of the ship.
 	 */
 	public BasicShip(Vector2 cockpitPosition, int width, int height,
-			ArrayList<Triggerable> triggers, ArrayList<Part> parts) {
+			ArrayList<Triggerable> triggers, ArrayList<Part> parts, Layout setup) {
 		this.cockpitPosition = cockpitPosition;
 		this.triggers = triggers;
 		this.parts = parts;
 		this.width = width;
 		this.height = height;
+		this.setup = setup;
 	}
 
 	/**
@@ -80,11 +81,12 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 	 *            Cockpit of the ship.
 	 */
 	public BasicShip(Vector2 cockpitPosition, int width, int height,
-			ArrayList<Part> parts) {
+			ArrayList<Part> parts, Layout setup) {
 		this.cockpitPosition = cockpitPosition;
 		this.parts = parts;
 		this.width = width;
 		this.height = height;
+		this.setup = setup;
 	}
 
 	/**
@@ -185,8 +187,9 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		fixtureDef.shape = shape;
 		body = world.createBody(bodyDef);
 		body.createFixture(fixtureDef).setUserData(
-				new Box2DSprite(cockpit.getSprite()));
+				new Box2DSprite(new Sprite(new Texture(cockpit.getSprite()))));
 		cockpit.setBody(body);
+		parts.get(0).setBody(body);
 		shape.dispose();
 
 		// Creating and attaching remaining parts to Ship.
@@ -200,15 +203,19 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 			fixtureDef.shape = shape;
 			body = world.createBody(bodyDef);
 			body.createFixture(fixtureDef).setUserData(
-					new Box2DSprite(part.getSprite()));
+					new Box2DSprite(new Sprite(new Texture(part.getSprite()))));
 			part.setBody(body);
+			// TODO This is where you need to make it a generic
+			// solution...modify relativePositon() to use coordinates from the
+			// grid?
+			setup.setPart(part, (int) part.getRelativePosition().x, (int) part.getRelativePosition().y);
 			shape.dispose();
 		}
 
 		// Weld all adjacent parts together.
 		for (Part part : parts) {
-			if (part.getAdjacent() != null && !part.getAdjacent().isEmpty()) {
-				for (Part adjacent : part.getAdjacent()) {
+			if (!setup.getAdjacent(part).isEmpty()) {
+				for (Part adjacent : setup.getAdjacent(part)) {
 					weldJointDef.initialize(adjacent.getBody(), part.getBody(),
 							new Vector2(
 									(part.getBody().getPosition().x + adjacent
@@ -250,8 +257,10 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		cockpitPosition = json.readValue(Vector2.class, jsonData);
 		width = jsonData.getInt("width");
 		height = jsonData.getInt("height");
-		parts = json.readValue("triggers", ArrayList.class, Triggerable.class, jsonData);
+		parts = json.readValue("triggers", ArrayList.class, Triggerable.class,
+				jsonData);
 		parts = json.readValue("parts", ArrayList.class, Part.class, jsonData);
-		keyActions = json.readValue("keyActions", HashMap.class, ArrayList.class, jsonData);
+		keyActions = json.readValue("keyActions", HashMap.class,
+				ArrayList.class, jsonData);
 	}
 }

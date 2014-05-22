@@ -6,16 +6,15 @@ import javax.swing.JFileChooser;
 
 import us.rockhopper.entropy.entities.BasicShip;
 import us.rockhopper.entropy.utility.FileIO;
+import us.rockhopper.entropy.utility.Layout;
 import us.rockhopper.entropy.utility.Part;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.Json;
+import com.google.gson.Gson;
 
 public class ShipEditor implements Screen {
 
@@ -35,23 +34,25 @@ public class ShipEditor implements Screen {
 
 	@Override
 	public void show() {
-		Sprite shipSprite = new Sprite(new Texture("assets/img/sampleShip.png"));
-		Sprite thrusterSprite = new Sprite(new Texture(
-				"assets/img/thruster.png"));
-
-		Part partCockpit = new Part(new Vector2(0, 0), 32 / 4, 32 / 4, 0.8f,
-				shipSprite, null);
-		ArrayList<Part> partsAdjacent = new ArrayList<>();
-		partsAdjacent.add(partCockpit);
-		Part partThruster = new Part(new Vector2(0, 32 / 4), 32 / 4, 32 / 4,
-				0.8f, thrusterSprite, partsAdjacent);
+		Part partCockpit = new Part(new Vector2(0, 1), 32 / 4, 32 / 4, 0.8f,
+				"assets/img/sampleShip.png");
+		Part partThruster = new Part(new Vector2(0, 0), 32 / 4, 32 / 4,
+				0.8f, "assets/img/thruster.png");
 		ArrayList<Part> parts = new ArrayList<>();
 		parts.add(partCockpit);
 		parts.add(partThruster);
-		BasicShip ship = new BasicShip(new Vector2(0, 0), 32 / 2, 32 / 2, parts);
+		Layout setup = new Layout(1, 2);
+		setup.setPart(partCockpit, 0, 1);
+		setup.setPart(partThruster, 0, 0);
+		BasicShip ship = new BasicShip(new Vector2(0, 0), 32 / 2, 32 / 2,
+				parts, setup);
 
-		Json json = new Json();
-		String shipJSON = json.prettyPrint(ship);
+		// Gson gson = new
+		// GsonBuilder().registerTypeHierarchyAdapter(BasicShip.class, new
+		// InterfaceAdapter<TextureData>())
+		// .create();
+		Gson gson = new Gson();
+		String shipJSON = gson.toJson(ship);
 		FileIO.write(defaultFolder + "\\EntropyShips\\" + "sample.json",
 				shipJSON);
 		((Game) Gdx.app.getApplicationListener()).setScreen(new GameStart());

@@ -19,7 +19,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
-import com.badlogic.gdx.utils.Json;
+import com.google.gson.Gson;
 
 public class GameStart implements Screen {
 
@@ -78,8 +78,10 @@ public class GameStart implements Screen {
 		String filePath = defaultFolder + "\\EntropyShips\\" + "sample.json";
 		String shipJSON = FileIO.read(filePath);
 		System.out.println(shipJSON);
-		Json json = new Json();
-		ship = json.fromJson(BasicShip.class, shipJSON);
+		// Gson gson = new GsonBuilder().registerTypeAdapter(TextureData.class,
+		// new InterfaceAdapter<TextureData>()).create();
+		Gson gson = new Gson();
+		ship = gson.fromJson(shipJSON, BasicShip.class);
 
 		ship.setWorld(world);
 		ship.create();
