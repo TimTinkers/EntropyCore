@@ -5,19 +5,25 @@ import java.util.ArrayList;
 import javax.swing.JFileChooser;
 
 import us.rockhopper.entropy.entities.BasicShip;
+import us.rockhopper.entropy.entities.Cockpit;
+import us.rockhopper.entropy.entities.Thruster;
 import us.rockhopper.entropy.utility.FileIO;
 import us.rockhopper.entropy.utility.Layout;
 import us.rockhopper.entropy.utility.Part;
+import us.rockhopper.entropy.utility.PartClassAdapter;
+import us.rockhopper.entropy.utility.Triggerable;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.math.Vector2;
-import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class ShipEditor implements Screen {
 
+	ArrayList<Part> parts = new ArrayList<Part>();
+	ArrayList<Triggerable> triggers = new ArrayList<Triggerable>();
 	private String defaultFolder = new JFileChooser().getFileSystemView()
 			.getDefaultDirectory().toString();
 
@@ -34,27 +40,29 @@ public class ShipEditor implements Screen {
 
 	@Override
 	public void show() {
-		Part partCockpit = new Part(new Vector2(0, 1), 32 / 4, 32 / 4, 0.8f,
+		//Declare textures
+		Cockpit partCockpit = new Cockpit(new Vector2(1, 2), 1, 1, 0.8f,
 				"assets/img/sampleShip.png");
-		Part partThruster = new Part(new Vector2(0, 0), 32 / 4, 32 / 4,
-				0.8f, "assets/img/thruster.png");
-		ArrayList<Part> parts = new ArrayList<>();
+		Thruster partThruster = new Thruster(new Vector2(1, 1), 1, 1, 0.8f,
+				"assets/img/thruster.png");
+		
 		parts.add(partCockpit);
 		parts.add(partThruster);
-		Layout setup = new Layout(1, 2);
-		setup.setPart(partCockpit, 0, 1);
-		setup.setPart(partThruster, 0, 0);
-		BasicShip ship = new BasicShip(new Vector2(0, 0), 32 / 2, 32 / 2,
-				parts, setup);
+		Layout setup = new Layout(4, 4);
+		setup.setPart(partCockpit, partCockpit.getGridX(),
+				partCockpit.getGridY());
+		setup.setPart(partThruster, partThruster.getGridX(),
+				partThruster.getGridY());
+		BasicShip ship = new BasicShip(new Vector2(1, 2), 1, 2, parts, setup);
 
-		// Gson gson = new
-		// GsonBuilder().registerTypeHierarchyAdapter(BasicShip.class, new
-		// InterfaceAdapter<TextureData>())
-		// .create();
-		Gson gson = new Gson();
-		String shipJSON = gson.toJson(ship);
+		// Serialize and write to file
+		GsonBuilder gson = new GsonBuilder();
+		gson.registerTypeAdapter(Part.class, new PartClassAdapter());
+		String shipJSON = gson.create().toJson(ship);
 		FileIO.write(defaultFolder + "\\EntropyShips\\" + "sample.json",
 				shipJSON);
+
+		// Switch screens
 		((Game) Gdx.app.getApplicationListener()).setScreen(new GameStart());
 	}
 

@@ -24,31 +24,29 @@ public class Layout {
 	}
 
 	public ArrayList<Part> getAdjacent(Part part) {
-		System.out.println("Position is "
-				+ part.getRelativePosition().toString());
-		if (part.getRelativePosition().x > 0) {
-			System.out.println((int) part.getRelativePosition().x - 1);
-			System.out.println((int) part.getRelativePosition().y);
-			parts.add(this.getPart((int) part.getRelativePosition().x - 1,
-					(int) part.getRelativePosition().y));
+		if (part.getGridX() > 0
+				&& this.getPart((int) part.getGridX() - 1,
+						(int) part.getGridY()) != null) {
+			parts.add(this.getPart((int) part.getGridX() - 1,
+					(int) part.getGridY()));
 		}
-		if (part.getRelativePosition().y > 0) {
-			System.out.println((int) part.getRelativePosition().x);
-			System.out.println((int) part.getRelativePosition().y - 1);
-			parts.add(this.getPart((int) part.getRelativePosition().x,
-					(int) part.getRelativePosition().y - 1));
+		if (part.getGridY() > 0
+				&& this.getPart((int) part.getGridX(),
+						(int) part.getGridY() - 1) != null) {
+			parts.add(this.getPart((int) part.getGridX(),
+					(int) part.getGridY() - 1));
 		}
-		if (part.getRelativePosition().y < (y - 1)) {
-			System.out.println((int) part.getRelativePosition().x);
-			System.out.println((int) part.getRelativePosition().y + 1);
-			parts.add(this.getPart((int) part.getRelativePosition().x,
-					(int) part.getRelativePosition().y + 1));
+		if (part.getGridY() < (y - 1)
+				&& this.getPart((int) part.getGridX(),
+						(int) part.getGridY() + 1) != null) {
+			parts.add(this.getPart((int) part.getGridX(),
+					(int) part.getGridY() + 1));
 		}
-		if (part.getRelativePosition().x < (x - 1)) {
-			System.out.println((int) part.getRelativePosition().x + 1);
-			System.out.println((int) part.getRelativePosition().y);
-			parts.add(this.getPart((int) part.getRelativePosition().x + 1,
-					(int) part.getRelativePosition().y));
+		if (part.getGridX() < (x - 1)
+				&& this.getPart((int) part.getGridX() + 1,
+						(int) part.getGridY()) != null) {
+			parts.add(this.getPart((int) part.getGridX() + 1,
+					(int) part.getGridY()));
 		}
 		return parts;
 	}

@@ -12,7 +12,11 @@ public class Cockpit extends Part {
 	}
 
 	public Cockpit(Part part) {
-		super(part.getRelativePosition(), part.getHeight(), part.getWidth(),
+		super(part.getGridPositionVector(), part.getHeight(), part.getWidth(),
 				part.getDensity(), part.getSprite());
+	}
+	
+	public void update() {
+		System.out.println("UPDATING COCKPIT");
 	}
 }

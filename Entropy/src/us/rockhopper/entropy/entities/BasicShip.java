@@ -182,7 +182,7 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		Cockpit cockpit = new Cockpit(parts.get(0));
 		bodyDef.position.set(cockpitPosition.x, cockpitPosition.y);
 		PolygonShape shape = new PolygonShape();
-		shape.setAsBox(cockpit.getWidth() / 2, cockpit.getHeight() / 2);
+		shape.setAsBox(cockpit.getWidth() / 2f, cockpit.getHeight() / 2f);
 		fixtureDef.density = cockpit.getDensity();
 		fixtureDef.shape = shape;
 		body = world.createBody(bodyDef);
@@ -190,25 +190,24 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 				new Box2DSprite(new Sprite(new Texture(cockpit.getSprite()))));
 		cockpit.setBody(body);
 		parts.get(0).setBody(body);
+		// Need to set this part's body in the Layout for the ship as well.
+		setup.getPart(cockpit.getGridX(), cockpit.getGridY()).setBody(body);
 		shape.dispose();
 
 		// Creating and attaching remaining parts to Ship.
-		for (Part part : parts) {
-			bodyDef.position.set(cockpitPosition.x
-					+ part.getRelativePosition().x,
-					cockpitPosition.y + part.getRelativePosition().y);
+		for (int i = 1; i < parts.size(); ++i) {
+			Part part = parts.get(i);
+			bodyDef.position.set(part.getGridX(), part.getGridY());
 			shape = new PolygonShape();
-			shape.setAsBox(part.getWidth() / 2, part.getHeight() / 2);
+			shape.setAsBox(part.getWidth() / 2f, part.getHeight() / 2f);
 			fixtureDef.density = part.getDensity();
 			fixtureDef.shape = shape;
 			body = world.createBody(bodyDef);
 			body.createFixture(fixtureDef).setUserData(
 					new Box2DSprite(new Sprite(new Texture(part.getSprite()))));
 			part.setBody(body);
-			// TODO This is where you need to make it a generic
-			// solution...modify relativePositon() to use coordinates from the
-			// grid?
-			setup.setPart(part, (int) part.getRelativePosition().x, (int) part.getRelativePosition().y);
+			setup.getPart(part.getGridX(), part.getGridY()).setBody(body);
+			setup.setPart(part, part.getGridX(), part.getGridY());
 			shape.dispose();
 		}
 
@@ -216,13 +215,17 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		for (Part part : parts) {
 			if (!setup.getAdjacent(part).isEmpty()) {
 				for (Part adjacent : setup.getAdjacent(part)) {
-					weldJointDef.initialize(adjacent.getBody(), part.getBody(),
-							new Vector2(
-									(part.getBody().getPosition().x + adjacent
-											.getBody().getPosition().x) / 2,
-									(part.getBody().getPosition().y + adjacent
-											.getBody().getPosition().y) / 2));
-					world.createJoint(weldJointDef);
+					if (!part.equals(adjacent)) {
+						System.out.println(part.getBody().getPosition());
+						System.out.println(adjacent.getBody().getPosition());
+						weldJointDef.initialize(adjacent.getBody(), part
+								.getBody(), new Vector2((part.getBody()
+								.getPosition().x + adjacent.getBody()
+								.getPosition().x) / 2, (part.getBody()
+								.getPosition().y + adjacent.getBody()
+								.getPosition().y) / 2));
+						world.createJoint(weldJointDef);
+					}
 				}
 			}
 		}

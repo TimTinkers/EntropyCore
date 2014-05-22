@@ -5,9 +5,9 @@ import java.util.UUID;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 
-public class Part {
+public abstract class Part {
 
-	private Vector2 relativePosition;
+	private Vector2 gridPosition;
 	private final UUID id;
 	private int height;
 	private int width;
@@ -15,9 +15,9 @@ public class Part {
 	private String sprite;
 	private Body body;
 
-	public Part(Vector2 relativePosition, int height, int width, float density,
+	public Part(Vector2 gridPosition, int height, int width, float density,
 			String sprite) {
-		this.relativePosition = relativePosition;
+		this.gridPosition = gridPosition;
 		this.height = height;
 		this.width = width;
 		this.density = density;
@@ -25,13 +25,17 @@ public class Part {
 		this.id = UUID.randomUUID();
 	}
 
-	public Part setRelativePosition(Vector2 vector) {
-		this.relativePosition = vector;
+	public Part setGridPosition(Vector2 vector) {
+		this.gridPosition = vector;
 		return this;
 	}
 
-	public Vector2 getRelativePosition() {
-		return this.relativePosition;
+	public int getGridX() {
+		return (int) this.gridPosition.x;
+	}
+
+	public int getGridY() {
+		return (int) this.gridPosition.y;
 	}
 
 	public Part setHeight(int height) {
@@ -83,7 +87,9 @@ public class Part {
 		return this.id;
 	}
 
-	public void update() {
-		// TODO Auto-generated method stub
+	public abstract void update();
+
+	public Vector2 getGridPositionVector() {
+		return this.gridPosition;
 	}
 }

@@ -12,7 +12,7 @@ public class Thruster extends Part implements Triggerable {
 	private int backwardKey;
 	private boolean canReverse;
 
-	protected Thruster(Vector2 relativePosition, int height, int width,
+	public Thruster(Vector2 relativePosition, int height, int width,
 			float density, String sprite) {
 		super(relativePosition, height, width, density, sprite);
 	}
@@ -38,6 +38,8 @@ public class Thruster extends Part implements Triggerable {
 	}
 
 	public void update() {
+		System.out.println("UPDATING THRUSTER");
+		this.getBody().applyForceToCenter(new Vector2(1, 1), true);
 	}
 
 	@Override
@@ -48,13 +50,11 @@ public class Thruster extends Part implements Triggerable {
 
 	@Override
 	public void trigger(int key) {
-		// TODO Auto-generated method stub
-
+		System.out.println("BUTTON PRESSED");
 	}
 
 	@Override
 	public void unTrigger(int key) {
-		// TODO Auto-generated method stub
-
+		System.out.println("BUTTON RELEASED");
 	}
 }

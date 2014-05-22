@@ -5,6 +5,8 @@ import javax.swing.JFileChooser;
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
 import us.rockhopper.entropy.entities.BasicShip;
 import us.rockhopper.entropy.utility.FileIO;
+import us.rockhopper.entropy.utility.Part;
+import us.rockhopper.entropy.utility.PartClassAdapter;
 
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Game;
@@ -19,7 +21,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
-import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class GameStart implements Screen {
 
@@ -75,13 +77,12 @@ public class GameStart implements Screen {
 		camera = new OrthographicCamera(Gdx.graphics.getWidth() / 25,
 				Gdx.graphics.getHeight() / 25);
 
+		// Deserialize and get ship from file
 		String filePath = defaultFolder + "\\EntropyShips\\" + "sample.json";
 		String shipJSON = FileIO.read(filePath);
-		System.out.println(shipJSON);
-		// Gson gson = new GsonBuilder().registerTypeAdapter(TextureData.class,
-		// new InterfaceAdapter<TextureData>()).create();
-		Gson gson = new Gson();
-		ship = gson.fromJson(shipJSON, BasicShip.class);
+		GsonBuilder gson = new GsonBuilder();
+		gson.registerTypeAdapter(Part.class, new PartClassAdapter());
+		ship = gson.create().fromJson(shipJSON, BasicShip.class);
 
 		ship.setWorld(world);
 		ship.create();
