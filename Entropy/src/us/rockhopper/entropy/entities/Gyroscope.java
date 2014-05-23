@@ -6,32 +6,63 @@ import com.badlogic.gdx.math.Vector2;
 
 public class Gyroscope extends Part {
 
+	private int strength;
+	private int counterClockwiseKey;
+	private int clockwiseKey;
+	private boolean clockwiseThrust;
+	private boolean counterClockwiseThrust;
+
 	public Gyroscope(Vector2 gridPosition, int height, int width,
 			float density, String sprite) {
 		super(gridPosition, height, width, density, sprite);
 	}
 
+	public Gyroscope setStrength(int strength) {
+		this.strength = strength;
+		return this;
+	}
+
+	public Gyroscope setClockwise(int key) {
+		this.clockwiseKey = key;
+		return this;
+	}
+
+	public Gyroscope setCounterClockwise(int key) {
+		this.counterClockwiseKey = key;
+		return this;
+	}
+
 	@Override
 	public void update() {
-		// TODO Auto-generated method stub
+		if (clockwiseThrust) {
+			this.getBody().applyTorque(strength * -1, true);
+		} else if (counterClockwiseThrust) {
+			this.getBody().applyTorque(strength * 1, true);
+		}
 	}
 
 	@Override
 	public int[] getKeys() {
-		// TODO Auto-generated method stub
-		return null;
+		int[] keys = { clockwiseKey, counterClockwiseKey };
+		return keys;
 	}
 
 	@Override
 	public void trigger(int key) {
-		// TODO Auto-generated method stub
-		
+		if (key == clockwiseKey) {
+			clockwiseThrust = true;
+		} else if (key == counterClockwiseKey) {
+			counterClockwiseThrust = true;
+		}
 	}
 
 	@Override
 	public void unTrigger(int key) {
-		// TODO Auto-generated method stub
-		
+		if (key == clockwiseKey) {
+			clockwiseThrust = false;
+		} else if (key == counterClockwiseKey) {
+			counterClockwiseThrust = false;
+		}
 	}
 
 }

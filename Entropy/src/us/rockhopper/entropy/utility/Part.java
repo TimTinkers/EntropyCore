@@ -14,6 +14,10 @@ public abstract class Part {
 	private float density;
 	private String sprite;
 	private Body body;
+	private String name;
+	private String description;
+	private int cost;
+	private int health;
 
 	public Part(Vector2 gridPosition, int height, int width, float density,
 			String sprite) {
@@ -89,6 +93,42 @@ public abstract class Part {
 
 	public Vector2 getGridPositionVector() {
 		return this.gridPosition;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public Part setName(String name) {
+		this.name = name;
+		return this;
+	}
+
+	public String getDescription() {
+		return this.description;
+	}
+
+	public Part setDescription(String description) {
+		this.description = description;
+		return this;
+	}
+
+	public int getCost() {
+		return this.cost;
+	}
+
+	public Part setCost(int cost) {
+		this.cost = cost;
+		return this;
+	}
+
+	public int getHealth() {
+		return this.health;
+	}
+
+	public Part setHealth(int health) {
+		this.health = health;
+		return this;
 	}
 
 	public abstract void update();

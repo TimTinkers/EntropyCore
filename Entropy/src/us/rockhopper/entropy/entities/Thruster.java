@@ -40,12 +40,18 @@ public class Thruster extends Part {
 	}
 
 	public void update() {
+		System.out.println("Cos: " + Math.cos(this.getBody().getAngle()));
+		System.out.println("Sin " + Math.sin(this.getBody().getAngle()));
 		if (shouldForward) {
-			this.getBody().applyForceToCenter(new Vector2(0, 1 * strength),
-					true);
+			this.getBody().applyForceToCenter(
+					new Vector2((float) Math.sin(this.getBody().getAngle())
+							* -1 * strength, (float) Math.cos(this.getBody()
+							.getAngle()) * strength), true);
 		} else if (canReverse && shouldReverse) {
-			this.getBody().applyForceToCenter(new Vector2(0, -1 * strength),
-					true);
+			this.getBody().applyForceToCenter(
+					new Vector2((float) Math.sin(this.getBody().getAngle())
+							* strength, (float) Math.cos(this.getBody()
+							.getAngle()) * -1 * strength), true);
 		}
 	}
 

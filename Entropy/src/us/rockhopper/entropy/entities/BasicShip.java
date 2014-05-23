@@ -79,7 +79,6 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 	 */
 	@Override
 	public boolean keyDown(int keycode) {
-		System.out.println("KEY PRESSED");
 		if (keyActions.containsKey(keycode)) {
 			for (Part trigger : keyActions.get(keycode)) {
 				System.out.println("The keyaction hashmap contains the code "

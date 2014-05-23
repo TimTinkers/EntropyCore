@@ -2,6 +2,7 @@ package us.rockhopper.entropy.utility;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.base.Charsets;
@@ -23,12 +24,24 @@ public class FileIO {
 			List<String> lines = Files.readLines(new File(filePath),
 					Charsets.UTF_8);
 			for (String line : lines) {
-				System.out.println(line);
 				jsonString += line;
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return jsonString;
+	}
+
+	public static ArrayList<File> getFilesForFolder(final File folder) {
+		ArrayList<File> files = new ArrayList<File>();
+		for (final File fileEntry : folder.listFiles()) {
+			if (fileEntry.isFile()) {
+				String temp = fileEntry.getName();
+				if ((temp.substring(temp.lastIndexOf('.') + 1, temp.length())
+						.toLowerCase()).equals("json"))
+					files.add(fileEntry);
+			}
+		}
+		return files;
 	}
 }
