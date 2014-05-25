@@ -45,11 +45,11 @@ public class ShipEditor implements Screen {
 	private Stage stage;
 	private Skin skin;
 	private OrthographicCamera camera;
-	private Sprite overlay;
 	private SpriteBatch batch;
 
 	private Table selections;
 	private Table tabbed;
+	private Table gridTable;
 
 	private String defaultFolder = new JFileChooser().getFileSystemView()
 			.getDefaultDirectory().toString();
@@ -57,12 +57,15 @@ public class ShipEditor implements Screen {
 	private ArrayList<Part> command = new ArrayList<Part>();
 	private ArrayList<Part> control = new ArrayList<Part>();
 	private ArrayList<Part> thrust = new ArrayList<Part>();
+	private ArrayList<Part> hull = new ArrayList<Part>();
 
 	private Part activePart;
 	private float activePartX, activePartY;
 	private int sWidth, sHeight;
 
+	ArrayList<PartImageButton> grid = new ArrayList<PartImageButton>();
 	ArrayList<Part> parts = new ArrayList<Part>();
+	private Layout setup;
 
 	@Override
 	public void render(float delta) {
@@ -101,12 +104,15 @@ public class ShipEditor implements Screen {
 
 	@Override
 	public void show() {
+		// Begin initializing the layout.
+		setup = new Layout(1, 1);
+
 		// Sprite rendering
 		batch = new SpriteBatch();
-		camera = new OrthographicCamera(Gdx.graphics.getWidth() / 25,
-				Gdx.graphics.getHeight() / 25);
+		camera = new OrthographicCamera(Gdx.graphics.getWidth(),
+				Gdx.graphics.getHeight());
 
-		// Load all parts into their appropriate arrays.
+		// Load all command parts into its list.
 		String commandPath = defaultFolder + "\\EntropyShips\\Parts\\Command\\";
 		for (File file : FileIO.getFilesForFolder(new File(commandPath))) {
 			String partJSON = FileIO.read(file.getAbsolutePath());
@@ -116,6 +122,36 @@ public class ShipEditor implements Screen {
 			command.add(part);
 		}
 
+		// Load all control parts into its list.
+		String controlPath = defaultFolder + "\\EntropyShips\\Parts\\Control\\";
+		for (File file : FileIO.getFilesForFolder(new File(controlPath))) {
+			String partJSON = FileIO.read(file.getAbsolutePath());
+			GsonBuilder gson = new GsonBuilder();
+			gson.registerTypeAdapter(Part.class, new PartClassAdapter());
+			Part part = gson.create().fromJson(partJSON, Part.class);
+			control.add(part);
+		}
+
+		// Load all thrust parts into its list.
+		String thrustPath = defaultFolder + "\\EntropyShips\\Parts\\Thrust\\";
+		for (File file : FileIO.getFilesForFolder(new File(thrustPath))) {
+			String partJSON = FileIO.read(file.getAbsolutePath());
+			GsonBuilder gson = new GsonBuilder();
+			gson.registerTypeAdapter(Part.class, new PartClassAdapter());
+			Part part = gson.create().fromJson(partJSON, Part.class);
+			thrust.add(part);
+		}
+
+		// Load all hull parts into its list.
+		String hullPath = defaultFolder + "\\EntropyShips\\Parts\\Hull\\";
+		for (File file : FileIO.getFilesForFolder(new File(hullPath))) {
+			String partJSON = FileIO.read(file.getAbsolutePath());
+			GsonBuilder gson = new GsonBuilder();
+			gson.registerTypeAdapter(Part.class, new PartClassAdapter());
+			Part part = gson.create().fromJson(partJSON, Part.class);
+			hull.add(part);
+		}
+
 		stage = new Stage();
 		Gdx.input.setInputProcessor(stage);
 
@@ -123,6 +159,8 @@ public class ShipEditor implements Screen {
 				new TextureAtlas("assets/ui/uiskin.pack"));
 
 		selections = new Table(skin);
+		gridTable = new Table(skin);
+		gridTable.setFillParent(true);
 		selections.setFillParent(true);
 		selections.debug();
 		tabbed = new Table(skin);
@@ -133,8 +171,62 @@ public class ShipEditor implements Screen {
 				"default");
 		final TextButton buttonThrust = new TextButton("Thrust", skin,
 				"default");
-
+		final TextButton buttonHull = new TextButton("Hull", skin, "default");
 		final TextButton buttonGo = new TextButton("Start", skin, "default");
+
+		final ClickListener partAddListener = new ClickListener() {
+
+			@Override
+			public void clicked(InputEvent event, float x, float y) {
+				if (activePart != null) {
+					PartImageButton active = (PartImageButton) event
+							.getListenerActor();
+					// TODO Layout must be used. Create an ArrayList of
+					// Arraylists. Use these to consistently add more
+					// information into the Layout and dynamically resize the
+					// parts as they are added. Rework getAdjacent accordingly.
+					for (int j = 0; j < activePart.getAttachmentNodes().length; ++j) {
+						int[] nodes = activePart.getAttachmentNodes();
+						// Add additional ship piece slots.
+						ImageButtonStyle style = new ImageButtonStyle(
+								skin.get(ImageButtonStyle.class));
+						style.imageUp = new TextureRegionDrawable(
+								new TextureRegion(new Texture(
+										"assets/img/grid.png")));
+						PartImageButton extra = new PartImageButton(style, null);
+						for (int i = 0; i < active.getListeners().size; ++i) {
+							extra.addListener(active.getListeners().get(i));
+						}
+						Vector2 buttonCoords = active
+								.localToStageCoordinates(new Vector2(0, 0));
+						if (nodes[j] == 0) {
+							extra.setPosition(buttonCoords.x, buttonCoords.y
+									+ active.getHeight());
+						} else if (nodes[j] == 1) {
+							extra.setPosition(
+									buttonCoords.x + active.getWidth(),
+									buttonCoords.y);
+						} else if (nodes[j] == 2) {
+							extra.setPosition(buttonCoords.x, buttonCoords.y
+									- active.getHeight());
+						} else if (nodes[j] == 3) {
+							extra.setPosition(
+									buttonCoords.x - active.getWidth(),
+									buttonCoords.y);
+						}
+
+						grid.add(extra);
+						stage.addActor(extra);
+
+						// Modify the existing button
+						active.setPart(activePart);
+						active.getStyle().imageUp = new TextureRegionDrawable(
+								new TextureRegion(new Texture(active.getPart()
+										.getSprite())));
+					}
+				}
+			}
+		};
 
 		final ClickListener itemChooseListener = new ClickListener() {
 
@@ -142,17 +234,13 @@ public class ShipEditor implements Screen {
 			public void clicked(InputEvent event, float x, float y) {
 				PartImageButton active = (PartImageButton) event
 						.getListenerActor();
-				if (active.isChecked()) {
-					activePart = active.getPart();
-					System.out.println("On! " + active.getPart().getName());
-					Vector2 buttonCoords = active
-							.localToStageCoordinates(new Vector2(0, 0));
-					activePartX = buttonCoords.x;
-					activePartY = buttonCoords.y;
-					System.out.println(activePartX + " " + activePartY);
-				} else {
-					System.out.println("Off!");
-				}
+				activePart = active.getPart();
+				System.out.println("On! " + active.getPart().getName());
+				Vector2 buttonCoords = active
+						.localToStageCoordinates(new Vector2(0, 0));
+				activePartX = buttonCoords.x;
+				activePartY = buttonCoords.y;
+				System.out.println(activePartX + " " + activePartY);
 			}
 		};
 
@@ -162,6 +250,7 @@ public class ShipEditor implements Screen {
 			public void clicked(InputEvent event, float x, float y) {
 				if (event.getListenerActor() == buttonCommand) {
 					tabbed.clear();
+					activePart = null;
 					for (int i = 0; i < command.size(); ++i) {
 						Part part = command.get(i);
 						TextureRegion image = new TextureRegion(new Texture(
@@ -176,14 +265,52 @@ public class ShipEditor implements Screen {
 					}
 				} else if (event.getListenerActor() == buttonControl) {
 					tabbed.clear();
-					TextButton buttonGo = new TextButton("Start", skin,
-							"default");
-					tabbed.add(buttonGo);
+					activePart = null;
+					for (int i = 0; i < control.size(); ++i) {
+						Part part = control.get(i);
+						TextureRegion image = new TextureRegion(new Texture(
+								part.getSprite()));
+						ImageButtonStyle style = new ImageButtonStyle(
+								skin.get(ImageButtonStyle.class));
+						style.imageUp = new TextureRegionDrawable(image);
+						PartImageButton selectPart = new PartImageButton(style,
+								part);
+						selectPart.addListener(itemChooseListener);
+						tabbed.add(selectPart);
+					}
 				} else if (event.getListenerActor() == buttonThrust) {
 					tabbed.clear();
-
-					// Instantiate the ship and move onto the next screen.
-				} else if (event.getListenerActor() == buttonGo) {
+					activePart = null;
+					for (int i = 0; i < thrust.size(); ++i) {
+						Part part = control.get(i);
+						TextureRegion image = new TextureRegion(new Texture(
+								part.getSprite()));
+						ImageButtonStyle style = new ImageButtonStyle(
+								skin.get(ImageButtonStyle.class));
+						style.imageUp = new TextureRegionDrawable(image);
+						PartImageButton selectPart = new PartImageButton(style,
+								part);
+						selectPart.addListener(itemChooseListener);
+						tabbed.add(selectPart);
+					}
+				} else if (event.getListenerActor() == buttonHull) {
+					tabbed.clear();
+					activePart = null;
+					for (int i = 0; i < hull.size(); ++i) {
+						Part part = hull.get(i);
+						TextureRegion image = new TextureRegion(new Texture(
+								part.getSprite()));
+						ImageButtonStyle style = new ImageButtonStyle(
+								skin.get(ImageButtonStyle.class));
+						style.imageUp = new TextureRegionDrawable(image);
+						PartImageButton selectPart = new PartImageButton(style,
+								part);
+						selectPart.addListener(itemChooseListener);
+						tabbed.add(selectPart);
+					}
+				}
+				// Instantiate the ship and move onto the next screen.
+				else if (event.getListenerActor() == buttonGo) {
 					// Declare textures
 					Cockpit partCockpit = new Cockpit(new Vector2(1, 3), 1, 1,
 							0.8f, "assets/img/sampleShip.png");
@@ -233,16 +360,29 @@ public class ShipEditor implements Screen {
 		buttonCommand.addListener(buttonListener);
 		buttonControl.addListener(buttonListener);
 		buttonThrust.addListener(buttonListener);
+		buttonHull.addListener(buttonListener);
 		buttonGo.addListener(buttonListener);
 
 		selections.left().top();
 		selections.add(buttonCommand);
 		selections.add(buttonControl);
 		selections.add(buttonThrust);
+		selections.add(buttonHull);
 		selections.add(buttonGo);
 		selections.row();
-		selections.add(tabbed).colspan(3);
+		selections.add(tabbed).colspan(4);
 
+		// Add the initial ship slot
+		TextureRegion image = new TextureRegion(new Texture(
+				"assets/img/grid.png"));
+		ImageButtonStyle style = new ImageButtonStyle(
+				skin.get(ImageButtonStyle.class));
+		style.imageUp = new TextureRegionDrawable(image);
+		PartImageButton addPart = new PartImageButton(style, null);
+		addPart.addListener(partAddListener);
+		gridTable.add(addPart).center();
+		grid.add(addPart);
+		stage.addActor(gridTable);
 		stage.addActor(selections);
 
 		stage.addAction(sequence(moveTo(0, stage.getHeight()),

@@ -16,4 +16,8 @@ public class PartImageButton extends ImageButton {
 	public Part getPart() {
 		return this.part;
 	}
+
+	public void setPart(Part part) {
+		this.part = part;
+	}
 }

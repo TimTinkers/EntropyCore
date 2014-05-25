@@ -18,7 +18,8 @@ public abstract class Part {
 	private String description;
 	private int cost;
 	private int health;
-
+	private int[] attachmentNodes;
+	
 	public Part(Vector2 gridPosition, int height, int width, float density,
 			String sprite) {
 		this.gridPosition = gridPosition;
@@ -128,6 +129,15 @@ public abstract class Part {
 
 	public Part setHealth(int health) {
 		this.health = health;
+		return this;
+	}
+
+	public int[] getAttachmentNodes() {
+		return this.attachmentNodes;
+	}
+
+	public Part setAttachmentNodes(int[] nodes) {
+		this.attachmentNodes = nodes;
 		return this;
 	}
 

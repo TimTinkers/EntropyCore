@@ -4,8 +4,8 @@ import java.util.ArrayList;
 
 public class Layout {
 
-	int x;
-	int y;
+	public int x;
+	public int y;
 	Part[][] ids;
 	ArrayList<Part> parts = new ArrayList<Part>();
 
@@ -14,7 +14,7 @@ public class Layout {
 		this.y = y;
 		ids = new Part[x][y];
 	}
-
+	
 	public void setPart(Part part, int x, int y) {
 		ids[x][y] = part;
 	}
@@ -22,7 +22,7 @@ public class Layout {
 	public Part getPart(int x, int y) {
 		return ids[x][y];
 	}
-
+	
 	public ArrayList<Part> getAdjacent(Part part) {
 		if (part.getGridX() > 0
 				&& this.getPart((int) part.getGridX() - 1,
