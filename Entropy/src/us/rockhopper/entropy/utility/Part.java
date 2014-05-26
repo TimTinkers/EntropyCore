@@ -19,7 +19,8 @@ public abstract class Part {
 	private int cost;
 	private int health;
 	private int[] attachmentNodes;
-	
+	private int rotation;
+
 	public Part(Vector2 gridPosition, int height, int width, float density,
 			String sprite) {
 		this.gridPosition = gridPosition;
@@ -139,6 +140,52 @@ public abstract class Part {
 	public Part setAttachmentNodes(int[] nodes) {
 		this.attachmentNodes = nodes;
 		return this;
+	}
+
+	public void rotateLeft() {
+		this.rotation += 90;
+		for (int i = 0; i < getAttachmentNodes().length; ++i) {
+			int node = getAttachmentNodes()[i];
+			switch (node) {
+			case 0:
+				getAttachmentNodes()[i] = 3;
+				break;
+			case 1:
+				getAttachmentNodes()[i] = 0;
+				break;
+			case 2:
+				getAttachmentNodes()[i] = 1;
+				break;
+			case 3:
+				getAttachmentNodes()[i] = 2;
+				break;
+			}
+		}
+	}
+
+	public void rotateRight() {
+		this.rotation -= 90;
+		for (int i = 0; i < getAttachmentNodes().length; ++i) {
+			int node = getAttachmentNodes()[i];
+			switch (node) {
+			case 0:
+				getAttachmentNodes()[i] = 1;
+				break;
+			case 1:
+				getAttachmentNodes()[i] = 2;
+				break;
+			case 2:
+				getAttachmentNodes()[i] = 3;
+				break;
+			case 3:
+				getAttachmentNodes()[i] = 0;
+				break;
+			}
+		}
+	}
+
+	public int getRotation() {
+		return this.rotation;
 	}
 
 	public abstract void update();

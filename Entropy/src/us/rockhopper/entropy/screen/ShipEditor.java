@@ -21,6 +21,8 @@ import us.rockhopper.entropy.utility.PartClassAdapter;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -28,18 +30,16 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
-import com.badlogic.gdx.scenes.scene2d.ui.ImageButton.ImageButtonStyle;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.google.gson.GsonBuilder;
 
 public class ShipEditor implements Screen {
@@ -69,6 +69,7 @@ public class ShipEditor implements Screen {
 	ArrayList<PartImageButton> grid = new ArrayList<PartImageButton>();
 	ArrayList<Part> parts = new ArrayList<Part>();
 	private Layout setup;
+	private Image activeImage;
 
 	@Override
 	public void render(float delta) {
@@ -83,8 +84,7 @@ public class ShipEditor implements Screen {
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
 		if (activePart != null) {
-			Sprite sprite = (Sprite) new Sprite(new Texture(
-					"assets/img/overlay.png"));
+			Sprite sprite = new Sprite(new Texture("assets/img/overlay.png"));
 			sprite.setPosition(activePartX - sWidth / 2, activePartY - sHeight
 					/ 2);
 			sprite.draw(batch);
@@ -105,9 +105,30 @@ public class ShipEditor implements Screen {
 		sHeight = height;
 	}
 
-	// TODO add the ability to rotate parts
 	@Override
 	public void show() {
+		// Initialize input processing
+		InputMultiplexer multiplexer = new InputMultiplexer();
+		stage = new Stage();
+		multiplexer.addProcessor(stage);
+		multiplexer.addProcessor(new InputAdapter() {
+			@Override
+			public boolean keyDown(int keycode) {
+				if (activePart != null && activeImage != null
+						&& keycode == Keys.Q) {
+					activeImage.setRotation(activeImage.getRotation() + 90);
+					activePart.rotateLeft();
+				}
+				if (activePart != null && activeImage != null
+						&& keycode == Keys.E) {
+					activeImage.setRotation(activeImage.getRotation() - 90);
+					activePart.rotateRight();
+				}
+				return true;
+			}
+		});
+		Gdx.input.setInputProcessor(multiplexer);
+
 		// Begin initializing the layout.
 		setup = new Layout(1, 1);
 
@@ -156,9 +177,6 @@ public class ShipEditor implements Screen {
 			hull.add(part);
 		}
 
-		stage = new Stage();
-		Gdx.input.setInputProcessor(stage);
-
 		skin = new Skin(Gdx.files.internal("assets/ui/uiskin.json"),
 				new TextureAtlas("assets/ui/uiskin.pack"));
 
@@ -192,55 +210,90 @@ public class ShipEditor implements Screen {
 							}
 						}.show(stage);
 					} else {
+						// This is the tile clicked.
 						PartImageButton active = (PartImageButton) event
 								.getListenerActor();
-						for (int j = 0; j < activePart.getAttachmentNodes().length; ++j) {
-							int[] nodes = activePart.getAttachmentNodes();
-							// Add additional ship piece slots.
-							ImageButtonStyle style = new ImageButtonStyle(
-									skin.get(ImageButtonStyle.class));
-							style.imageUp = new TextureRegionDrawable(
-									new TextureRegion(new Texture(
-											"assets/img/grid.png")));
-							PartImageButton extra = new PartImageButton(style,
-									null);
-							for (int i = 0; i < active.getListeners().size; ++i) {
-								extra.addListener(active.getListeners().get(i));
+						boolean match = false;
+						if (grid.size() != 1) {
+							// If this is a valid means of attaching a piece
+							for (int k = 0; k < 4; ++k) {
+								if (hasMatch(activePart.getAttachmentNodes(),
+										getAdjacent(grid, active, k))) {
+									match = true;
+								}
 							}
-							Vector2 buttonCoords = active
-									.localToStageCoordinates(new Vector2(0, 0));
-							if (nodes[j] == 0 && !hasAdjacent(grid, active, 0)) {
-								extra.setPosition(buttonCoords.x,
-										buttonCoords.y + active.getHeight());
-								grid.add(extra);
-								stage.addActor(extra);
-							} else if (nodes[j] == 1
-									&& !hasAdjacent(grid, active, 1)) {
-								extra.setPosition(
-										buttonCoords.x + active.getWidth(),
-										buttonCoords.y);
-								grid.add(extra);
-								stage.addActor(extra);
-							} else if (nodes[j] == 2
-									&& !hasAdjacent(grid, active, 2)) {
-								extra.setPosition(buttonCoords.x,
-										buttonCoords.y - active.getHeight());
-								grid.add(extra);
-								stage.addActor(extra);
-							} else if (nodes[j] == 3
-									&& !hasAdjacent(grid, active, 3)) {
-								extra.setPosition(
-										buttonCoords.x - active.getWidth(),
-										buttonCoords.y);
-								grid.add(extra);
-								stage.addActor(extra);
+						} else {
+							match = true;
+						}
+						if (match) {
+							// For every valid node...
+							for (int j = 0; j < activePart.getAttachmentNodes().length; ++j) {
+								int[] nodes = activePart.getAttachmentNodes();
+								// Add additional ship piece slots.
+								PartImageButton extra = new PartImageButton(
+										null,
+										new Texture("assets/img/grid.png"));
+								// Give these slots any listeners associated
+								// with the clicked tile.
+								for (int i = 0; i < active.getListeners().size; ++i) {
+									extra.addListener(active.getListeners()
+											.get(i));
+								}
+								Vector2 buttonCoords = new Vector2(
+										active.getX(), active.getY());
+								if (nodes[j] == 0
+										&& !hasAdjacent(grid, active, 0)) {
+									extra.setPosition(buttonCoords.x,
+											buttonCoords.y + active.getHeight());
+									grid.add(extra);
+									stage.addActor(extra);
+								} else if (nodes[j] == 1
+										&& !hasAdjacent(grid, active, 1)) {
+									extra.setPosition(
+											buttonCoords.x + active.getWidth(),
+											buttonCoords.y);
+									grid.add(extra);
+									stage.addActor(extra);
+								} else if (nodes[j] == 2
+										&& !hasAdjacent(grid, active, 2)) {
+									extra.setPosition(buttonCoords.x,
+											buttonCoords.y - active.getHeight());
+									grid.add(extra);
+									stage.addActor(extra);
+								} else if (nodes[j] == 3
+										&& !hasAdjacent(grid, active, 3)) {
+									extra.setPosition(
+											buttonCoords.x - active.getWidth(),
+											buttonCoords.y);
+									grid.add(extra);
+									stage.addActor(extra);
+								}
 							}
 
-							// Modify the existing button
-							active.setPart(activePart);
-							active.getStyle().imageUp = new TextureRegionDrawable(
-									new TextureRegion(new Texture(active
-											.getPart().getSprite())));
+							// Now modify the clicked tile
+							PartImageButton temp = new PartImageButton(
+									activePart, new Texture(
+											activePart.getSprite()));
+							temp.setOrigin(temp.getWidth() / 2f,
+									temp.getHeight() / 2f);
+							temp.setRotation(activePart.getRotation());
+							temp.setPosition(active.getX(), active.getY());
+							active.remove();
+							active = temp;
+							grid.add(active);
+							stage.addActor(active);
+							System.out.println(activePart.getName() + " "
+									+ activePart.getSprite());
+							System.out.println(active.getPart().getName() + " "
+									+ active.getPart().getSprite());
+
+						} else {
+							new Dialog("", skin) {
+								{
+									text("Those pieces don't line up that way.");
+									button("Okay");
+								}
+							}.show(stage);
 						}
 					}
 				}
@@ -268,6 +321,13 @@ public class ShipEditor implements Screen {
 				info.add("Cost: " + activePart.getCost());
 				info.row();
 				info.add(description).width(200).center();
+				info.row();
+				Image activeSprite = new Image(new Texture(
+						activePart.getSprite()));
+				activeSprite.setOrigin(activeSprite.getWidth() / 2f,
+						activeSprite.getHeight() / 2f);
+				activeImage = activeSprite;
+				info.add(activeSprite);
 			}
 		};
 
@@ -281,13 +341,8 @@ public class ShipEditor implements Screen {
 					activePart = null;
 					for (int i = 0; i < command.size(); ++i) {
 						Part part = command.get(i);
-						TextureRegion image = new TextureRegion(new Texture(
-								part.getSprite()));
-						ImageButtonStyle style = new ImageButtonStyle(
-								skin.get(ImageButtonStyle.class));
-						style.imageUp = new TextureRegionDrawable(image);
-						PartImageButton selectPart = new PartImageButton(style,
-								part);
+						PartImageButton selectPart = new PartImageButton(part,
+								new Texture(part.getSprite()));
 						selectPart.addListener(itemChooseListener);
 						tabbed.add(selectPart);
 					}
@@ -297,13 +352,8 @@ public class ShipEditor implements Screen {
 					activePart = null;
 					for (int i = 0; i < control.size(); ++i) {
 						Part part = control.get(i);
-						TextureRegion image = new TextureRegion(new Texture(
-								part.getSprite()));
-						ImageButtonStyle style = new ImageButtonStyle(
-								skin.get(ImageButtonStyle.class));
-						style.imageUp = new TextureRegionDrawable(image);
-						PartImageButton selectPart = new PartImageButton(style,
-								part);
+						PartImageButton selectPart = new PartImageButton(part,
+								new Texture(part.getSprite()));
 						selectPart.addListener(itemChooseListener);
 						tabbed.add(selectPart);
 					}
@@ -312,14 +362,9 @@ public class ShipEditor implements Screen {
 					info.clear();
 					activePart = null;
 					for (int i = 0; i < thrust.size(); ++i) {
-						Part part = control.get(i);
-						TextureRegion image = new TextureRegion(new Texture(
-								part.getSprite()));
-						ImageButtonStyle style = new ImageButtonStyle(
-								skin.get(ImageButtonStyle.class));
-						style.imageUp = new TextureRegionDrawable(image);
-						PartImageButton selectPart = new PartImageButton(style,
-								part);
+						Part part = thrust.get(i);
+						PartImageButton selectPart = new PartImageButton(part,
+								new Texture(part.getSprite()));
 						selectPart.addListener(itemChooseListener);
 						tabbed.add(selectPart);
 					}
@@ -329,13 +374,8 @@ public class ShipEditor implements Screen {
 					activePart = null;
 					for (int i = 0; i < hull.size(); ++i) {
 						Part part = hull.get(i);
-						TextureRegion image = new TextureRegion(new Texture(
-								part.getSprite()));
-						ImageButtonStyle style = new ImageButtonStyle(
-								skin.get(ImageButtonStyle.class));
-						style.imageUp = new TextureRegionDrawable(image);
-						PartImageButton selectPart = new PartImageButton(style,
-								part);
+						PartImageButton selectPart = new PartImageButton(part,
+								new Texture(part.getSprite()));
 						selectPart.addListener(itemChooseListener);
 						tabbed.add(selectPart);
 					}
@@ -405,12 +445,8 @@ public class ShipEditor implements Screen {
 		selections.add(info).colspan(4);
 
 		// Add the initial ship slot
-		TextureRegion image = new TextureRegion(new Texture(
+		PartImageButton addPart = new PartImageButton(null, new Texture(
 				"assets/img/grid.png"));
-		ImageButtonStyle style = new ImageButtonStyle(
-				skin.get(ImageButtonStyle.class));
-		style.imageUp = new TextureRegionDrawable(image);
-		PartImageButton addPart = new PartImageButton(style, null);
 		addPart.addListener(partAddListener);
 		gridTable.add(addPart).center();
 		grid.add(addPart);
@@ -419,6 +455,96 @@ public class ShipEditor implements Screen {
 
 		stage.addAction(sequence(moveTo(0, stage.getHeight()),
 				moveTo(0, 0, .5f))); // coming in from top animation
+	}
+
+	/**
+	 * Determines whether or not any of the nodes in these two lists are able to
+	 * attach together.
+	 * 
+	 * @param attachmentNodes
+	 * @param adjacent
+	 * @return
+	 */
+	protected boolean hasMatch(int[] attachmentNodes, PartImageButton adjacent) {
+		boolean result = false;
+		for (int i = 0; i < attachmentNodes.length; ++i) {
+			int node = attachmentNodes[i];
+			switch (node) {
+			case 0:
+				for (int j = 0; j < adjacent.getPart().getAttachmentNodes().length; ++j) {
+					if (adjacent.getPart().getAttachmentNodes()[j] == 2) {
+						result = true;
+						break;
+					}
+				}
+				break;
+			case 1:
+				for (int j = 0; j < adjacent.getPart().getAttachmentNodes().length; ++j) {
+					if (adjacent.getPart().getAttachmentNodes()[j] == 3) {
+						result = true;
+						break;
+					}
+				}
+				break;
+			case 2:
+				for (int j = 0; j < adjacent.getPart().getAttachmentNodes().length; ++j) {
+					if (adjacent.getPart().getAttachmentNodes()[j] == 0) {
+						result = true;
+						break;
+					}
+				}
+				break;
+			case 3:
+				for (int j = 0; j < adjacent.getPart().getAttachmentNodes().length; ++j) {
+					if (adjacent.getPart().getAttachmentNodes()[j] == 1) {
+						result = true;
+						break;
+					}
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Gets the imageButton adjacent to the selected button in the direction
+	 * given.
+	 * 
+	 * @param grid2
+	 *            The list of pieces to check.
+	 * @param active
+	 *            The piece to check the adjacent nature for.
+	 * @param direction
+	 *            The direction to look in.
+	 * @return A list of the pieces which are adjacent. Returns null if no
+	 *         adjacent are found.
+	 */
+	// TODO THis is where the problem is. It always is null.
+	protected PartImageButton getAdjacent(ArrayList<PartImageButton> grid2,
+			PartImageButton active, int direction) {
+		Vector2 activeCoords = active
+				.localToStageCoordinates(new Vector2(0, 0));
+		for (int i = 0; i < grid.size(); ++i) {
+			PartImageButton button = grid.get(i);
+			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(
+					0, 0));
+			if (direction == 1
+					&& activeCoords.x + button.getWidth() == buttonCoords.x
+					&& activeCoords.y == buttonCoords.y) {
+				return button;
+			} else if (direction == 0 && activeCoords.x == buttonCoords.x
+					&& activeCoords.y + button.getHeight() == buttonCoords.y) {
+				return button;
+			} else if (direction == 2 && activeCoords.x == buttonCoords.x
+					&& activeCoords.y - button.getHeight() == buttonCoords.y) {
+				return button;
+			} else if (direction == 3
+					&& activeCoords.x - button.getWidth() == buttonCoords.x
+					&& activeCoords.y == buttonCoords.y) {
+				return button;
+			}
+		}
+		return null;
 	}
 
 	/**

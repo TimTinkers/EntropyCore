@@ -2,14 +2,15 @@ package us.rockhopper.entropy.gui;
 
 import us.rockhopper.entropy.utility.Part;
 
-import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.scenes.scene2d.ui.Image;
 
-public class PartImageButton extends ImageButton {
+public class PartImageButton extends Image {
 
 	private Part part;
 
-	public PartImageButton(ImageButtonStyle style, Part part) {
-		super(style);
+	public PartImageButton(Part part, Texture texture) {
+		super(texture);
 		this.part = part;
 	}
 
