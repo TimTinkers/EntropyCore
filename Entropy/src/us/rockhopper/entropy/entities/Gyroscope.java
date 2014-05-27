@@ -2,8 +2,6 @@ package us.rockhopper.entropy.entities;
 
 import us.rockhopper.entropy.utility.Part;
 
-import com.badlogic.gdx.math.Vector2;
-
 public class Gyroscope extends Part {
 
 	private int strength;
