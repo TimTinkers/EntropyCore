@@ -215,14 +215,28 @@ public class ShipEditor implements Screen {
 								.getListenerActor();
 						boolean match = false;
 						if (grid.size() != 1) {
+							// Create a new array
+							int[] newArray = new int[activePart
+									.getAttachmentNodes().length];
+							for (int i = 0; i < activePart.getAttachmentNodes().length; ++i) {
+								newArray[i] = new Integer(
+										activePart.getAttachmentNodes()[i]);
+								System.out.println("Added a value of "
+										+ activePart.getAttachmentNodes()[i]);
+							}
+
 							// If this is a valid means of attaching a piece
 							for (int k = 0; k < 4; ++k) {
-								if (hasMatch(activePart.getAttachmentNodes(),
+								if (hasMatch(newArray,
 										getAdjacent(grid, active, k))) {
+									System.out.println("Ran!");
 									match = true;
 								}
 							}
 						} else {
+							System.out
+									.println("The attachment node should still be 2: "
+											+ activePart.getAttachmentNodes()[0]);
 							match = true;
 						}
 						if (match) {
@@ -256,6 +270,8 @@ public class ShipEditor implements Screen {
 									stage.addActor(extra);
 								} else if (nodes[j] == 2
 										&& !hasAdjacent(grid, active, 2)) {
+									System.out
+											.println("Just making sure this is run.");
 									extra.setPosition(buttonCoords.x,
 											buttonCoords.y - active.getHeight());
 									grid.add(extra);
@@ -270,23 +286,31 @@ public class ShipEditor implements Screen {
 								}
 							}
 
+							int[] newArray = new int[activePart
+									.getAttachmentNodes().length];
+							for (int i = 0; i < activePart.getAttachmentNodes().length; ++i) {
+								newArray[i] = new Integer(
+										activePart.getAttachmentNodes()[i]);
+								System.out.println("Added a value of "
+										+ activePart.getAttachmentNodes()[i]);
+							}
+
 							// Now modify the clicked tile
 							PartImageButton temp = new PartImageButton(
-									activePart, new Texture(
+									activePart.clone().setAttachmentNodes(newArray), new Texture(
 											activePart.getSprite()));
 							temp.setOrigin(temp.getWidth() / 2f,
 									temp.getHeight() / 2f);
 							temp.setRotation(activePart.getRotation());
 							temp.setPosition(active.getX(), active.getY());
 							active.remove();
+							grid.remove(active);
 							active = temp;
 							grid.add(active);
 							stage.addActor(active);
 							System.out.println(activePart.getName() + " "
-									+ activePart.getSprite());
-							System.out.println(active.getPart().getName() + " "
-									+ active.getPart().getSprite());
-
+									+ activePart.getSprite() + " "
+									+ activePart.getAttachmentNodes()[0]);
 						} else {
 							new Dialog("", skin) {
 								{
@@ -465,44 +489,78 @@ public class ShipEditor implements Screen {
 	 * @param adjacent
 	 * @return
 	 */
-	protected boolean hasMatch(int[] attachmentNodes, PartImageButton adjacent) {
+	protected boolean hasMatch(int[] base, Part adjacent) {
+		if (adjacent == null) {
+			return false;
+		}
+
+		System.out.println("Running HASMATCH");
+		System.out.println("The adjacent piece is " + adjacent.getName());
 		boolean result = false;
-		for (int i = 0; i < attachmentNodes.length; ++i) {
-			int node = attachmentNodes[i];
+		for (int i = 0; i < base.length; ++i) {
+			int node = base[i];
+			System.out.println("The attachment node for your piece now is "
+					+ node);
 			switch (node) {
 			case 0:
-				for (int j = 0; j < adjacent.getPart().getAttachmentNodes().length; ++j) {
-					if (adjacent.getPart().getAttachmentNodes()[j] == 2) {
+				System.out.println("Checking above!");
+				for (int j = 0; j < adjacent.getAttachmentNodes().length; ++j) {
+					System.out.println(adjacent.getName());
+					System.out
+							.println("The node you are trying to attach to has points at "
+									+ adjacent.getAttachmentNodes()[j]);
+					if (adjacent.getAttachmentNodes()[j] == 2) {
+						System.out.println("Can attach to the above node");
 						result = true;
 						break;
 					}
 				}
 				break;
 			case 1:
-				for (int j = 0; j < adjacent.getPart().getAttachmentNodes().length; ++j) {
-					if (adjacent.getPart().getAttachmentNodes()[j] == 3) {
+				System.out.println("Checking right!");
+				for (int j = 0; j < adjacent.getAttachmentNodes().length; ++j) {
+					System.out.println(adjacent.getName());
+					System.out
+							.println("The node you are trying to attach to has points at "
+									+ adjacent.getAttachmentNodes()[j]);
+					if (adjacent.getAttachmentNodes()[j] == 3) {
+						System.out.println("Can attach to the right node");
 						result = true;
 						break;
 					}
 				}
 				break;
-			case 2:
-				for (int j = 0; j < adjacent.getPart().getAttachmentNodes().length; ++j) {
-					if (adjacent.getPart().getAttachmentNodes()[j] == 0) {
+			case 2: // Attachment node for the piece being attached is 2
+				System.out.println("Checking below!");
+				for (int j = 0; j < adjacent.getAttachmentNodes().length; ++j) {
+					System.out.println(adjacent.getName());
+					System.out
+							.println("The node you are trying to attach to has points at "
+									+ adjacent.getAttachmentNodes()[j]);
+					if (adjacent.getAttachmentNodes()[j] == 0) {
+						System.out.println("Can attach to the bottom node");
 						result = true;
 						break;
 					}
 				}
 				break;
 			case 3:
-				for (int j = 0; j < adjacent.getPart().getAttachmentNodes().length; ++j) {
-					if (adjacent.getPart().getAttachmentNodes()[j] == 1) {
+				System.out.println("Checking left!");
+				for (int j = 0; j < adjacent.getAttachmentNodes().length; ++j) {
+					System.out.println(adjacent.getName());
+					System.out
+							.println("The node you are trying to attach to has points at "
+									+ adjacent.getAttachmentNodes()[j]);
+					if (adjacent.getAttachmentNodes()[j] == 1) {
+						System.out.println("Can attach to the left node");
 						result = true;
 						break;
 					}
 				}
+				break;
 			}
 		}
+		System.out.println("Returning " + result);
 		return result;
 	}
 
@@ -520,30 +578,50 @@ public class ShipEditor implements Screen {
 	 *         adjacent are found.
 	 */
 	// TODO THis is where the problem is. It always is null.
-	protected PartImageButton getAdjacent(ArrayList<PartImageButton> grid2,
+	protected Part getAdjacent(ArrayList<PartImageButton> grid2,
 			PartImageButton active, int direction) {
-		Vector2 activeCoords = active
-				.localToStageCoordinates(new Vector2(0, 0));
+		Vector2 activeCoords = active.localToStageCoordinates(new Vector2(
+				active.getWidth() / 2f, active.getHeight() / 2f));
 		for (int i = 0; i < grid.size(); ++i) {
 			PartImageButton button = grid.get(i);
-			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(
-					0, 0));
-			if (direction == 1
-					&& activeCoords.x + button.getWidth() == buttonCoords.x
-					&& activeCoords.y == buttonCoords.y) {
-				return button;
-			} else if (direction == 0 && activeCoords.x == buttonCoords.x
-					&& activeCoords.y + button.getHeight() == buttonCoords.y) {
-				return button;
-			} else if (direction == 2 && activeCoords.x == buttonCoords.x
-					&& activeCoords.y - button.getHeight() == buttonCoords.y) {
-				return button;
-			} else if (direction == 3
-					&& activeCoords.x - button.getWidth() == buttonCoords.x
-					&& activeCoords.y == buttonCoords.y) {
-				return button;
+			System.out.println("Adjacent? " + hasAdjacent(grid, button, 2));
+			if (!button.equals(active)) {
+				Vector2 buttonCoords = button
+						.localToStageCoordinates(new Vector2(
+								button.getWidth() / 2f, button.getHeight() / 2f));
+				if (direction == 1
+						&& activeCoords.x + button.getWidth() == buttonCoords.x
+						&& activeCoords.y == buttonCoords.y) {
+					System.out.println("Match found in direction " + direction
+							+ " with attachment node at "
+							+ button.getPart().getAttachmentNodes()[0]);
+					return button.getPart().clone();
+				} else if (direction == 0
+						&& activeCoords.x == buttonCoords.x
+						&& activeCoords.y + button.getHeight() == buttonCoords.y) {
+					System.out.println("Match found in direction " + direction
+							+ " with attachment node at "
+							+ button.getPart().getAttachmentNodes()[0]);
+					System.out.println(activeCoords.x + button.getWidth());
+					return button.getPart().clone();
+				} else if (direction == 2
+						&& activeCoords.x == buttonCoords.x
+						&& activeCoords.y - button.getHeight() == buttonCoords.y) {
+					System.out.println("Match found in direction " + direction
+							+ " with attachment node at "
+							+ button.getPart().getAttachmentNodes()[0]);
+					return button.getPart().clone();
+				} else if (direction == 3
+						&& activeCoords.x - button.getWidth() == buttonCoords.x
+						&& activeCoords.y == buttonCoords.y) {
+					System.out.println("Match found in direction " + direction
+							+ " with attachment node at "
+							+ button.getPart().getAttachmentNodes()[0]);
+					return button.getPart().clone();
+				}
 			}
 		}
+		System.out.println("Returning null.");
 		return null;
 	}
 

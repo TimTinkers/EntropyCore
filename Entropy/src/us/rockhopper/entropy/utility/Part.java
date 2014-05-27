@@ -5,7 +5,7 @@ import java.util.UUID;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 
-public abstract class Part {
+public abstract class Part implements Cloneable {
 
 	private Vector2 gridPosition;
 	private final UUID id;
@@ -186,6 +186,16 @@ public abstract class Part {
 
 	public int getRotation() {
 		return this.rotation;
+	}
+
+	@Override
+	public Part clone() {
+		try {
+			return (Part) super.clone();
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	public abstract void update();
