@@ -61,6 +61,7 @@ public class ShipEditor implements Screen {
 	private ArrayList<Part> control = new ArrayList<Part>();
 	private ArrayList<Part> thrust = new ArrayList<Part>();
 	private ArrayList<Part> hull = new ArrayList<Part>();
+	private ArrayList<Part> weaponry = new ArrayList<Part>();
 
 	private Part activePart;
 	private float activePartX, activePartY;
@@ -177,6 +178,16 @@ public class ShipEditor implements Screen {
 			hull.add(part);
 		}
 
+		// Load all weapon parts into its list.
+		String weaponPath = defaultFolder + "\\EntropyShips\\Parts\\Weaponry\\";
+		for (File file : FileIO.getFilesForFolder(new File(weaponPath))) {
+			String partJSON = FileIO.read(file.getAbsolutePath());
+			GsonBuilder gson = new GsonBuilder();
+			gson.registerTypeAdapter(Part.class, new PartClassAdapter());
+			Part part = gson.create().fromJson(partJSON, Part.class);
+			weaponry.add(part);
+		}
+
 		skin = new Skin(Gdx.files.internal("assets/ui/uiskin.json"),
 				new TextureAtlas("assets/ui/uiskin.pack"));
 
@@ -195,6 +206,8 @@ public class ShipEditor implements Screen {
 		final TextButton buttonThrust = new TextButton("Thrust", skin,
 				"default");
 		final TextButton buttonHull = new TextButton("Hull", skin, "default");
+		final TextButton buttonWeaponry = new TextButton("Weaponry", skin,
+				"default");
 		final TextButton buttonGo = new TextButton("Start", skin, "default");
 
 		final ClickListener partAddListener = new ClickListener() {
@@ -215,6 +228,8 @@ public class ShipEditor implements Screen {
 								.getListenerActor();
 						boolean match = false;
 						if (grid.size() != 1) {
+							System.out.println("The number of nodes is "
+									+ activePart.getAttachmentNodes().length);
 							// Create a new array
 							int[] newArray = new int[activePart
 									.getAttachmentNodes().length];
@@ -228,7 +243,7 @@ public class ShipEditor implements Screen {
 							// If this is a valid means of attaching a piece
 							for (int k = 0; k < 4; ++k) {
 								if (hasMatch(newArray,
-										getAdjacent(grid, active, k))) {
+										getAdjacent(grid, active, k), k)) {
 									System.out.println("Ran!");
 									match = true;
 								}
@@ -297,7 +312,8 @@ public class ShipEditor implements Screen {
 
 							// Now modify the clicked tile
 							PartImageButton temp = new PartImageButton(
-									activePart.clone().setAttachmentNodes(newArray), new Texture(
+									activePart.clone().setAttachmentNodes(
+											newArray), new Texture(
 											activePart.getSprite()));
 							temp.setOrigin(temp.getWidth() / 2f,
 									temp.getHeight() / 2f);
@@ -331,6 +347,7 @@ public class ShipEditor implements Screen {
 				PartImageButton active = (PartImageButton) event
 						.getListenerActor();
 				activePart = active.getPart();
+				activePart.clearRotation();
 				Vector2 buttonCoords = active
 						.localToStageCoordinates(new Vector2(0, 0));
 				activePartX = buttonCoords.x;
@@ -355,7 +372,7 @@ public class ShipEditor implements Screen {
 			}
 		};
 
-		ClickListener buttonListener = new ClickListener() {
+		ClickListener tabChooseListener = new ClickListener() {
 
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
@@ -398,6 +415,17 @@ public class ShipEditor implements Screen {
 					activePart = null;
 					for (int i = 0; i < hull.size(); ++i) {
 						Part part = hull.get(i);
+						PartImageButton selectPart = new PartImageButton(part,
+								new Texture(part.getSprite()));
+						selectPart.addListener(itemChooseListener);
+						tabbed.add(selectPart);
+					}
+				} else if (event.getListenerActor() == buttonWeaponry) {
+					tabbed.clear();
+					info.clear();
+					activePart = null;
+					for (int i = 0; i < weaponry.size(); ++i) {
+						Part part = weaponry.get(i);
 						PartImageButton selectPart = new PartImageButton(part,
 								new Texture(part.getSprite()));
 						selectPart.addListener(itemChooseListener);
@@ -452,22 +480,24 @@ public class ShipEditor implements Screen {
 			}
 		};
 
-		buttonCommand.addListener(buttonListener);
-		buttonControl.addListener(buttonListener);
-		buttonThrust.addListener(buttonListener);
-		buttonHull.addListener(buttonListener);
-		buttonGo.addListener(buttonListener);
+		buttonCommand.addListener(tabChooseListener);
+		buttonControl.addListener(tabChooseListener);
+		buttonThrust.addListener(tabChooseListener);
+		buttonHull.addListener(tabChooseListener);
+		buttonWeaponry.addListener(tabChooseListener);
+		buttonGo.addListener(tabChooseListener);
 		selections.left().top();
 		selections.add(buttonCommand);
 		selections.add(buttonControl);
 		selections.add(buttonThrust);
 		selections.add(buttonHull);
+		selections.add(buttonWeaponry);
 		selections.add(buttonGo);
 		selections.row();
-		selections.add(tabbed).colspan(4);
+		selections.add(tabbed).colspan(5);
 		selections.row();
-		selections.add(info).colspan(4);
-
+		selections.add(info).colspan(5);
+		
 		// Add the initial ship slot
 		PartImageButton addPart = new PartImageButton(null, new Texture(
 				"assets/img/grid.png"));
@@ -489,7 +519,7 @@ public class ShipEditor implements Screen {
 	 * @param adjacent
 	 * @return
 	 */
-	protected boolean hasMatch(int[] base, Part adjacent) {
+	protected boolean hasMatch(int[] base, Part adjacent, int direction) {
 		if (adjacent == null) {
 			return false;
 		}
@@ -509,11 +539,16 @@ public class ShipEditor implements Screen {
 					System.out
 							.println("The node you are trying to attach to has points at "
 									+ adjacent.getAttachmentNodes()[j]);
-					if (adjacent.getAttachmentNodes()[j] == 2) {
+					if (direction == node
+							&& adjacent.getAttachmentNodes()[j] == 2) {
 						System.out.println("Can attach to the above node");
 						result = true;
 						break;
-					}
+					} // TODO: still some weird rotation problems, cleanup this
+						// section, remove TODO's, look into other potential
+						// ways of doing this? Who knows. Remove all debugs.
+						// Serialize. Add all other parts and thoroughly test
+						// ship builder.
 				}
 				break;
 			case 1:
@@ -523,7 +558,8 @@ public class ShipEditor implements Screen {
 					System.out
 							.println("The node you are trying to attach to has points at "
 									+ adjacent.getAttachmentNodes()[j]);
-					if (adjacent.getAttachmentNodes()[j] == 3) {
+					if (direction == node
+							&& adjacent.getAttachmentNodes()[j] == 3) {
 						System.out.println("Can attach to the right node");
 						result = true;
 						break;
@@ -537,7 +573,8 @@ public class ShipEditor implements Screen {
 					System.out
 							.println("The node you are trying to attach to has points at "
 									+ adjacent.getAttachmentNodes()[j]);
-					if (adjacent.getAttachmentNodes()[j] == 0) {
+					if (direction == node
+							&& adjacent.getAttachmentNodes()[j] == 0) {
 						System.out.println("Can attach to the bottom node");
 						result = true;
 						break;
@@ -551,7 +588,8 @@ public class ShipEditor implements Screen {
 					System.out
 							.println("The node you are trying to attach to has points at "
 									+ adjacent.getAttachmentNodes()[j]);
-					if (adjacent.getAttachmentNodes()[j] == 1) {
+					if (direction == node
+							&& adjacent.getAttachmentNodes()[j] == 1) {
 						System.out.println("Can attach to the left node");
 						result = true;
 						break;
@@ -592,32 +630,19 @@ public class ShipEditor implements Screen {
 				if (direction == 1
 						&& activeCoords.x + button.getWidth() == buttonCoords.x
 						&& activeCoords.y == buttonCoords.y) {
-					System.out.println("Match found in direction " + direction
-							+ " with attachment node at "
-							+ button.getPart().getAttachmentNodes()[0]);
-					return button.getPart().clone();
+					return button.getPart();
 				} else if (direction == 0
 						&& activeCoords.x == buttonCoords.x
 						&& activeCoords.y + button.getHeight() == buttonCoords.y) {
-					System.out.println("Match found in direction " + direction
-							+ " with attachment node at "
-							+ button.getPart().getAttachmentNodes()[0]);
-					System.out.println(activeCoords.x + button.getWidth());
-					return button.getPart().clone();
+					return button.getPart();
 				} else if (direction == 2
 						&& activeCoords.x == buttonCoords.x
 						&& activeCoords.y - button.getHeight() == buttonCoords.y) {
-					System.out.println("Match found in direction " + direction
-							+ " with attachment node at "
-							+ button.getPart().getAttachmentNodes()[0]);
-					return button.getPart().clone();
+					return button.getPart();
 				} else if (direction == 3
 						&& activeCoords.x - button.getWidth() == buttonCoords.x
 						&& activeCoords.y == buttonCoords.y) {
-					System.out.println("Match found in direction " + direction
-							+ " with attachment node at "
-							+ button.getPart().getAttachmentNodes()[0]);
-					return button.getPart().clone();
+					return button.getPart();
 				}
 			}
 		}
@@ -641,12 +666,12 @@ public class ShipEditor implements Screen {
 	protected boolean hasAdjacent(ArrayList<PartImageButton> grid,
 			PartImageButton active, int direction) {
 		boolean result = false;
-		Vector2 activeCoords = active
-				.localToStageCoordinates(new Vector2(0, 0));
+		Vector2 activeCoords = active.localToStageCoordinates(new Vector2(
+				active.getWidth() / 2f, active.getHeight() / 2f));
 		for (int i = 0; i < grid.size(); ++i) {
 			PartImageButton button = grid.get(i);
 			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(
-					0, 0));
+					button.getWidth() / 2f, button.getHeight() / 2f));
 			if (direction == 1
 					&& activeCoords.x + button.getWidth() == buttonCoords.x
 					&& activeCoords.y == buttonCoords.y) {

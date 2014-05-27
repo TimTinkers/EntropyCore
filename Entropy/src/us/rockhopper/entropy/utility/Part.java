@@ -188,6 +188,20 @@ public abstract class Part implements Cloneable {
 		return this.rotation;
 	}
 
+	public void clearRotation() {
+		int rotations = this.getRotation() / 90;
+		if (rotations < 0) {
+			for (int i = 0; i < Math.abs(rotations); ++i) {
+				rotateLeft();
+			}
+		} else if (rotations > 0) {
+			for (int i = 0; i < rotations; ++i) {
+				rotateRight();
+			}
+		}
+		System.out.println("Cleared rotation");
+	}
+
 	@Override
 	public Part clone() {
 		try {
