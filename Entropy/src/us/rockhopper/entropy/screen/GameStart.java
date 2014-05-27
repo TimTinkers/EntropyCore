@@ -31,11 +31,16 @@ public class GameStart implements Screen {
 	private Box2DDebugRenderer debugRenderer;
 	private SpriteBatch batch;
 	private OrthographicCamera camera;
+	private String shipName;
 
 	private final float TIMESTEP = 1 / 60f;
 	private final int VELOCITYITERATIONS = 8, POSITIONITERATIONS = 3;
 
 	private BasicShip ship;
+
+	public GameStart(String shipName) {
+		this.shipName = shipName;
+	}
 
 	// TODO implement DeWitters loop
 	@Override
@@ -55,7 +60,7 @@ public class GameStart implements Screen {
 		Box2DSprite.draw(batch, world);
 		batch.end();
 
-		debugRenderer.render(world, camera.combined);
+		//debugRenderer.render(world, camera.combined);
 	}
 
 	@Override
@@ -79,7 +84,8 @@ public class GameStart implements Screen {
 				Gdx.graphics.getHeight() / 25);
 
 		// Deserialize and get ship from file
-		String filePath = defaultFolder + "\\EntropyShips\\" + "sample.json";
+		String filePath = defaultFolder + "\\EntropyShips\\" + shipName
+				+ ".json";
 		String shipJSON = FileIO.read(filePath);
 		GsonBuilder gson = new GsonBuilder();
 		gson.registerTypeAdapter(Part.class, new PartClassAdapter());

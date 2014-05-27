@@ -10,6 +10,8 @@ import javax.swing.JFileChooser;
 
 import us.rockhopper.entropy.entities.BasicShip;
 import us.rockhopper.entropy.entities.Cockpit;
+import us.rockhopper.entropy.entities.Gyroscope;
+import us.rockhopper.entropy.entities.Thruster;
 import us.rockhopper.entropy.gui.PartImageButton;
 import us.rockhopper.entropy.utility.FileIO;
 import us.rockhopper.entropy.utility.Layout;
@@ -37,6 +39,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.google.gson.GsonBuilder;
 
@@ -205,6 +208,10 @@ public class ShipEditor implements Screen {
 				"default");
 		final TextButton buttonGo = new TextButton("Start", skin, "default");
 
+		final TextField nameField = new TextField("Ship Name", skin, "default");
+		final TextField forwardField = new TextField("Forward", skin, "default");
+		final TextField reverseField = new TextField("Reverse", skin, "default");
+
 		final ClickListener partAddListener = new ClickListener() {
 
 			@Override
@@ -293,18 +300,31 @@ public class ShipEditor implements Screen {
 										activePart.getAttachmentNodes()[i]);
 							}
 
+							// Create new part to attach
+							Part part = activePart.clone();
+
+							// Part specific actions
+							if (part instanceof Thruster) {
+								Thruster thruster = (Thruster) part;
+								thruster.setForward(Keys.valueOf(forwardField
+										.getText().toUpperCase()));
+							} else if (part instanceof Gyroscope) {
+								Gyroscope gyro = (Gyroscope) part;
+								gyro.setClockwise(Keys.valueOf(forwardField
+										.getText().toUpperCase()));
+								gyro.setCounterClockwise(Keys
+										.valueOf(reverseField.getText()
+												.toUpperCase()));
+							}
+
 							// Now modify the clicked tile
 							PartImageButton temp = new PartImageButton(
-									activePart.clone().setAttachmentNodes(
-											newArray), new Texture(
-											activePart.getSprite()));
+									part.setAttachmentNodes(newArray),
+									new Texture(activePart.getSprite()));
 							temp.setOrigin(temp.getWidth() / 2f,
 									temp.getHeight() / 2f);
 							temp.setRotation(activePart.getRotation());
 							temp.setPosition(active.getX(), active.getY());
-
-							// Perhaps the pieces are the same before they even
-							// hit the grid?
 							temp.getPart().setGridPosition(
 									activePart.getGridX(),
 									activePart.getGridY());
@@ -356,6 +376,20 @@ public class ShipEditor implements Screen {
 						activeSprite.getHeight() / 2f);
 				activeImage = activeSprite;
 				info.add(activeSprite);
+				info.row();
+
+				// Handling part-specific actions
+				if (activePart instanceof Thruster) {
+					info.add(forwardField);
+					Thruster thruster = (Thruster) activePart;
+					if (thruster.getCanReverse()) {
+						info.row();
+						info.add(reverseField);
+					}
+				} else if (activePart instanceof Gyroscope) {
+					info.add(forwardField);
+					info.add(reverseField);
+				}
 			}
 		};
 
@@ -442,8 +476,9 @@ public class ShipEditor implements Screen {
 					gson.registerTypeAdapter(Part.class, new PartClassAdapter());
 					String shipJSON = gson.setPrettyPrinting().create()
 							.toJson(ship);
-					FileIO.write(defaultFolder + "\\EntropyShips\\"
-							+ "sample.json", shipJSON);
+					FileIO.write(
+							defaultFolder + "\\EntropyShips\\"
+									+ nameField.getText() + ".json", shipJSON);
 
 					// // Test some info in the parts array
 					// for (int i = 0; i < parts.size(); ++i) {
@@ -456,7 +491,7 @@ public class ShipEditor implements Screen {
 					System.out.println("Poll:");
 					setup.poll();
 					((Game) Gdx.app.getApplicationListener())
-							.setScreen(new GameStart());
+							.setScreen(new GameStart(nameField.getText()));
 				}
 			}
 		};
@@ -473,6 +508,7 @@ public class ShipEditor implements Screen {
 		selections.add(buttonThrust);
 		selections.add(buttonHull);
 		selections.add(buttonWeaponry);
+		selections.add(nameField);
 		selections.add(buttonGo);
 		selections.row();
 		selections.add(tabbed).colspan(5);

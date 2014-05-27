@@ -39,9 +39,11 @@ public class Thruster extends Part {
 		return this;
 	}
 
+	public boolean getCanReverse() {
+		return this.canReverse;
+	}
+
 	public void update() {
-		System.out.println("Cos: " + Math.cos(this.getBody().getAngle()));
-		System.out.println("Sin " + Math.sin(this.getBody().getAngle()));
 		if (shouldForward) {
 			this.getBody().applyForceToCenter(
 					new Vector2((float) Math.sin(this.getBody().getAngle())

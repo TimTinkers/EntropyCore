@@ -208,9 +208,10 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 			System.out.println("Looking at " + part + " " + part.getGridX()
 					+ " " + part.getGridY());
 			if (!setup.getAdjacent(part).isEmpty()) {
+				System.out.println("here");
 				for (Part adjacent : setup.getAdjacent(part)) {
-					if (part.getGridX() != adjacent.getGridX()
-							&& part.getGridY() != adjacent.getGridY()) {
+//					if (part.getGridX() != adjacent.getGridX()
+//							&& part.getGridY() != adjacent.getGridY()) {
 						System.out.println(part);
 						System.out.println(adjacent);
 						System.out.println(part.getBody().getPosition());
@@ -222,7 +223,7 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 								.getPosition().y + adjacent.getBody()
 								.getPosition().y) / 2));
 						world.createJoint(weldJointDef);
-					}
+//					}
 				}
 			}
 		}
