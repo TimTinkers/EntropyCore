@@ -7,21 +7,21 @@ import com.google.gson.GsonBuilder;
 
 public class PartCreator {
 	public static void main(String[] args) {
-		Hull part = new Hull(new Vector2(1, 3), 1, 1, 10f,
-				"assets/img/LargeMissileLauncher.png");
-		part.setCost(75)
-				.setHealth(100)
-				.setName("Large Missile Launcher")
+		Hull part = new Hull(new Vector2(1, 3), 1, 1, 3f,
+				"assets/img/ShieldModule.png");
+		part.setCost(50)
+				.setHealth(200)
+				.setName("Shield Module")
 				.setDescription(
-						"Heavy and expensive, but packs a powerful punch.")
-				.setAttachmentNodes(new int[] { 2 });
+						"Absorbs damage which would otherwise tear your ship to smithereens.")
+				.setAttachmentNodes(new int[] { 3 });
 
 		// Serialize and write to file
 		GsonBuilder gson = new GsonBuilder();
 		gson.registerTypeAdapter(Part.class, new PartClassAdapter());
 		String partJSON = gson.setPrettyPrinting().create().toJson(part);
 		FileIO.write(
-				"C:\\Users\\Timothy\\Documents\\EntropyShips\\Parts\\Weaponry\\"
+				"C:\\Users\\Timothy\\Documents\\EntropyShips\\Parts\\Hull\\"
 						+ part.getName() + ".json", partJSON);
 	}
 }
