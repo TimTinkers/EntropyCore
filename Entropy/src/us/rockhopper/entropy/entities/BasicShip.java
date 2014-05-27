@@ -157,15 +157,16 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		// are positioned accordingly.
 		Cockpit cockpit = new Cockpit(parts.get(0));
 
-		// Test some info in the parts array
-		for (int i = 0; i < parts.size(); ++i) {
-			if (parts.get(i) != null) {
-				System.out.println(parts.get(i) + " " + parts.get(i).getGridX()
-						+ " " + parts.get(i).getGridY());
-			}
-		}
+		// // Test some info in the parts array
+		// for (int i = 0; i < parts.size(); ++i) {
+		// if (parts.get(i) != null) {
+		// System.out.println(parts.get(i) + " " + parts.get(i).getGridX()
+		// + " " + parts.get(i).getGridY());
+		// }
+		// }
 
 		bodyDef.position.set(cockpitPosition.x, cockpitPosition.y);
+		bodyDef.angle = (float) Math.toRadians(cockpit.getRotation());
 		PolygonShape shape = new PolygonShape();
 		shape.setAsBox(cockpit.getWidth() / 2f, cockpit.getHeight() / 2f);
 		fixtureDef.density = cockpit.getDensity();
@@ -185,6 +186,7 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 			if (parts.get(i) != null) {
 				Part part = parts.get(i);
 				bodyDef.position.set(part.getGridX(), part.getGridY());
+				bodyDef.angle = (float) Math.toRadians(part.getRotation());
 				shape = new PolygonShape();
 				shape.setAsBox(part.getWidth() / 2f, part.getHeight() / 2f);
 				fixtureDef.density = part.getDensity();

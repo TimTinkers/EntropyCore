@@ -501,6 +501,7 @@ public class ShipEditor implements Screen {
 	 * @return a sorted layout of the parts.
 	 */
 	protected Layout toLayout(ArrayList<PartImageButton> grid) {
+
 		// Find the bottom-left-corner of the ship.
 		float lowX = Integer.MAX_VALUE;
 		float lowY = Integer.MAX_VALUE;
@@ -685,7 +686,6 @@ public class ShipEditor implements Screen {
 	 * @return A list of the pieces which are adjacent. Returns null if no
 	 *         adjacent are found.
 	 */
-
 	protected Part getAdjacent(ArrayList<PartImageButton> grid2,
 			PartImageButton active, int direction) {
 		Vector2 activeCoords = active.localToStageCoordinates(new Vector2(

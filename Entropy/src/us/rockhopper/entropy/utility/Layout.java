@@ -4,8 +4,6 @@ import java.util.ArrayList;
 
 import us.rockhopper.entropy.entities.Cockpit;
 
-import com.badlogic.gdx.math.Vector2;
-
 public class Layout {
 
 	public int x;
