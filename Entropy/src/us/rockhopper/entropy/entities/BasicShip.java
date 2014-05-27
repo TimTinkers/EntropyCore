@@ -42,8 +42,10 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 	 * Creates a ship object, which contains all information it would need to
 	 * later render itself.
 	 * 
-	 * @param cockpitPosition
-	 *            The Vector2 position of the cockpit.
+	 * @param cockpitX
+	 *            The x-coordinate of the cockpit.
+	 * @param cockpitY
+	 *            The y-coordinate of the cockpit.
 	 * @param width
 	 *            The width of the ship.
 	 * @param height
@@ -52,9 +54,9 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 	 *            All parts on the ship. The first Part in this list MUST be the
 	 *            Cockpit of the ship.
 	 */
-	public BasicShip(Vector2 cockpitPosition, int width, int height,
+	public BasicShip(int cockpitX, int cockpitY, int width, int height,
 			ArrayList<Part> parts, Layout setup) {
-		this.cockpitPosition = cockpitPosition;
+		this.cockpitPosition = new Vector2(cockpitX, cockpitY);
 		this.parts = parts;
 		this.width = width;
 		this.height = height;
@@ -154,6 +156,15 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		// The cockpit is the root of the ship, and then the rest of the parts
 		// are positioned accordingly.
 		Cockpit cockpit = new Cockpit(parts.get(0));
+
+		// Test some info in the parts array
+		for (int i = 0; i < parts.size(); ++i) {
+			if (parts.get(i) != null) {
+				System.out.println(parts.get(i) + " " + parts.get(i).getGridX()
+						+ " " + parts.get(i).getGridY());
+			}
+		}
+
 		bodyDef.position.set(cockpitPosition.x, cockpitPosition.y);
 		PolygonShape shape = new PolygonShape();
 		shape.setAsBox(cockpit.getWidth() / 2f, cockpit.getHeight() / 2f);
@@ -165,24 +176,28 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		cockpit.setBody(body);
 		parts.get(0).setBody(body);
 		// Need to set this part's body in the Layout for the ship as well.
+		System.out.println(cockpit.getGridX() + " " + cockpit.getGridY());
 		setup.getPart(cockpit.getGridX(), cockpit.getGridY()).setBody(body);
 		shape.dispose();
 
 		// Creating and attaching remaining parts to Ship.
 		for (int i = 1; i < parts.size(); ++i) {
-			Part part = parts.get(i);
-			bodyDef.position.set(part.getGridX(), part.getGridY());
-			shape = new PolygonShape();
-			shape.setAsBox(part.getWidth() / 2f, part.getHeight() / 2f);
-			fixtureDef.density = part.getDensity();
-			fixtureDef.shape = shape;
-			body = world.createBody(bodyDef);
-			body.createFixture(fixtureDef).setUserData(
-					new Box2DSprite(new Sprite(new Texture(part.getSprite()))));
-			part.setBody(body);
-			setup.getPart(part.getGridX(), part.getGridY()).setBody(body);
-			setup.setPart(part, part.getGridX(), part.getGridY());
-			shape.dispose();
+			if (parts.get(i) != null) {
+				Part part = parts.get(i);
+				bodyDef.position.set(part.getGridX(), part.getGridY());
+				shape = new PolygonShape();
+				shape.setAsBox(part.getWidth() / 2f, part.getHeight() / 2f);
+				fixtureDef.density = part.getDensity();
+				fixtureDef.shape = shape;
+				body = world.createBody(bodyDef);
+				body.createFixture(fixtureDef).setUserData(
+						new Box2DSprite(new Sprite(
+								new Texture(part.getSprite()))));
+				part.setBody(body);
+				setup.getPart(part.getGridX(), part.getGridY()).setBody(body);
+				setup.setPart(part, part.getGridX(), part.getGridY());
+				shape.dispose();
+			}
 		}
 
 		// Weld all adjacent parts together.

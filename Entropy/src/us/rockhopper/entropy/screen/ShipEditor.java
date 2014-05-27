@@ -10,8 +10,6 @@ import javax.swing.JFileChooser;
 
 import us.rockhopper.entropy.entities.BasicShip;
 import us.rockhopper.entropy.entities.Cockpit;
-import us.rockhopper.entropy.entities.Gyroscope;
-import us.rockhopper.entropy.entities.Thruster;
 import us.rockhopper.entropy.gui.PartImageButton;
 import us.rockhopper.entropy.utility.FileIO;
 import us.rockhopper.entropy.utility.Layout;
@@ -69,7 +67,6 @@ public class ShipEditor implements Screen {
 
 	ArrayList<PartImageButton> grid = new ArrayList<PartImageButton>();
 	ArrayList<Part> parts = new ArrayList<Part>();
-	private Layout setup;
 	private Image activeImage;
 	private ClickListener itemChooseListener;
 
@@ -316,7 +313,6 @@ public class ShipEditor implements Screen {
 							grid.remove(active);
 							active = temp;
 							grid.add(active);
-							parts.add(activePart);
 							stage.addActor(active);
 						} else {
 							new Dialog("", skin) {
@@ -426,8 +422,20 @@ public class ShipEditor implements Screen {
 				// Instantiate the ship and move onto the next screen.
 				else if (event.getListenerActor() == buttonGo) {
 					Layout setup = toLayout(grid);
-					BasicShip ship = new BasicShip(setup.getCockpitPosition(),
-							setup.x, setup.y, parts, setup);
+
+					parts.add(setup.getPart(setup.getCockpitX(),
+							setup.getCockpitY()));
+					for (int i = 0; i < setup.x; ++i) {
+						for (int j = 0; j < setup.y; ++j) {
+							if (setup.getPart(i, j) != null
+									&& !parts.contains(setup.getPart(i, j))) {
+								parts.add(setup.getPart(i, j));
+							}
+						}
+					}
+
+					BasicShip ship = new BasicShip(setup.getCockpitX(),
+							setup.getCockpitY(), setup.x, setup.y, parts, setup);
 
 					// Serialize and write to file
 					GsonBuilder gson = new GsonBuilder();
@@ -436,6 +444,13 @@ public class ShipEditor implements Screen {
 							.toJson(ship);
 					FileIO.write(defaultFolder + "\\EntropyShips\\"
 							+ "sample.json", shipJSON);
+
+					// // Test some info in the parts array
+					// for (int i = 0; i < parts.size(); ++i) {
+					// System.out.println(parts.get(i) + " "
+					// + parts.get(i).getGridX() + " "
+					// + parts.get(i).getGridY());
+					// }
 
 					// Switch screens
 					System.out.println("Poll:");

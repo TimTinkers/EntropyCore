@@ -81,11 +81,22 @@ public class Layout {
 		return parts;
 	}
 
-	public Vector2 getCockpitPosition() {
+	public int getCockpitX() {
 		for (int i = 0; i < x; ++i) {
 			for (int j = 0; j < y; ++j) {
 				if (getPart(i, j) instanceof Cockpit) {
-					return new Vector2(i, j);
+					return getPart(i, j).getGridX();
+				}
+			}
+		}
+		throw new RuntimeException();
+	}
+
+	public int getCockpitY() {
+		for (int i = 0; i < x; ++i) {
+			for (int j = 0; j < y; ++j) {
+				if (getPart(i, j) instanceof Cockpit) {
+					return getPart(i, j).getGridY();
 				}
 			}
 		}
