@@ -12,9 +12,9 @@ public class Gyroscope extends Part {
 	private boolean clockwiseThrust;
 	private boolean counterClockwiseThrust;
 
-	public Gyroscope(Vector2 gridPosition, int height, int width,
+	public Gyroscope(int gridX, int gridY, int height, int width,
 			float density, String sprite) {
-		super(gridPosition, height, width, density, sprite);
+		super(gridX, gridY, height, width, density, sprite);
 	}
 
 	public Gyroscope setStrength(int strength) {

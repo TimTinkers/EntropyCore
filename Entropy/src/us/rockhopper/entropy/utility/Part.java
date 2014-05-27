@@ -2,12 +2,12 @@ package us.rockhopper.entropy.utility;
 
 import java.util.UUID;
 
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 
 public abstract class Part implements Cloneable {
 
-	private Vector2 gridPosition;
+	private int gridX;
+	private int gridY;
 	private final UUID id;
 	private int height;
 	private int width;
@@ -21,9 +21,10 @@ public abstract class Part implements Cloneable {
 	private int[] attachmentNodes;
 	private int rotation;
 
-	public Part(Vector2 gridPosition, int height, int width, float density,
+	public Part(int gridX, int gridY, int height, int width, float density,
 			String sprite) {
-		this.gridPosition = gridPosition;
+		this.gridX = gridX;
+		this.gridY = gridY;
 		this.height = height;
 		this.width = width;
 		this.density = density;
@@ -31,17 +32,12 @@ public abstract class Part implements Cloneable {
 		this.id = UUID.randomUUID();
 	}
 
-	public Part setGridPosition(Vector2 vector) {
-		this.gridPosition = vector;
-		return this;
-	}
-
 	public int getGridX() {
-		return (int) this.gridPosition.x;
+		return gridX;
 	}
 
 	public int getGridY() {
-		return (int) this.gridPosition.y;
+		return gridY;
 	}
 
 	public Part setHeight(int height) {
@@ -93,8 +89,10 @@ public abstract class Part implements Cloneable {
 		return this.id;
 	}
 
-	public Vector2 getGridPositionVector() {
-		return this.gridPosition;
+	public Part setGridPosition(int x, int y) {
+		this.gridX = x;
+		this.gridY = y;
+		return this;
 	}
 
 	public String getName() {
@@ -205,7 +203,10 @@ public abstract class Part implements Cloneable {
 	@Override
 	public Part clone() {
 		try {
-			return (Part) super.clone();
+			Part newPart = (Part) super.clone();
+			newPart.setBody(body);
+			newPart.setGridPosition(gridX, gridY);
+			return newPart;
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();
 		}

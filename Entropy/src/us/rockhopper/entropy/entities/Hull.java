@@ -1,14 +1,12 @@
 package us.rockhopper.entropy.entities;
 
-import com.badlogic.gdx.math.Vector2;
-
 import us.rockhopper.entropy.utility.Part;
 
 public class Hull extends Part {
 
-	public Hull(Vector2 gridPosition, int height, int width, float density,
+	public Hull(int gridX, int gridY, int height, int width, float density,
 			String sprite) {
-		super(gridPosition, height, width, density, sprite);
+		super(gridX, gridY, height, width, density, sprite);
 	}
 
 	@Override

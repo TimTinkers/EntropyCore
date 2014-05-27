@@ -186,10 +186,16 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		}
 
 		// Weld all adjacent parts together.
+		System.out.println(parts.size());
 		for (Part part : parts) {
+			System.out.println("Looking at " + part + " " + part.getGridX()
+					+ " " + part.getGridY());
 			if (!setup.getAdjacent(part).isEmpty()) {
 				for (Part adjacent : setup.getAdjacent(part)) {
-					if (!part.equals(adjacent)) {
+					if (part.getGridX() != adjacent.getGridX()
+							&& part.getGridY() != adjacent.getGridY()) {
+						System.out.println(part);
+						System.out.println(adjacent);
 						System.out.println(part.getBody().getPosition());
 						System.out.println(adjacent.getBody().getPosition());
 						weldJointDef.initialize(adjacent.getBody(), part

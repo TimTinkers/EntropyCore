@@ -13,9 +13,9 @@ public class Thruster extends Part {
 	private boolean shouldForward;
 	private boolean shouldReverse;
 
-	public Thruster(Vector2 relativePosition, int height, int width,
-			float density, String sprite) {
-		super(relativePosition, height, width, density, sprite);
+	public Thruster(int gridX, int gridY, int height, int width, float density,
+			String sprite) {
+		super(gridX, gridY, height, width, density, sprite);
 		shouldForward = false;
 	}
 

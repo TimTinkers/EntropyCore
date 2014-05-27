@@ -71,6 +71,7 @@ public class ShipEditor implements Screen {
 	ArrayList<Part> parts = new ArrayList<Part>();
 	private Layout setup;
 	private Image activeImage;
+	private ClickListener itemChooseListener;
 
 	@Override
 	public void render(float delta) {
@@ -129,9 +130,6 @@ public class ShipEditor implements Screen {
 			}
 		});
 		Gdx.input.setInputProcessor(multiplexer);
-
-		// Begin initializing the layout.
-		setup = new Layout(1, 1);
 
 		// Sprite rendering
 		batch = new SpriteBatch();
@@ -228,30 +226,22 @@ public class ShipEditor implements Screen {
 								.getListenerActor();
 						boolean match = false;
 						if (grid.size() != 1) {
-							System.out.println("The number of nodes is "
-									+ activePart.getAttachmentNodes().length);
 							// Create a new array
 							int[] newArray = new int[activePart
 									.getAttachmentNodes().length];
 							for (int i = 0; i < activePart.getAttachmentNodes().length; ++i) {
 								newArray[i] = new Integer(
 										activePart.getAttachmentNodes()[i]);
-								System.out.println("Added a value of "
-										+ activePart.getAttachmentNodes()[i]);
 							}
 
 							// If this is a valid means of attaching a piece
 							for (int k = 0; k < 4; ++k) {
 								if (hasMatch(newArray,
 										getAdjacent(grid, active, k), k)) {
-									System.out.println("Ran!");
 									match = true;
 								}
 							}
 						} else {
-							System.out
-									.println("The attachment node should still be 2: "
-											+ activePart.getAttachmentNodes()[0]);
 							match = true;
 						}
 						if (match) {
@@ -285,8 +275,6 @@ public class ShipEditor implements Screen {
 									stage.addActor(extra);
 								} else if (nodes[j] == 2
 										&& !hasAdjacent(grid, active, 2)) {
-									System.out
-											.println("Just making sure this is run.");
 									extra.setPosition(buttonCoords.x,
 											buttonCoords.y - active.getHeight());
 									grid.add(extra);
@@ -306,8 +294,6 @@ public class ShipEditor implements Screen {
 							for (int i = 0; i < activePart.getAttachmentNodes().length; ++i) {
 								newArray[i] = new Integer(
 										activePart.getAttachmentNodes()[i]);
-								System.out.println("Added a value of "
-										+ activePart.getAttachmentNodes()[i]);
 							}
 
 							// Now modify the clicked tile
@@ -319,14 +305,19 @@ public class ShipEditor implements Screen {
 									temp.getHeight() / 2f);
 							temp.setRotation(activePart.getRotation());
 							temp.setPosition(active.getX(), active.getY());
+
+							// Perhaps the pieces are the same before they even
+							// hit the grid?
+							temp.getPart().setGridPosition(
+									activePart.getGridX(),
+									activePart.getGridY());
+
 							active.remove();
 							grid.remove(active);
 							active = temp;
 							grid.add(active);
+							parts.add(activePart);
 							stage.addActor(active);
-							System.out.println(activePart.getName() + " "
-									+ activePart.getSprite() + " "
-									+ activePart.getAttachmentNodes()[0]);
 						} else {
 							new Dialog("", skin) {
 								{
@@ -340,7 +331,7 @@ public class ShipEditor implements Screen {
 			}
 		};
 
-		final ClickListener itemChooseListener = new ClickListener() {
+		itemChooseListener = new ClickListener() {
 
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
@@ -434,36 +425,9 @@ public class ShipEditor implements Screen {
 				}
 				// Instantiate the ship and move onto the next screen.
 				else if (event.getListenerActor() == buttonGo) {
-					// Declare textures
-					Cockpit partCockpit = new Cockpit(new Vector2(1, 3), 1, 1,
-							0.8f, "assets/img/sampleShip.png");
-					Gyroscope partGyro = new Gyroscope(new Vector2(1, 2), 1, 1,
-							0.8f, "assets/img/gyroscope.png")
-							.setClockwise(Keys.D).setCounterClockwise(Keys.A)
-							.setStrength(5);
-					Thruster partThruster = new Thruster(new Vector2(1, 0), 1,
-							1, 0.8f, "assets/img/thruster.png")
-							.setForward(Keys.W).setReverse(Keys.S)
-							.setCanReverse(true).setStrength(1);
-					Thruster partThruster1 = new Thruster(new Vector2(1, 1), 1,
-							1, 0.8f, "assets/img/thruster.png")
-							.setForward(Keys.W).setReverse(Keys.S)
-							.setCanReverse(true).setStrength(1);
-					parts.add(partCockpit);
-					parts.add(partGyro);
-					parts.add(partThruster);
-					parts.add(partThruster1);
-					Layout setup = new Layout(2, 4);
-					setup.setPart(partCockpit, partCockpit.getGridX(),
-							partCockpit.getGridY());
-					setup.setPart(partGyro, partGyro.getGridX(),
-							partGyro.getGridY());
-					setup.setPart(partThruster1, partThruster1.getGridX(),
-							partThruster1.getGridY());
-					setup.setPart(partThruster, partThruster.getGridX(),
-							partThruster.getGridY());
-					BasicShip ship = new BasicShip(new Vector2(1, 3), 1, 3,
-							parts, setup);
+					Layout setup = toLayout(grid);
+					BasicShip ship = new BasicShip(setup.getCockpitPosition(),
+							setup.x, setup.y, parts, setup);
 
 					// Serialize and write to file
 					GsonBuilder gson = new GsonBuilder();
@@ -474,6 +438,8 @@ public class ShipEditor implements Screen {
 							+ "sample.json", shipJSON);
 
 					// Switch screens
+					System.out.println("Poll:");
+					setup.poll();
 					((Game) Gdx.app.getApplicationListener())
 							.setScreen(new GameStart());
 				}
@@ -497,7 +463,7 @@ public class ShipEditor implements Screen {
 		selections.add(tabbed).colspan(5);
 		selections.row();
 		selections.add(info).colspan(5);
-		
+
 		// Add the initial ship slot
 		PartImageButton addPart = new PartImageButton(null, new Texture(
 				"assets/img/grid.png"));
@@ -509,6 +475,103 @@ public class ShipEditor implements Screen {
 
 		stage.addAction(sequence(moveTo(0, stage.getHeight()),
 				moveTo(0, 0, .5f))); // coming in from top animation
+	}
+
+	/**
+	 * Takes a list of Images which hold part data, and returns the parts
+	 * appropriately sorted into a layout.
+	 * 
+	 * @param grid
+	 *            the grid of parts.
+	 * @return a sorted layout of the parts.
+	 */
+	protected Layout toLayout(ArrayList<PartImageButton> grid) {
+		// Find the bottom-left-corner of the ship.
+		float lowX = Integer.MAX_VALUE;
+		float lowY = Integer.MAX_VALUE;
+
+		// Find the top-right-corner of the ship.
+		float highX = Integer.MIN_VALUE;
+		float highY = Integer.MIN_VALUE;
+
+		// Find the lowest x-coordinate of the pieces.
+		for (int i = 0; i < grid.size(); ++i) {
+			PartImageButton button = grid.get(i);
+			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(
+					button.getWidth() / 2f, button.getHeight() / 2f));
+			if (buttonCoords.x < lowX) {
+				lowX = buttonCoords.x;
+			}
+		}
+
+		// Find the lowest y-coordinate of the pieces.
+		for (int i = 0; i < grid.size(); ++i) {
+			PartImageButton button = grid.get(i);
+			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(
+					button.getWidth() / 2f, button.getHeight() / 2f));
+			if (buttonCoords.y < lowY) {
+				lowY = buttonCoords.y;
+			}
+		}
+
+		// Find the highest x-coordinate of the pieces.
+		for (int i = 0; i < grid.size(); ++i) {
+			PartImageButton button = grid.get(i);
+			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(
+					button.getWidth() / 2f, button.getHeight() / 2f));
+			if (buttonCoords.x > highX) {
+				highX = buttonCoords.x;
+			}
+		}
+
+		// Find the highest y-coordinate of the pieces.
+		for (int i = 0; i < grid.size(); ++i) {
+			PartImageButton button = grid.get(i);
+			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(
+					button.getWidth() / 2f, button.getHeight() / 2f));
+			if (buttonCoords.y > highY) {
+				highY = buttonCoords.y;
+			}
+		}
+
+		// Figure out the width and height of the required layout.
+		int width = 1 + (int) (highX - lowX) / 32;
+		int height = 1 + (int) (highY - lowY) / 32;
+		Layout layout = new Layout(width, height);
+
+		// Run through every piece in the grid and determine their spots in the
+		// layout.
+		for (int i = 0; i < (width); ++i) {
+			for (int j = 0; j < (height); ++j) {
+				for (int k = 0; k < grid.size(); ++k) {
+					PartImageButton button = grid.get(k);
+					Vector2 buttonCoords = button
+							.localToStageCoordinates(new Vector2(button
+									.getWidth() / 2f, button.getHeight() / 2f));
+					// If an Image exists with these exact coordinates...
+					if (button.getPart() != null
+							&& buttonCoords.x == lowX + (i * 32)
+							&& buttonCoords.y == lowY + (j * 32)) {
+						// Set its location in the Layout.
+						grid.get(k)
+								.getPart()
+								.setGridPosition(new Integer(i), new Integer(j));
+						layout.setPart(grid.get(k).getPart(), new Integer(i),
+								new Integer(j));
+						System.out.println(button.getPart() + " is at "
+								+ button.getPart().getGridX() + " "
+								+ button.getPart().getGridY() + " or " + i
+								+ " " + j);
+						break;
+					} else {
+						// No part here, set null.
+						layout.setPart(null, i, j);
+					}
+				}
+			}
+		}
+
+		return layout;
 	}
 
 	/**
@@ -524,13 +587,9 @@ public class ShipEditor implements Screen {
 			return false;
 		}
 
-		System.out.println("Running HASMATCH");
-		System.out.println("The adjacent piece is " + adjacent.getName());
 		boolean result = false;
 		for (int i = 0; i < base.length; ++i) {
 			int node = base[i];
-			System.out.println("The attachment node for your piece now is "
-					+ node);
 			switch (node) {
 			case 0:
 				System.out.println("Checking above!");
@@ -544,11 +603,7 @@ public class ShipEditor implements Screen {
 						System.out.println("Can attach to the above node");
 						result = true;
 						break;
-					} // TODO: still some weird rotation problems, cleanup this
-						// section, remove TODO's, look into other potential
-						// ways of doing this? Who knows. Remove all debugs.
-						// Serialize. Add all other parts and thoroughly test
-						// ship builder.
+					}
 				}
 				break;
 			case 1:
@@ -615,14 +670,13 @@ public class ShipEditor implements Screen {
 	 * @return A list of the pieces which are adjacent. Returns null if no
 	 *         adjacent are found.
 	 */
-	// TODO THis is where the problem is. It always is null.
+
 	protected Part getAdjacent(ArrayList<PartImageButton> grid2,
 			PartImageButton active, int direction) {
 		Vector2 activeCoords = active.localToStageCoordinates(new Vector2(
 				active.getWidth() / 2f, active.getHeight() / 2f));
 		for (int i = 0; i < grid.size(); ++i) {
 			PartImageButton button = grid.get(i);
-			System.out.println("Adjacent? " + hasAdjacent(grid, button, 2));
 			if (!button.equals(active)) {
 				Vector2 buttonCoords = button
 						.localToStageCoordinates(new Vector2(

@@ -13,6 +13,11 @@ public class PartImageButton extends Image {
 		super(texture);
 		this.part = part;
 	}
+	
+	public PartImageButton(PartImageButton button) {
+		super(new Texture(button.getPart().getSprite()));
+		this.part = button.getPart().clone();
+	}
 
 	public Part getPart() {
 		return this.part;
