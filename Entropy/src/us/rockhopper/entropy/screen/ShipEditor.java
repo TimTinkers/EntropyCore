@@ -20,6 +20,7 @@ import us.rockhopper.entropy.utility.PartClassAdapter;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.InputMultiplexer;
@@ -30,6 +31,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -41,9 +43,13 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.scenes.scene2d.utils.TiledDrawable;
 import com.google.gson.GsonBuilder;
 
 public class ShipEditor implements Screen {
+
+	private TiledDrawable background;
 
 	private Stage stage;
 	private Skin skin;
@@ -52,7 +58,6 @@ public class ShipEditor implements Screen {
 
 	private Table selections;
 	private Table tabbed;
-	private Table gridTable;
 	private Table info;
 
 	private String defaultFolder = new JFileChooser().getFileSystemView()
@@ -79,12 +84,14 @@ public class ShipEditor implements Screen {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
 		stage.act(delta);
-		stage.draw();
-
 		camera.update();
 
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
+		// Draw background
+		background.draw(batch, -sWidth / 2, -sHeight / 2, sWidth, sHeight);
+
+		// Draw part overlay
 		if (activePart != null) {
 			Sprite sprite = new Sprite(new Texture("assets/img/overlay.png"));
 			sprite.setPosition(activePartX - sWidth / 2, activePartY - sHeight
@@ -92,6 +99,8 @@ public class ShipEditor implements Screen {
 			sprite.draw(batch);
 		}
 		batch.end();
+
+		stage.draw();
 
 		Table.drawDebug(stage);
 	}
@@ -101,19 +110,38 @@ public class ShipEditor implements Screen {
 		stage.getViewport().update(width, height, true);
 		selections.invalidateHierarchy();
 		tabbed.invalidateHierarchy();
+		info.invalidateHierarchy();
 		camera.viewportWidth = width;
 		camera.viewportHeight = height;
 		sWidth = width;
 		sHeight = height;
+		System.out.println("Resized to " + sWidth + " " + sHeight);
 	}
 
 	@Override
 	public void show() {
+		// Sprite rendering
+		background = new TiledDrawable(new TextureRegion(new Texture(
+				"assets/img/grid.png")));
+		batch = new SpriteBatch();
+		camera = new OrthographicCamera(Gdx.graphics.getWidth(),
+				Gdx.graphics.getHeight());
+
 		// Initialize input processing
 		InputMultiplexer multiplexer = new InputMultiplexer();
 		stage = new Stage();
 		multiplexer.addProcessor(stage);
 		multiplexer.addProcessor(new InputAdapter() {
+
+			@Override
+			public boolean touchDown(int screenX, int screenY, int pointer,
+					int button) {
+				if (button == Buttons.LEFT) {
+					System.out.println("Click!");
+				}
+				return true;
+			}
+
 			@Override
 			public boolean keyDown(int keycode) {
 				if (activePart != null && activeImage != null
@@ -130,11 +158,6 @@ public class ShipEditor implements Screen {
 			}
 		});
 		Gdx.input.setInputProcessor(multiplexer);
-
-		// Sprite rendering
-		batch = new SpriteBatch();
-		camera = new OrthographicCamera(Gdx.graphics.getWidth(),
-				Gdx.graphics.getHeight());
 
 		// Load all command parts into its list.
 		String commandPath = defaultFolder + "\\EntropyShips\\Parts\\Command\\";
@@ -190,10 +213,12 @@ public class ShipEditor implements Screen {
 				new TextureAtlas("assets/ui/uiskin.pack"));
 
 		selections = new Table(skin);
-		gridTable = new Table(skin);
 		info = new Table(skin);
+		info.setBackground(new TextureRegionDrawable(new TextureRegion(
+				new Texture("assets/img/tableBack.png"))));
 		tabbed = new Table(skin);
-		gridTable.setFillParent(true);
+		tabbed.setBackground(new TextureRegionDrawable(new TextureRegion(
+				new Texture("assets/img/tableBack.png"))));
 		selections.setFillParent(true);
 		selections.debug();
 
@@ -459,8 +484,11 @@ public class ShipEditor implements Screen {
 
 					parts.add(setup.getPart(setup.getCockpitX(),
 							setup.getCockpitY()));
-					System.out.println("The rotation for the command module is " + setup.getPart(setup.getCockpitX(),
-							setup.getCockpitY()).getRotation() + " or " + parts.get(0).getRotation());
+					System.out
+							.println("The rotation for the command module is "
+									+ setup.getPart(setup.getCockpitX(),
+											setup.getCockpitY()).getRotation()
+									+ " or " + parts.get(0).getRotation());
 					for (int i = 0; i < setup.x; ++i) {
 						for (int j = 0; j < setup.y; ++j) {
 							if (setup.getPart(i, j) != null
@@ -519,6 +547,7 @@ public class ShipEditor implements Screen {
 		buttonWeaponry.addListener(tabChooseListener);
 		buttonGo.addListener(tabChooseListener);
 		selections.left().top();
+		selections.defaults().fillX();
 		selections.add(buttonCommand);
 		selections.add(buttonControl);
 		selections.add(buttonThrust);
@@ -528,16 +557,18 @@ public class ShipEditor implements Screen {
 		selections.add(buttonGo);
 		selections.row();
 		selections.add(tabbed).colspan(5);
+		System.out.println("Tabbed " + tabbed.getX() + " " + tabbed.getY());
 		selections.row();
 		selections.add(info).colspan(5);
-
-		// Add the initial ship slot
-		PartImageButton addPart = new PartImageButton(null, new Texture(
-				"assets/img/grid.png"));
-		addPart.addListener(partAddListener);
-		gridTable.add(addPart).center();
-		grid.add(addPart);
-		stage.addActor(gridTable);
+		System.out.println("Info " + info.getX() + " " + info.getY());
+		System.out.println("Selections " + selections.getX() + " "
+				+ selections.getY());
+		// selections.setPosition(0, Gdx.graphics.getHeight());
+		// selections.top().right();
+		System.out.println("Tabbed " + tabbed.getX() + " " + tabbed.getY());
+		System.out.println("Info " + info.getX() + " " + info.getY());
+		System.out.println("Selections " + selections.getX() + " "
+				+ selections.getY());
 		stage.addActor(selections);
 
 		stage.addAction(sequence(moveTo(0, stage.getHeight()),

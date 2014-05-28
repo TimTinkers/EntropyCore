@@ -47,6 +47,7 @@ public class FileIO {
 
 	public static boolean exists(String string) {
 		// TODO Auto-generated method stub
+		System.out.println("FIX THE EXISTS METHOD");
 		return true;
 	}
 }
