@@ -387,7 +387,7 @@ public class ShipEditor implements Screen {
 						info.add(reverseField);
 					}
 				} else if (activePart instanceof Gyroscope) {
-					info.add(forwardField);
+					info.add(forwardField).row();
 					info.add(reverseField);
 				}
 			}
@@ -455,10 +455,12 @@ public class ShipEditor implements Screen {
 				}
 				// Instantiate the ship and move onto the next screen.
 				else if (event.getListenerActor() == buttonGo) {
-					Layout setup = toLayout(grid);
+					final Layout setup = toLayout(grid);
 
 					parts.add(setup.getPart(setup.getCockpitX(),
 							setup.getCockpitY()));
+					System.out.println("The rotation for the command module is " + setup.getPart(setup.getCockpitX(),
+							setup.getCockpitY()).getRotation() + " or " + parts.get(0).getRotation());
 					for (int i = 0; i < setup.x; ++i) {
 						for (int j = 0; j < setup.y; ++j) {
 							if (setup.getPart(i, j) != null
@@ -474,24 +476,38 @@ public class ShipEditor implements Screen {
 					// Serialize and write to file
 					GsonBuilder gson = new GsonBuilder();
 					gson.registerTypeAdapter(Part.class, new PartClassAdapter());
-					String shipJSON = gson.setPrettyPrinting().create()
+					final String shipJSON = gson.setPrettyPrinting().create()
 							.toJson(ship);
-					FileIO.write(
-							defaultFolder + "\\EntropyShips\\"
-									+ nameField.getText() + ".json", shipJSON);
+					if (FileIO.exists(defaultFolder + "\\EntropyShips\\"
+							+ nameField.getText() + ".json")) {
+						new Dialog("", skin) {
+							{
+								text("Ship "
+										+ nameField.getText()
+										+ " already exists. Would you like to overwrite it?");
+								button("Yes", true);
+								button("No", false);
+							}
 
-					// // Test some info in the parts array
-					// for (int i = 0; i < parts.size(); ++i) {
-					// System.out.println(parts.get(i) + " "
-					// + parts.get(i).getGridX() + " "
-					// + parts.get(i).getGridY());
-					// }
+							protected void result(Object object) {
+								System.out.println("Chosen: " + object);
+								boolean bool = (Boolean) object;
+								if (bool == true) {
+									FileIO.write(
+											defaultFolder + "\\EntropyShips\\"
+													+ nameField.getText()
+													+ ".json", shipJSON);
 
-					// Switch screens
-					System.out.println("Poll:");
-					setup.poll();
-					((Game) Gdx.app.getApplicationListener())
-							.setScreen(new GameStart(nameField.getText()));
+									// Switch screens
+									System.out.println("Poll:");
+									setup.poll();
+									((Game) Gdx.app.getApplicationListener())
+											.setScreen(new GameStart(nameField
+													.getText()));
+								}
+							}
+						}.show(stage);
+					}
 				}
 			}
 		};

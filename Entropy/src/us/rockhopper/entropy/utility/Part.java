@@ -186,6 +186,18 @@ public abstract class Part implements Cloneable {
 		return this.rotation;
 	}
 
+	/**
+	 * THIS IS ONLY TO BE USED AFTER SHIP CREATION, WHEN ATTACHMENT NODES NO
+	 * LONGER MATTER. IN ALL CONSTRUCTION ASPECTS USE rotateLeft() and
+	 * rotateRight() ONLY.
+	 * 
+	 * @param rotation
+	 *            the integer rotation to set to the part.
+	 */
+	public void setRotation(int rotation) {
+		this.rotation = rotation;
+	}
+
 	public void clearRotation() {
 		int rotations = this.getRotation() / 90;
 		if (rotations < 0) {

@@ -157,16 +157,10 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		// are positioned accordingly.
 		Cockpit cockpit = new Cockpit(parts.get(0));
 
-		// // Test some info in the parts array
-		// for (int i = 0; i < parts.size(); ++i) {
-		// if (parts.get(i) != null) {
-		// System.out.println(parts.get(i) + " " + parts.get(i).getGridX()
-		// + " " + parts.get(i).getGridY());
-		// }
-		// }
-
 		bodyDef.position.set(cockpitPosition.x, cockpitPosition.y);
 		bodyDef.angle = (float) Math.toRadians(cockpit.getRotation());
+		System.out.println("Cockpit with info: " + cockpit.getGridX() + " "
+				+ cockpit.getGridY() + " rotation " + cockpit.getRotation());
 		PolygonShape shape = new PolygonShape();
 		shape.setAsBox(cockpit.getWidth() / 2f, cockpit.getHeight() / 2f);
 		fixtureDef.density = cockpit.getDensity();
@@ -210,20 +204,20 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 			if (!setup.getAdjacent(part).isEmpty()) {
 				System.out.println("here");
 				for (Part adjacent : setup.getAdjacent(part)) {
-//					if (part.getGridX() != adjacent.getGridX()
-//							&& part.getGridY() != adjacent.getGridY()) {
-						System.out.println(part);
-						System.out.println(adjacent);
-						System.out.println(part.getBody().getPosition());
-						System.out.println(adjacent.getBody().getPosition());
-						weldJointDef.initialize(adjacent.getBody(), part
-								.getBody(), new Vector2((part.getBody()
-								.getPosition().x + adjacent.getBody()
-								.getPosition().x) / 2, (part.getBody()
-								.getPosition().y + adjacent.getBody()
-								.getPosition().y) / 2));
-						world.createJoint(weldJointDef);
-//					}
+					// if (part.getGridX() != adjacent.getGridX()
+					// && part.getGridY() != adjacent.getGridY()) {
+					System.out.println(part);
+					System.out.println(adjacent);
+					System.out.println(part.getBody().getPosition());
+					System.out.println(adjacent.getBody().getPosition());
+					weldJointDef.initialize(adjacent.getBody(), part.getBody(),
+							new Vector2(
+									(part.getBody().getPosition().x + adjacent
+											.getBody().getPosition().x) / 2,
+									(part.getBody().getPosition().y + adjacent
+											.getBody().getPosition().y) / 2));
+					world.createJoint(weldJointDef);
+					// }
 				}
 			}
 		}

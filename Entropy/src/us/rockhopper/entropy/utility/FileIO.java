@@ -44,4 +44,9 @@ public class FileIO {
 		}
 		return files;
 	}
+
+	public static boolean exists(String string) {
+		// TODO Auto-generated method stub
+		return true;
+	}
 }
