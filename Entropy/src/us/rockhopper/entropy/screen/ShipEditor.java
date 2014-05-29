@@ -12,7 +12,7 @@ import javax.swing.JFileChooser;
 import us.rockhopper.entropy.entities.Cockpit;
 import us.rockhopper.entropy.entities.Gyroscope;
 import us.rockhopper.entropy.entities.Thruster;
-import us.rockhopper.entropy.gui.PartImageButton;
+import us.rockhopper.entropy.gui.PartImage;
 import us.rockhopper.entropy.utility.FileIO;
 import us.rockhopper.entropy.utility.Layout;
 import us.rockhopper.entropy.utility.Part;
@@ -60,8 +60,7 @@ public class ShipEditor extends ScreenAdapter {
 	private Table tabbed;
 	private Table info;
 
-	private String defaultFolder = new JFileChooser().getFileSystemView()
-			.getDefaultDirectory().toString();
+	private String defaultFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
 
 	private ArrayList<Part> command = new ArrayList<Part>();
 	private ArrayList<Part> control = new ArrayList<Part>();
@@ -74,7 +73,7 @@ public class ShipEditor extends ScreenAdapter {
 	private int sWidth, sHeight;
 
 	ArrayList<Vector2> occupiedTiles = new ArrayList<Vector2>();
-	ArrayList<Image> partImages = new ArrayList<Image>();
+	ArrayList<PartImage> partImages = new ArrayList<PartImage>();
 	ArrayList<Part> parts = new ArrayList<Part>();
 	private Image activeImage;
 	private ClickListener itemChooseListener;
@@ -83,9 +82,8 @@ public class ShipEditor extends ScreenAdapter {
 	public void render(float delta) {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-		stage.act(delta);
 		camera.update();
+		stage.act(delta);
 
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
@@ -100,8 +98,8 @@ public class ShipEditor extends ScreenAdapter {
 		// Draw part overlay
 		if (activePart != null) {
 			Sprite sprite = new Sprite(new Texture("assets/img/overlay.png"));
-			sprite.setPosition(activePartX - sWidth / 2, activePartY - sHeight
-					/ 2);
+			sprite.setPosition(activePartX - sWidth / 2, activePartY - sHeight / 2);
+			sprite.setSize(activeImage.getWidth(), activeImage.getHeight());
 			sprite.draw(batch);
 		}
 		batch.end();
@@ -125,24 +123,17 @@ public class ShipEditor extends ScreenAdapter {
 	@Override
 	public void show() {
 		// Sprite rendering
-		background = new TiledDrawable(new TextureRegion(new Texture(
-				"assets/img/grid.png")));
+		background = new TiledDrawable(new TextureRegion(new Texture("assets/img/grid.png")));
 		batch = new SpriteBatch();
-		camera = new OrthographicCamera(Gdx.graphics.getWidth(),
-				Gdx.graphics.getHeight());
-		skin = new Skin(Gdx.files.internal("assets/ui/uiskin.json"),
-				new TextureAtlas("assets/ui/uiskin.pack"));
+		camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		skin = new Skin(Gdx.files.internal("assets/ui/uiskin.json"), new TextureAtlas("assets/ui/uiskin.pack"));
 
 		// Button initializing
-		final TextButton buttonCommand = new TextButton("Command", skin,
-				"default");
-		final TextButton buttonControl = new TextButton("Control", skin,
-				"default");
-		final TextButton buttonThrust = new TextButton("Thrust", skin,
-				"default");
+		final TextButton buttonCommand = new TextButton("Command", skin, "default");
+		final TextButton buttonControl = new TextButton("Control", skin, "default");
+		final TextButton buttonThrust = new TextButton("Thrust", skin, "default");
 		final TextButton buttonHull = new TextButton("Hull", skin, "default");
-		final TextButton buttonWeaponry = new TextButton("Weaponry", skin,
-				"default");
+		final TextButton buttonWeaponry = new TextButton("Weaponry", skin, "default");
 		final TextButton buttonGo = new TextButton("Start", skin, "default");
 
 		final TextField nameField = new TextField("Ship Name", skin, "default");
@@ -154,129 +145,179 @@ public class ShipEditor extends ScreenAdapter {
 		stage = new Stage();
 		multiplexer.addProcessor(stage);
 		multiplexer.addProcessor(new InputAdapter() {
-			// TODO when you work on right-click-dragging the ship around the
-			// grid, move the screen only in the 16x16 block pieces. When a
-			// movement happens, add 1 to gridX and gridY, and then decrement
-			// accordingly, so that the position might be reserved still. IE
-			// make gridX and gridY screen independent.
+
+			int lastGridX;
+			int lastGridY;
+
 			@Override
-			public boolean touchDown(int screenX, int screenY, int pointer,
-					int button) {
-				if (button == Buttons.LEFT
-						&& !(contains(tabbed, screenX, screenY) || contains(
-								info, screenX, screenY))) {
+			public boolean touchDragged(int screenX, int screenY, int pointer) {
+				// Get the grid position the mouse starts in, get the one it ends in, and every time it crosses into a
+				// new grid cell move all pieces accordingly?
+				if (Gdx.input.isButtonPressed(Buttons.RIGHT)) {
 					int gridX = (int) screenX / 16;
 					int gridY = (int) (Gdx.graphics.getHeight() - screenY) / 16;
-					System.out.println("Click! at " + gridX + " " + gridY);
+					int dX = gridX - lastGridX;
+					int dY = gridY - lastGridY;
+					System.out.println("Difference " + dX + ", " + dY);
 
+					for (PartImage image : partImages) {
+						image.setGridY(image.getGridY() + dY);
+						image.setGridX(image.getGridX() + dX);
+
+						// Reposition the image.
+						int rotIndex = (int) (Math.abs(image.getRotation()) / 90) % 4;
+						if ((image.getWidth() != image.getHeight()) && (rotIndex == 1 || rotIndex == 3)) {
+							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f + image.getWidth()
+									/ 2f, (image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f - image.getHeight()
+									/ 4f);
+						} else {
+							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f,
+									(image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f);
+						}
+					}
+
+					lastGridX = gridX;
+					lastGridY = gridY;
+				}
+				return true;
+			}
+
+			@Override
+			public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+				int gridX = (int) screenX / 16;
+				int gridY = (int) (Gdx.graphics.getHeight() - screenY) / 16;
+				lastGridX = gridX;
+				lastGridY = gridY;
+
+				if (button == Buttons.LEFT && !(contains(tabbed, screenX, screenY) || contains(info, screenX, screenY))) {
+					System.out.println("Click! at " + gridX + " " + gridY);
 					if (activePart != null) {
-						if (partImages.isEmpty()
-								&& !(activePart instanceof Cockpit)) {
+						if (partImages.isEmpty() && !(activePart instanceof Cockpit)) {
 							new Dialog("", skin) {
 								{
 									text("The first piece on your ship must be a command module.");
 								}
 							}.show(stage).addAction(
-									sequence(alpha(1f, 0.3f),
-											Actions.delay(0.4f),
-											alpha(0f, 0.3f),
+									sequence(alpha(1f, 0.3f), Actions.delay(0.4f), alpha(0f, 0.3f),
 											Actions.removeActor()));
 						} else {
 							// This is the tile clicked.
-							Image image = new Image(new Texture(activePart
-									.getSprite()));
-							image.setOrigin(image.getWidth() / 2f,
-									image.getHeight() / 2f);
-							image.setPosition(
-									(gridX * 16) - Gdx.graphics.getWidth() / 2f,
-									(gridY * 16) - Gdx.graphics.getHeight()
-											/ 2f);
+							PartImage image = new PartImage(null, new Texture(activePart.getSprite()));
+							image.setOrigin(image.getWidth() / 2f, image.getHeight() / 2f);
 							image.setRotation(activePart.getRotation());
+							image.setGridX(gridX);
+							image.setGridY(gridY);
+							image.setPart(activePart.clone());
+
+							// Image positioning is dependent on its rotation
+							int rotIndex = (int) (Math.abs(image.getRotation()) / 90) % 4;
+							if ((image.getWidth() != image.getHeight()) && (rotIndex == 1 || rotIndex == 3)) {
+								image.setPosition((gridX * 16) - Gdx.graphics.getWidth() / 2f + image.getWidth() / 2f,
+										(gridY * 16) - Gdx.graphics.getHeight() / 2f - image.getHeight() / 4f);
+							} else {
+								image.setPosition((gridX * 16) - Gdx.graphics.getWidth() / 2f, (gridY * 16)
+										- Gdx.graphics.getHeight() / 2f);
+							}
 
 							// If this is a valid place to put the part
 							// 1. This is not overlapping another part.
-							if (!hasOverlap(image, gridX, gridY, occupiedTiles)) {
+							if (!hasOverlap(image, gridX, gridY)) {
 
 								// 2. This piece is adjacent to another piece.
 								// Check all four directions
-								ArrayList<Image> adjacentImages = null;
+								ArrayList<PartImage> adjacentImages = new ArrayList<PartImage>();
+								ArrayList<Integer> directions = new ArrayList<Integer>();
+								adjacentImages.clear();
 								for (int i = 0; i < 4; ++i) {
-									if (!getAdjacent(image, gridX, gridY, i)
-											.isEmpty()) {
-										adjacentImages = getAdjacent(image,
-												gridX, gridY, i);
+									ArrayList<PartImage> temp = getAdjacent(image, gridX, gridY, i);
+									if (!temp.isEmpty()) {
+										System.out.println("Found " + temp.size() + " pieces in direction " + i);
+										for (PartImage part : temp) {
+											System.out.println("There is a part here, " + part.getPart().getName());
+											adjacentImages.add(part);
+											directions.add(i);
+										}
 									}
 								}
 
 								// If any four directions contain any part, but
 								// only if there's at least one part down.
-								if (partImages.isEmpty()
-										|| (adjacentImages != null && !adjacentImages
-												.isEmpty())) {
+								if (partImages.isEmpty() || !adjacentImages.isEmpty()) {
 
-									// Mark all tiles covered by this part as
-									// occupied
-									int tilesX = (int) image.getWidth() / 16;
-									int tilesY = (int) image.getHeight() / 16;
-									for (int i = 0; i < tilesX; ++i) {
-										for (int j = 0; j < tilesY; ++j) {
-											System.out.println((gridX + i)
-													+ ", " + (gridY + j));
-											occupiedTiles.add(new Vector2(gridX
-													+ i, gridY + j));
+									// 3. If the rotation is appropriate given
+									// any surrounding pieces.
+									// If this is a valid means of attaching a
+									// piece
+									boolean match = false;
+									if (!partImages.isEmpty()) {
+										for (int i = 0; i < adjacentImages.size(); ++i) {
+											PartImage adjacent = adjacentImages.get(i);
+											int direction = directions.get(i);
+											if (image.fits(adjacent, direction)) {
+												match = true;
+											}
 										}
+									} else {
+										match = true;
 									}
+									if (match) {
 
-									// Add the part associated with the image
-									// into
-									// the parts ArrayList.
-									// Create a new array of nodes to prevent
-									// reference errors
-									int[] newArray = new int[activePart
-											.getAttachmentNodes().length];
-									for (int i = 0; i < activePart
-											.getAttachmentNodes().length; ++i) {
-										newArray[i] = new Integer(activePart
-												.getAttachmentNodes()[i]);
+										// Mark all tiles covered by this part
+										// as
+										// occupied
+										for (Vector2 vector : image.getOccupiedCells()) {
+											System.out.println("Adding cells " + vector.toString());
+											occupiedTiles.add(vector);
+										}
+
+										// Add the part associated with the
+										// image
+										// into
+										// the parts ArrayList.
+										// Create a new array of nodes to
+										// prevent
+										// reference errors
+										int[] newArray = new int[activePart.getAttachmentNodes().length];
+										for (int i = 0; i < activePart.getAttachmentNodes().length; ++i) {
+											newArray[i] = new Integer(activePart.getAttachmentNodes()[i]);
+										}
+
+										// Create new part to attach
+										Part part = image.getPart();
+
+										// Add any part-specific actions
+										if (part instanceof Thruster) {
+											Thruster thruster = (Thruster) part;
+											thruster.setForward(Keys.valueOf(forwardField.getText().toUpperCase()));
+										} else if (part instanceof Gyroscope) {
+											Gyroscope gyro = (Gyroscope) part;
+											gyro.setClockwise(Keys.valueOf(forwardField.getText().toUpperCase()));
+											gyro.setCounterClockwise(Keys.valueOf(reverseField.getText().toUpperCase()));
+										}
+
+										// Now modify and add the part
+										part.setAttachmentNodes(newArray);
+										part.setGridPosition(gridX, gridY);
+										parts.add(part);
+
+										// Designate that this image be rendered
+										partImages.add(image);
+									} else {
+										new Dialog("", skin) {
+											{
+												text("Those pieces don't line up like that.");
+											}
+										}.show(stage).addAction(
+												sequence(alpha(1f, 0.3f), Actions.delay(0.6f), alpha(0f, 0.3f),
+														Actions.removeActor()));
 									}
-									// TODO debug to figure out why
-									// adjacenticity isn't working.
-									
-									// Create new part to attach
-									Part part = activePart.clone();
-
-									// Add any part-specific actions
-									if (part instanceof Thruster) {
-										Thruster thruster = (Thruster) part;
-										thruster.setForward(Keys
-												.valueOf(forwardField.getText()
-														.toUpperCase()));
-									} else if (part instanceof Gyroscope) {
-										Gyroscope gyro = (Gyroscope) part;
-										gyro.setClockwise(Keys
-												.valueOf(forwardField.getText()
-														.toUpperCase()));
-										gyro.setCounterClockwise(Keys
-												.valueOf(reverseField.getText()
-														.toUpperCase()));
-									}
-
-									// Now modify and add the part
-									part.setAttachmentNodes(newArray);
-									part.setGridPosition(gridX, gridY);
-									parts.add(part);
-
-									// Draw the part's image.
-									partImages.add(image);
 								} else {
 									new Dialog("", skin) {
 										{
 											text("Your piece must be adjacent to another.");
 										}
 									}.show(stage).addAction(
-											sequence(alpha(1f, 0.3f),
-													Actions.delay(0.6f),
-													alpha(0f, 0.3f),
+											sequence(alpha(1f, 0.3f), Actions.delay(0.6f), alpha(0f, 0.3f),
 													Actions.removeActor()));
 								}
 							} else {
@@ -285,9 +326,7 @@ public class ShipEditor extends ScreenAdapter {
 										text("Your pieces cannot overlap.");
 									}
 								}.show(stage).addAction(
-										sequence(alpha(1f, 0.3f),
-												Actions.delay(0.4f),
-												alpha(0f, 0.3f),
+										sequence(alpha(1f, 0.3f), Actions.delay(0.4f), alpha(0f, 0.3f),
 												Actions.removeActor()));
 							}
 
@@ -298,12 +337,10 @@ public class ShipEditor extends ScreenAdapter {
 			}
 
 			/**
-			 * Takes an image, its root gridX and gridY, and a direction, and
-			 * returns the Image from partsImage located in that direction.
-			 * Being adjacent is defined as having any point along the edge in
-			 * the given direction also touch another Image. Touching corners
-			 * are not considered adjacent. Returns an empty list if no adjacent
-			 * pieces are found.
+			 * Takes an image, its root gridX and gridY, and a direction, and returns the Image from partsImage located
+			 * in that direction. Being adjacent is defined as having any point along the edge in the given direction
+			 * also touch another Image. Touching corners are not considered adjacent. Returns an empty list if no
+			 * adjacent pieces are found.
 			 * 
 			 * @param image
 			 * @param gridX
@@ -311,15 +348,28 @@ public class ShipEditor extends ScreenAdapter {
 			 * @param direction
 			 * @return
 			 */
-			//TODO issues with adjacent
-			private ArrayList<Image> getAdjacent(Image image, int gridX,
-					int gridY, int direction) {
+			private ArrayList<PartImage> getAdjacent(PartImage image, int gridX, int gridY, int direction) {
 				// Instantiate the list
-				ArrayList<Image> list = new ArrayList<>();
-
+				ArrayList<PartImage> list = new ArrayList<>();
+				list.clear();
 				// Get grid-Width and grid-Height
-				int tilesX = (int) image.getWidth() / 16;
-				int tilesY = (int) image.getHeight() / 16;
+				Texture texture = new Texture(image.getPart().getSprite());
+				System.out.println("Rotation " + image.getRotation());
+				int rotIndex = (int) (Math.abs(image.getRotation()) / 90) % 4;
+				int tilesX = 0;
+				int tilesY = 0;
+				System.out.println("RotIndex " + rotIndex);
+				if (rotIndex == 1 || rotIndex == 3) {
+					System.out.println();
+					tilesX = (int) texture.getHeight() / 16;
+					tilesY = (int) texture.getWidth() / 16;
+				} else {
+					tilesX = (int) texture.getWidth() / 16;
+					tilesY = (int) texture.getHeight() / 16;
+				}
+
+				System.out.println("Grid: " + gridX + " " + gridY + " from direction " + direction + " at widths "
+						+ tilesX + " " + tilesY);
 
 				// Find all grid tiles along the given edge.
 				switch (direction) {
@@ -327,15 +377,16 @@ public class ShipEditor extends ScreenAdapter {
 					// For the entire width of the image
 					for (int i = 0; i < tilesX; ++i) {
 						// x is each x grid
-						int adjacentX = gridX + (16 * i);
+						int adjacentX = gridX + i;
 						// for every image thus far
 						for (int j = 0; j < partImages.size(); ++j) {
-							Image partImage = partImages.get(j);
+							PartImage partImage = partImages.get(j);
 							// if it overlaps any of the points along the top
 							// edge, add it to the list of images adjacent in
 							// that direction
-							if (hasOverlap(partImage, adjacentX,
-									gridY + tilesY, occupiedTiles)) {
+							ArrayList<Vector2> occupied = partImage.getOccupiedCells();
+							if (occupied.contains(new Vector2(adjacentX, (gridY + tilesY)))
+									&& !list.contains(partImage)) {
 								list.add(partImage);
 							}
 						}
@@ -345,15 +396,15 @@ public class ShipEditor extends ScreenAdapter {
 					// For the entire height of the image
 					for (int i = 0; i < tilesY; ++i) {
 						// y is each y grid
-						int adjacentY = gridY + (16 * i);
+						int adjacentY = gridY + i;
 						// for every image thus far
 						for (int j = 0; j < partImages.size(); ++j) {
-							Image partImage = partImages.get(j);
+							PartImage partImage = partImages.get(j);
 							// if it overlaps any of the points along the right
 							// edge, add it to the list of images adjacent in
 							// that direction
-							if (hasOverlap(partImage, gridX + tilesX,
-									adjacentY, occupiedTiles)) {
+							ArrayList<Vector2> occupied = partImage.getOccupiedCells();
+							if (occupied.contains(new Vector2(gridX + tilesX, adjacentY)) && !list.contains(partImage)) {
 								list.add(partImage);
 							}
 						}
@@ -363,15 +414,15 @@ public class ShipEditor extends ScreenAdapter {
 					// For the entire width of the image
 					for (int i = 0; i < tilesX; ++i) {
 						// x is each x grid
-						int adjacentX = gridX + (16 * i);
+						int adjacentX = gridX + i;
 						// for every image thus far
 						for (int j = 0; j < partImages.size(); ++j) {
-							Image partImage = partImages.get(j);
+							PartImage partImage = partImages.get(j);
 							// if it overlaps any of the points along the bottom
 							// edge, add it to the list of images adjacent in
 							// that direction
-							if (hasOverlap(partImage, adjacentX, gridY - 1,
-									occupiedTiles)) {
+							ArrayList<Vector2> occupied = partImage.getOccupiedCells();
+							if (occupied.contains(new Vector2(adjacentX, gridY - 1)) && !list.contains(partImage)) {
 								list.add(partImage);
 							}
 						}
@@ -381,15 +432,15 @@ public class ShipEditor extends ScreenAdapter {
 					// For the entire height of the image
 					for (int i = 0; i < tilesY; ++i) {
 						// y is each y grid
-						int adjacentY = gridY + (16 * i);
+						int adjacentY = gridY + i;
 						// for every image thus far
 						for (int j = 0; j < partImages.size(); ++j) {
-							Image partImage = partImages.get(j);
+							PartImage partImage = partImages.get(j);
 							// if it overlaps any of the points along the left
 							// edge, add it to the list of images adjacent in
 							// that direction
-							if (hasOverlap(partImage, gridX - 1, adjacentY,
-									occupiedTiles)) {
+							ArrayList<Vector2> occupied = partImage.getOccupiedCells();
+							if (occupied.contains(new Vector2(gridX - 1, adjacentY)) && !list.contains(partImage)) {
 								list.add(partImage);
 							}
 						}
@@ -399,9 +450,8 @@ public class ShipEditor extends ScreenAdapter {
 			}
 
 			/**
-			 * Determines whether or not the image, rooted at the gridX and
-			 * gridY position, overlaps any of the grid tiles marked as
-			 * occupied.
+			 * Determines whether or not the image, rooted at the gridX and gridY position, overlaps any of the grid
+			 * tiles marked as occupied.
 			 * 
 			 * @param image
 			 * @param gridX
@@ -409,14 +459,21 @@ public class ShipEditor extends ScreenAdapter {
 			 * @param occupiedTiles
 			 * @return
 			 */
-			private boolean hasOverlap(Image image, int gridX, int gridY,
-					ArrayList<Vector2> occupiedTiles) {
-				int tilesX = (int) image.getWidth() / 16;
-				int tilesY = (int) image.getHeight() / 16;
+			private boolean hasOverlap(PartImage image, int gridX, int gridY) {
+				int rotIndex = (int) (Math.abs(image.getRotation()) / 90) % 4;
+				int tilesX = 0;
+				int tilesY = 0;
+				if (rotIndex == 1 || rotIndex == 3) {
+					System.out.println();
+					tilesX = (int) image.getHeight() / 16;
+					tilesY = (int) image.getWidth() / 16;
+				} else {
+					tilesX = (int) image.getWidth() / 16;
+					tilesY = (int) image.getHeight() / 16;
+				}
 				for (int i = 0; i < tilesX; ++i) {
 					for (int j = 0; j < tilesY; ++j) {
-						if (occupiedTiles.contains(new Vector2(gridX + i, gridY
-								+ j))) {
+						if (occupiedTiles.contains(new Vector2(gridX + i, gridY + j))) {
 							return true;
 						}
 					}
@@ -425,8 +482,7 @@ public class ShipEditor extends ScreenAdapter {
 			}
 
 			/**
-			 * Returns whether or not the given table contains the
-			 * screen-coordinate point.
+			 * Returns whether or not the given table contains the screen-coordinate point.
 			 * 
 			 * @param table
 			 * @param screenX
@@ -434,10 +490,8 @@ public class ShipEditor extends ScreenAdapter {
 			 * @return
 			 */
 			private boolean contains(Table table, int screenX, int screenY) {
-				if (screenX < (table.getX() + table.getWidth())
-						&& screenX > table.getX()
-						&& (Gdx.graphics.getHeight() - screenY) < (table.getY() + table
-								.getHeight())
+				if (screenX < (table.getX() + table.getWidth()) && screenX > table.getX()
+						&& (Gdx.graphics.getHeight() - screenY) < (table.getY() + table.getHeight())
 						&& (Gdx.graphics.getHeight() - screenY) > table.getY()) {
 					return true;
 				}
@@ -446,15 +500,81 @@ public class ShipEditor extends ScreenAdapter {
 
 			@Override
 			public boolean keyDown(int keycode) {
-				if (activePart != null && activeImage != null
-						&& keycode == Keys.Q) {
+				if (activePart != null && activeImage != null && keycode == Keys.Q) {
 					activeImage.setRotation(activeImage.getRotation() + 90);
 					activePart.rotateLeft();
 				}
-				if (activePart != null && activeImage != null
-						&& keycode == Keys.E) {
+				if (activePart != null && activeImage != null && keycode == Keys.E) {
 					activeImage.setRotation(activeImage.getRotation() - 90);
 					activePart.rotateRight();
+				}
+				// Use WASD to move pieces around the grid.
+				if (keycode == Keys.W) {
+					for (PartImage image : partImages) {
+						image.setGridY(image.getGridY() - 1);
+
+						// Reposition the image.
+						int rotIndex = (int) (Math.abs(image.getRotation()) / 90) % 4;
+						if ((image.getWidth() != image.getHeight()) && (rotIndex == 1 || rotIndex == 3)) {
+							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f + image.getWidth()
+									/ 2f, (image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f - image.getHeight()
+									/ 4f);
+						} else {
+							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f,
+									(image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f);
+						}
+					}
+				}
+
+				if (keycode == Keys.A) {
+					for (PartImage image : partImages) {
+						image.setGridX(image.getGridX() + 1);
+
+						// Reposition the image.
+						int rotIndex = (int) (Math.abs(image.getRotation()) / 90) % 4;
+						if ((image.getWidth() != image.getHeight()) && (rotIndex == 1 || rotIndex == 3)) {
+							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f + image.getWidth()
+									/ 2f, (image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f - image.getHeight()
+									/ 4f);
+						} else {
+							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f,
+									(image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f);
+						}
+					}
+				}
+
+				if (keycode == Keys.S) {
+					for (PartImage image : partImages) {
+						image.setGridY(image.getGridY() + 1);
+
+						// Reposition the image.
+						int rotIndex = (int) (Math.abs(image.getRotation()) / 90) % 4;
+						if ((image.getWidth() != image.getHeight()) && (rotIndex == 1 || rotIndex == 3)) {
+							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f + image.getWidth()
+									/ 2f, (image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f - image.getHeight()
+									/ 4f);
+						} else {
+							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f,
+									(image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f);
+						}
+					}
+				}
+
+				if (keycode == Keys.D) {
+					for (PartImage image : partImages) {
+						image.setGridX(image.getGridX() - 1);
+
+						// Reposition the image.
+						int rotIndex = (int) (Math.abs(image.getRotation()) / 90) % 4;
+						if ((image.getWidth() != image.getHeight()) && (rotIndex == 1 || rotIndex == 3)) {
+							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f + image.getWidth()
+									/ 2f, (image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f - image.getHeight()
+									/ 4f);
+						} else {
+							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f,
+									(image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f);
+						}
+					}
 				}
 				return true;
 			}
@@ -513,11 +633,9 @@ public class ShipEditor extends ScreenAdapter {
 
 		selections = new Table(skin);
 		info = new Table(skin);
-		info.setBackground(new TextureRegionDrawable(new TextureRegion(
-				new Texture("assets/img/tableBack.png"))));
+		info.setBackground(new TextureRegionDrawable(new TextureRegion(new Texture("assets/img/tableBack.png"))));
 		tabbed = new Table(skin);
-		tabbed.setBackground(new TextureRegionDrawable(new TextureRegion(
-				new Texture("assets/img/tableBack.png"))));
+		tabbed.setBackground(new TextureRegionDrawable(new TextureRegion(new Texture("assets/img/tableBack.png"))));
 		selections.setFillParent(true);
 		selections.debug();
 
@@ -525,18 +643,15 @@ public class ShipEditor extends ScreenAdapter {
 
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
-				PartImageButton active = (PartImageButton) event
-						.getListenerActor();
+				PartImage active = (PartImage) event.getListenerActor();
 				activePart = active.getPart();
 				activePart.clearRotation();
-				Vector2 buttonCoords = active
-						.localToStageCoordinates(new Vector2(0, 0));
+				Vector2 buttonCoords = active.localToStageCoordinates(new Vector2(0, 0));
 				activePartX = buttonCoords.x;
 				activePartY = buttonCoords.y;
 				info.clear();
 				Label heading = new Label(activePart.getName(), skin, "default");
-				Label description = new Label(activePart.getDescription(),
-						skin, "default");
+				Label description = new Label(activePart.getDescription(), skin, "default");
 				description.setWrap(true);
 				info.add(heading);
 				info.row();
@@ -544,10 +659,8 @@ public class ShipEditor extends ScreenAdapter {
 				info.row();
 				info.add(description).width(200).center();
 				info.row();
-				Image activeSprite = new Image(new Texture(
-						activePart.getSprite()));
-				activeSprite.setOrigin(activeSprite.getWidth() / 2f,
-						activeSprite.getHeight() / 2f);
+				Image activeSprite = new Image(new Texture(activePart.getSprite()));
+				activeSprite.setOrigin(activeSprite.getWidth() / 2f, activeSprite.getHeight() / 2f);
 				activeImage = activeSprite;
 				info.add(activeSprite);
 				info.row();
@@ -577,8 +690,7 @@ public class ShipEditor extends ScreenAdapter {
 					activePart = null;
 					for (int i = 0; i < command.size(); ++i) {
 						Part part = command.get(i);
-						PartImageButton selectPart = new PartImageButton(part,
-								new Texture(part.getSprite()));
+						PartImage selectPart = new PartImage(part, new Texture(part.getSprite()));
 						selectPart.addListener(itemChooseListener);
 						tabbed.add(selectPart);
 					}
@@ -588,8 +700,7 @@ public class ShipEditor extends ScreenAdapter {
 					activePart = null;
 					for (int i = 0; i < control.size(); ++i) {
 						Part part = control.get(i);
-						PartImageButton selectPart = new PartImageButton(part,
-								new Texture(part.getSprite()));
+						PartImage selectPart = new PartImage(part, new Texture(part.getSprite()));
 						selectPart.addListener(itemChooseListener);
 						tabbed.add(selectPart);
 					}
@@ -599,8 +710,7 @@ public class ShipEditor extends ScreenAdapter {
 					activePart = null;
 					for (int i = 0; i < thrust.size(); ++i) {
 						Part part = thrust.get(i);
-						PartImageButton selectPart = new PartImageButton(part,
-								new Texture(part.getSprite()));
+						PartImage selectPart = new PartImage(part, new Texture(part.getSprite()));
 						selectPart.addListener(itemChooseListener);
 						tabbed.add(selectPart);
 					}
@@ -610,8 +720,7 @@ public class ShipEditor extends ScreenAdapter {
 					activePart = null;
 					for (int i = 0; i < hull.size(); ++i) {
 						Part part = hull.get(i);
-						PartImageButton selectPart = new PartImageButton(part,
-								new Texture(part.getSprite()));
+						PartImage selectPart = new PartImage(part, new Texture(part.getSprite()));
 						selectPart.addListener(itemChooseListener);
 						tabbed.add(selectPart);
 					}
@@ -621,8 +730,7 @@ public class ShipEditor extends ScreenAdapter {
 					activePart = null;
 					for (int i = 0; i < weaponry.size(); ++i) {
 						Part part = weaponry.get(i);
-						PartImageButton selectPart = new PartImageButton(part,
-								new Texture(part.getSprite()));
+						PartImage selectPart = new PartImage(part, new Texture(part.getSprite()));
 						selectPart.addListener(itemChooseListener);
 						tabbed.add(selectPart);
 					}
@@ -630,10 +738,8 @@ public class ShipEditor extends ScreenAdapter {
 				// Instantiate the ship and move onto the next screen.
 				else if (event.getListenerActor() == buttonGo) {
 					for (Part part : parts) {
-						System.out.println(part.getName() + " "
-								+ part.getAttachmentNodes().length
-								+ " nodes, (" + part.getGridX() + ", "
-								+ part.getGridY() + ")");
+						System.out.println(part.getName() + " " + part.getAttachmentNodes().length + " nodes, ("
+								+ part.getGridX() + ", " + part.getGridY() + ")");
 					}
 				}
 			}
@@ -661,19 +767,17 @@ public class ShipEditor extends ScreenAdapter {
 
 		stage.addActor(selections);
 
-		stage.addAction(sequence(moveTo(0, stage.getHeight()),
-				moveTo(0, 0, .5f))); // coming in from top animation
+		stage.addAction(sequence(moveTo(0, stage.getHeight()), moveTo(0, 0, .5f))); // coming in from top animation
 	}
 
 	/**
-	 * Takes a list of Images which hold part data, and returns the parts
-	 * appropriately sorted into a layout.
+	 * Takes a list of Images which hold part data, and returns the parts appropriately sorted into a layout.
 	 * 
 	 * @param grid
 	 *            the grid of parts.
 	 * @return a sorted layout of the parts.
 	 */
-	protected Layout toLayout(ArrayList<PartImageButton> grid) {
+	protected Layout toLayout(ArrayList<PartImage> grid) {
 
 		// Find the bottom-left-corner of the ship.
 		float lowX = Integer.MAX_VALUE;
@@ -685,9 +789,9 @@ public class ShipEditor extends ScreenAdapter {
 
 		// Find the lowest x-coordinate of the pieces.
 		for (int i = 0; i < grid.size(); ++i) {
-			PartImageButton button = grid.get(i);
-			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(
-					button.getWidth() / 2f, button.getHeight() / 2f));
+			PartImage button = grid.get(i);
+			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(button.getWidth() / 2f, button
+					.getHeight() / 2f));
 			if (buttonCoords.x < lowX) {
 				lowX = buttonCoords.x;
 			}
@@ -695,9 +799,9 @@ public class ShipEditor extends ScreenAdapter {
 
 		// Find the lowest y-coordinate of the pieces.
 		for (int i = 0; i < grid.size(); ++i) {
-			PartImageButton button = grid.get(i);
-			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(
-					button.getWidth() / 2f, button.getHeight() / 2f));
+			PartImage button = grid.get(i);
+			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(button.getWidth() / 2f, button
+					.getHeight() / 2f));
 			if (buttonCoords.y < lowY) {
 				lowY = buttonCoords.y;
 			}
@@ -705,9 +809,9 @@ public class ShipEditor extends ScreenAdapter {
 
 		// Find the highest x-coordinate of the pieces.
 		for (int i = 0; i < grid.size(); ++i) {
-			PartImageButton button = grid.get(i);
-			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(
-					button.getWidth() / 2f, button.getHeight() / 2f));
+			PartImage button = grid.get(i);
+			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(button.getWidth() / 2f, button
+					.getHeight() / 2f));
 			if (buttonCoords.x > highX) {
 				highX = buttonCoords.x;
 			}
@@ -715,9 +819,9 @@ public class ShipEditor extends ScreenAdapter {
 
 		// Find the highest y-coordinate of the pieces.
 		for (int i = 0; i < grid.size(); ++i) {
-			PartImageButton button = grid.get(i);
-			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(
-					button.getWidth() / 2f, button.getHeight() / 2f));
+			PartImage button = grid.get(i);
+			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(button.getWidth() / 2f, button
+					.getHeight() / 2f));
 			if (buttonCoords.y > highY) {
 				highY = buttonCoords.y;
 			}
@@ -733,24 +837,17 @@ public class ShipEditor extends ScreenAdapter {
 		for (int i = 0; i < (width); ++i) {
 			for (int j = 0; j < (height); ++j) {
 				for (int k = 0; k < grid.size(); ++k) {
-					PartImageButton button = grid.get(k);
-					Vector2 buttonCoords = button
-							.localToStageCoordinates(new Vector2(button
-									.getWidth() / 2f, button.getHeight() / 2f));
+					PartImage button = grid.get(k);
+					Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(button.getWidth() / 2f, button
+							.getHeight() / 2f));
 					// If an Image exists with these exact coordinates...
-					if (button.getPart() != null
-							&& buttonCoords.x == lowX + (i * 32)
+					if (button.getPart() != null && buttonCoords.x == lowX + (i * 32)
 							&& buttonCoords.y == lowY + (j * 32)) {
 						// Set its location in the Layout.
-						grid.get(k)
-								.getPart()
-								.setGridPosition(new Integer(i), new Integer(j));
-						layout.setPart(grid.get(k).getPart(), new Integer(i),
-								new Integer(j));
-						System.out.println(button.getPart() + " is at "
-								+ button.getPart().getGridX() + " "
-								+ button.getPart().getGridY() + " or " + i
-								+ " " + j);
+						grid.get(k).getPart().setGridPosition(new Integer(i), new Integer(j));
+						layout.setPart(grid.get(k).getPart(), new Integer(i), new Integer(j));
+						System.out.println(button.getPart() + " is at " + button.getPart().getGridX() + " "
+								+ button.getPart().getGridY() + " or " + i + " " + j);
 						break;
 					} else {
 						// No part here, set null.
@@ -764,112 +861,25 @@ public class ShipEditor extends ScreenAdapter {
 	}
 
 	/**
-	 * Determines whether or not any of the nodes in these two lists are able to
-	 * attach together.
-	 * 
-	 * @param attachmentNodes
-	 * @param adjacent
-	 * @return
-	 */
-	protected boolean hasMatch(int[] base, Part adjacent, int direction) {
-		if (adjacent == null) {
-			return false;
-		}
-
-		boolean result = false;
-		for (int i = 0; i < base.length; ++i) {
-			int node = base[i];
-			switch (node) {
-			case 0:
-				System.out.println("Checking above!");
-				for (int j = 0; j < adjacent.getAttachmentNodes().length; ++j) {
-					System.out.println(adjacent.getName());
-					System.out
-							.println("The node you are trying to attach to has points at "
-									+ adjacent.getAttachmentNodes()[j]);
-					if (direction == node
-							&& adjacent.getAttachmentNodes()[j] == 2) {
-						System.out.println("Can attach to the above node");
-						result = true;
-						break;
-					}
-				}
-				break;
-			case 1:
-				System.out.println("Checking right!");
-				for (int j = 0; j < adjacent.getAttachmentNodes().length; ++j) {
-					System.out.println(adjacent.getName());
-					System.out
-							.println("The node you are trying to attach to has points at "
-									+ adjacent.getAttachmentNodes()[j]);
-					if (direction == node
-							&& adjacent.getAttachmentNodes()[j] == 3) {
-						System.out.println("Can attach to the right node");
-						result = true;
-						break;
-					}
-				}
-				break;
-			case 2: // Attachment node for the piece being attached is 2
-				System.out.println("Checking below!");
-				for (int j = 0; j < adjacent.getAttachmentNodes().length; ++j) {
-					System.out.println(adjacent.getName());
-					System.out
-							.println("The node you are trying to attach to has points at "
-									+ adjacent.getAttachmentNodes()[j]);
-					if (direction == node
-							&& adjacent.getAttachmentNodes()[j] == 0) {
-						System.out.println("Can attach to the bottom node");
-						result = true;
-						break;
-					}
-				}
-				break;
-			case 3:
-				System.out.println("Checking left!");
-				for (int j = 0; j < adjacent.getAttachmentNodes().length; ++j) {
-					System.out.println(adjacent.getName());
-					System.out
-							.println("The node you are trying to attach to has points at "
-									+ adjacent.getAttachmentNodes()[j]);
-					if (direction == node
-							&& adjacent.getAttachmentNodes()[j] == 1) {
-						System.out.println("Can attach to the left node");
-						result = true;
-						break;
-					}
-				}
-				break;
-			}
-		}
-		System.out.println("Returning " + result);
-		return result;
-	}
-
-	/**
-	 * Returns whether or not the PartImageButton in the grid has an adjacent
-	 * PartImageButton in the given direction.
+	 * Returns whether or not the PartImageButton in the grid has an adjacent PartImageButton in the given direction.
 	 * 
 	 * @param grid
 	 *            The grid to search for parts in.
 	 * @param active
 	 *            The PartImageButton of the grid to target.
 	 * @param direction
-	 *            The direction to search for adjacent buttons--0 for up, 1 for
-	 *            right, 2 for down, 3 for left.
+	 *            The direction to search for adjacent buttons--0 for up, 1 for right, 2 for down, 3 for left.
 	 * @return Whether or not the piece has an adjacent piece.
 	 */
-	protected boolean hasAdjacent(ArrayList<PartImageButton> grid,
-			PartImageButton active, int direction) {
+	protected boolean hasAdjacent(ArrayList<PartImage> grid, PartImage active, int direction) {
 		boolean result = false;
-		Vector2 activeCoords = active.localToStageCoordinates(new Vector2(
-				active.getWidth() / 2f, active.getHeight() / 2f));
+		Vector2 activeCoords = active.localToStageCoordinates(new Vector2(active.getWidth() / 2f,
+				active.getHeight() / 2f));
 		for (int i = 0; i < grid.size(); ++i) {
-			PartImageButton button = grid.get(i);
-			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(
-					button.getWidth() / 2f, button.getHeight() / 2f));
-			if (direction == 1
-					&& activeCoords.x + button.getWidth() == buttonCoords.x
+			PartImage button = grid.get(i);
+			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(button.getWidth() / 2f, button
+					.getHeight() / 2f));
+			if (direction == 1 && activeCoords.x + button.getWidth() == buttonCoords.x
 					&& activeCoords.y == buttonCoords.y) {
 				result = true;
 			} else if (direction == 0 && activeCoords.x == buttonCoords.x
@@ -878,8 +888,7 @@ public class ShipEditor extends ScreenAdapter {
 			} else if (direction == 2 && activeCoords.x == buttonCoords.x
 					&& activeCoords.y - button.getHeight() == buttonCoords.y) {
 				result = true;
-			} else if (direction == 3
-					&& activeCoords.x - button.getWidth() == buttonCoords.x
+			} else if (direction == 3 && activeCoords.x - button.getWidth() == buttonCoords.x
 					&& activeCoords.y == buttonCoords.y) {
 				result = true;
 			}
