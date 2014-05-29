@@ -2,9 +2,6 @@ package us.rockhopper.entropy.entities;
 
 import us.rockhopper.entropy.utility.Part;
 
-import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
-
 public class Weapon extends Part {
 	
 	private String weaponType;
@@ -35,7 +32,7 @@ public class Weapon extends Part {
 			missile.create();
 		} else if (reload == reloadTime) {
 			LaserProjectile laser = new LaserProjectile(
-					this.getGridX(), this.getGridY(), 20, 4, 0, laserTexture,
+					this.getGridX(), this.getGridY(), 10, 2, 0, laserTexture,
 					this.getBody().getAngle());
 			laser.create();
 		}
