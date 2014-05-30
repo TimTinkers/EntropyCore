@@ -7,8 +7,6 @@ import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
 import java.io.File;
 import java.util.ArrayList;
 
-import javax.swing.JFileChooser;
-
 import us.rockhopper.entropy.entities.BasicShip;
 import us.rockhopper.entropy.entities.Cockpit;
 import us.rockhopper.entropy.entities.Gyroscope;
@@ -62,7 +60,7 @@ public class ShipEditor extends ScreenAdapter {
 	private Table tabbed;
 	private Table info;
 
-	private String defaultFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
+	private String defaultFolder = "data";
 
 	private ArrayList<Part> command = new ArrayList<Part>();
 	private ArrayList<Part> control = new ArrayList<Part>();
@@ -576,7 +574,7 @@ public class ShipEditor extends ScreenAdapter {
 		Gdx.input.setInputProcessor(multiplexer);
 
 		// Load all command parts into its list.
-		String commandPath = defaultFolder + "\\EntropyShips\\Parts\\Command\\";
+		String commandPath = defaultFolder + "/parts/command/";
 		for (File file : FileIO.getFilesForFolder(new File(commandPath))) {
 			String partJSON = FileIO.read(file.getAbsolutePath());
 			GsonBuilder gson = new GsonBuilder();
@@ -586,7 +584,7 @@ public class ShipEditor extends ScreenAdapter {
 		}
 
 		// Load all control parts into its list.
-		String controlPath = defaultFolder + "\\EntropyShips\\Parts\\Control\\";
+		String controlPath = defaultFolder + "/parts/control";
 		for (File file : FileIO.getFilesForFolder(new File(controlPath))) {
 			String partJSON = FileIO.read(file.getAbsolutePath());
 			GsonBuilder gson = new GsonBuilder();
@@ -596,7 +594,7 @@ public class ShipEditor extends ScreenAdapter {
 		}
 
 		// Load all thrust parts into its list.
-		String thrustPath = defaultFolder + "\\EntropyShips\\Parts\\Thrust\\";
+		String thrustPath = defaultFolder + "/parts/thrust/";
 		for (File file : FileIO.getFilesForFolder(new File(thrustPath))) {
 			String partJSON = FileIO.read(file.getAbsolutePath());
 			GsonBuilder gson = new GsonBuilder();
@@ -606,7 +604,7 @@ public class ShipEditor extends ScreenAdapter {
 		}
 
 		// Load all hull parts into its list.
-		String hullPath = defaultFolder + "\\EntropyShips\\Parts\\Hull\\";
+		String hullPath = defaultFolder + "/parts/hull/";
 		for (File file : FileIO.getFilesForFolder(new File(hullPath))) {
 			String partJSON = FileIO.read(file.getAbsolutePath());
 			GsonBuilder gson = new GsonBuilder();
@@ -616,7 +614,7 @@ public class ShipEditor extends ScreenAdapter {
 		}
 
 		// Load all weapon parts into its list.
-		String weaponPath = defaultFolder + "\\EntropyShips\\Parts\\Weaponry\\";
+		String weaponPath = defaultFolder + "/parts/weaponry/";
 		for (File file : FileIO.getFilesForFolder(new File(weaponPath))) {
 			String partJSON = FileIO.read(file.getAbsolutePath());
 			GsonBuilder gson = new GsonBuilder();
@@ -750,7 +748,7 @@ public class ShipEditor extends ScreenAdapter {
 					GsonBuilder gson = new GsonBuilder();
 					gson.registerTypeAdapter(Part.class, new PartClassAdapter());
 					final String shipJSON = gson.setPrettyPrinting().create().toJson(ship);
-					if (FileIO.exists(defaultFolder + "\\EntropyShips\\" + nameField.getText() + ".json")) {
+					if (FileIO.exists(defaultFolder + "\\Ships\\" + nameField.getText() + ".json")) {
 						new Dialog("", skin) {
 							{
 								text("Ship " + nameField.getText() + " already exists. Would you like to overwrite it?");
@@ -762,8 +760,7 @@ public class ShipEditor extends ScreenAdapter {
 								System.out.println("Chosen: " + object);
 								boolean bool = (Boolean) object;
 								if (bool == true) {
-									FileIO.write(defaultFolder + "\\EntropyShips\\" + nameField.getText() + ".json",
-											shipJSON);
+									FileIO.write(defaultFolder + "/ships/" + nameField.getText() + ".json", shipJSON);
 									((Game) Gdx.app.getApplicationListener()).setScreen(new GameStart(nameField
 											.getText()));
 								}
