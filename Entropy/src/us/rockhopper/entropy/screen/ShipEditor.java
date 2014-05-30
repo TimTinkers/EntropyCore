@@ -7,16 +7,16 @@ import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
 import java.io.File;
 import java.util.ArrayList;
 
-import us.rockhopper.entropy.entities.BasicShip;
 import us.rockhopper.entropy.entities.Cockpit;
 import us.rockhopper.entropy.entities.Gyroscope;
+import us.rockhopper.entropy.entities.Ship;
 import us.rockhopper.entropy.entities.Thruster;
 import us.rockhopper.entropy.gui.PartImage;
+import us.rockhopper.entropy.gui.ShipSelectDialog;
 import us.rockhopper.entropy.utility.FileIO;
 import us.rockhopper.entropy.utility.Part;
 import us.rockhopper.entropy.utility.PartClassAdapter;
 
-import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
@@ -136,7 +136,8 @@ public class ShipEditor extends ScreenAdapter {
 		final TextButton buttonHull = new TextButton("Hull", skin, "default");
 		final TextButton buttonWeaponry = new TextButton("Weaponry", skin, "default");
 		final TextButton buttonTools = new TextButton("Editing", skin, "default");
-		final TextButton buttonGo = new TextButton("Start", skin, "default");
+		final TextButton buttonSave = new TextButton("Save", skin, "default");
+		final TextButton buttonTest = new TextButton("Test Flight", skin, "default");
 
 		final TextField nameField = new TextField("Ship Name", skin, "default");
 		final TextField forwardField = new TextField("Forward", skin, "default");
@@ -741,33 +742,72 @@ public class ShipEditor extends ScreenAdapter {
 				}
 
 				// Instantiate the ship and move onto the next screen.
-				else if (event.getListenerActor() == buttonGo) {
-					BasicShip ship = new BasicShip(parts.get(0).getGridX(), parts.get(0).getGridY(), parts);
+				else if (event.getListenerActor() == buttonSave) {
+					if (!parts.isEmpty()) {
+						Ship ship = new Ship(nameField.getText(), parts);
 
-					// Serialize and write to file
-					GsonBuilder gson = new GsonBuilder();
-					gson.registerTypeAdapter(Part.class, new PartClassAdapter());
-					final String shipJSON = gson.setPrettyPrinting().create().toJson(ship);
-					if (FileIO.exists(defaultFolder + "\\Ships\\" + nameField.getText() + ".json")) {
+						// Serialize and write to file
+						GsonBuilder gson = new GsonBuilder();
+						gson.registerTypeAdapter(Part.class, new PartClassAdapter());
+						final String shipJSON = gson.setPrettyPrinting().create().toJson(ship);
+						if (FileIO.exists(defaultFolder + "/ships/" + nameField.getText() + ".json")) {
+							new Dialog("", skin) {
+								{
+									text("Ship \"" + nameField.getText()
+											+ "\" already exists.\nWould you like to overwrite it?");
+									button("Yes", true);
+									button("No", false);
+								}
+
+								protected void result(Object object) {
+									System.out.println("Chosen: " + object);
+									boolean bool = (Boolean) object;
+									if (bool == true) {
+										new Dialog("", skin) {
+											{
+												text("Your ship has been saved.");
+											}
+										}.show(stage).addAction(
+												sequence(alpha(1f, 0.3f), Actions.delay(0.4f), alpha(0f, 0.3f),
+														Actions.removeActor()));
+										FileIO.write(defaultFolder + "/ships/" + nameField.getText() + ".json",
+												shipJSON);
+									}
+								}
+							}.show(stage);
+						} else {
+							new Dialog("", skin) {
+								{
+									text("Your ship has been saved.");
+								}
+							}.show(stage).addAction(
+									sequence(alpha(1f, 0.3f), Actions.delay(0.4f), alpha(0f, 0.3f),
+											Actions.removeActor()));
+							FileIO.write(defaultFolder + "/ships/" + nameField.getText() + ".json", shipJSON);
+						}
+					} else {
 						new Dialog("", skin) {
 							{
-								text("Ship " + nameField.getText() + " already exists. Would you like to overwrite it?");
-								button("Yes", true);
-								button("No", false);
+								text("You need parts on your ship!");
 							}
-
-							protected void result(Object object) {
-								System.out.println("Chosen: " + object);
-								boolean bool = (Boolean) object;
-								if (bool == true) {
-									FileIO.write(defaultFolder + "/ships/" + nameField.getText() + ".json", shipJSON);
-									((Game) Gdx.app.getApplicationListener()).setScreen(new GameStart(nameField
-											.getText()));
-								}
-							}
-						}.show(stage);
+						}.show(stage).addAction(
+								sequence(alpha(1f, 0.3f), Actions.delay(0.4f), alpha(0f, 0.3f), Actions.removeActor()));
 					}
+				} else if (event.getListenerActor() == buttonTest) {
+					final ArrayList<Ship> ships = new ArrayList<Ship>();
+					// Load all ships into this list.
+					String shipPath = defaultFolder + "/ships/";
+					for (File file : FileIO.getFilesForFolder(new File(shipPath))) {
+						String shipJSON = FileIO.read(file.getAbsolutePath());
+						GsonBuilder gson = new GsonBuilder();
+						gson.registerTypeAdapter(Part.class, new PartClassAdapter());
+						Ship ship = gson.create().fromJson(shipJSON, Ship.class);
+						ships.add(ship);
+					}
+					ShipSelectDialog dialog = new ShipSelectDialog("", skin, ships);
+					dialog.show(stage);
 				}
+
 			}
 		};
 
@@ -777,7 +817,8 @@ public class ShipEditor extends ScreenAdapter {
 		buttonHull.addListener(tabChooseListener);
 		buttonWeaponry.addListener(tabChooseListener);
 		buttonTools.addListener(tabChooseListener);
-		buttonGo.addListener(tabChooseListener);
+		buttonSave.addListener(tabChooseListener);
+		buttonTest.addListener(tabChooseListener);
 		selections.left().top();
 		selections.defaults().fillX();
 		selections.add(buttonCommand);
@@ -786,10 +827,11 @@ public class ShipEditor extends ScreenAdapter {
 		selections.add(buttonHull);
 		selections.add(buttonWeaponry);
 		selections.add(nameField);
-		selections.add(buttonGo);
+		selections.add(buttonSave);
 		selections.row();
 		selections.add(tabbed).colspan(5);
 		selections.add(buttonTools);
+		selections.add(buttonTest);
 		selections.row();
 		selections.add(info).colspan(5);
 
