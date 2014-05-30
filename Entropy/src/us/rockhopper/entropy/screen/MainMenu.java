@@ -3,7 +3,16 @@ package us.rockhopper.entropy.screen;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.moveTo;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.run;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
+
+import java.io.File;
+import java.util.ArrayList;
+
+import us.rockhopper.entropy.entities.Ship;
+import us.rockhopper.entropy.gui.ShipSelectDialog;
 import us.rockhopper.entropy.tween.ActorAccessor;
+import us.rockhopper.entropy.utility.FileIO;
+import us.rockhopper.entropy.utility.Part;
+import us.rockhopper.entropy.utility.PartClassAdapter;
 import aurelienribon.tweenengine.BaseTween;
 import aurelienribon.tweenengine.Timeline;
 import aurelienribon.tweenengine.Tween;
@@ -23,6 +32,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.google.gson.GsonBuilder;
 
 public class MainMenu implements Screen {
 
@@ -56,8 +66,7 @@ public class MainMenu implements Screen {
 
 		Gdx.input.setInputProcessor(stage);
 
-		skin = new Skin(Gdx.files.internal("assets/ui/uiskin.json"),
-				new TextureAtlas("assets/ui/uiskin.pack"));
+		skin = new Skin(Gdx.files.internal("assets/ui/uiskin.json"), new TextureAtlas("assets/ui/uiskin.pack"));
 
 		table = new Table(skin);
 		table.setFillParent(true);
@@ -67,38 +76,54 @@ public class MainMenu implements Screen {
 		heading.setFontScale(2);
 
 		// creating buttons
-		TextButton buttonPlay = new TextButton("PLAY", skin, "default");
-		buttonPlay.addListener(new ClickListener() {
+		TextButton buttonEditor = new TextButton("Ship Editor", skin, "default");
+		buttonEditor.addListener(new ClickListener() {
 
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
-				stage.addAction(sequence(moveTo(0, -stage.getHeight(), .5f),
-						run(new Runnable() {
+				stage.addAction(sequence(moveTo(0, -stage.getHeight(), .5f), run(new Runnable() {
 
-							@Override
-							public void run() {
-								((Game) Gdx.app.getApplicationListener())
-										.setScreen(new ShipEditor());
-							}
-						})));
+					@Override
+					public void run() {
+						((Game) Gdx.app.getApplicationListener()).setScreen(new ShipEditor());
+					}
+				})));
 			}
 		});
-		buttonPlay.pad(15);
+		buttonEditor.pad(15);
+
+		TextButton buttonTest = new TextButton("Test Flight", skin, "default");
+		buttonTest.addListener(new ClickListener() {
+			@Override
+			public void clicked(InputEvent event, float x, float y) {
+				final ArrayList<Ship> ships = new ArrayList<Ship>();
+				// Load all ships into this list.
+				String shipPath = "data/ships/";
+				for (File file : FileIO.getFilesForFolder(new File(shipPath))) {
+					String shipJSON = FileIO.read(file.getAbsolutePath());
+					GsonBuilder gson = new GsonBuilder();
+					gson.registerTypeAdapter(Part.class, new PartClassAdapter());
+					Ship ship = gson.create().fromJson(shipJSON, Ship.class);
+					ships.add(ship);
+				}
+				ShipSelectDialog dialog = new ShipSelectDialog("", skin, ships);
+				dialog.show(stage);
+			}
+		});
+		buttonTest.pad(15);
 
 		TextButton buttonSettings = new TextButton("SETTINGS", skin);
 		buttonSettings.addListener(new ClickListener() {
 
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
-				stage.addAction(sequence(moveTo(0, -stage.getHeight(), .5f),
-						run(new Runnable() {
+				stage.addAction(sequence(moveTo(0, -stage.getHeight(), .5f), run(new Runnable() {
 
-							@Override
-							public void run() {
-								((Game) Gdx.app.getApplicationListener())
-										.setScreen(new Settings());
-							}
-						})));
+					@Override
+					public void run() {
+						((Game) Gdx.app.getApplicationListener()).setScreen(new Settings());
+					}
+				})));
 			}
 		});
 		buttonSettings.pad(15);
@@ -110,15 +135,12 @@ public class MainMenu implements Screen {
 			public void clicked(InputEvent event, float x, float y) {
 				Timeline.createParallel()
 						.beginParallel()
-						.push(Tween.to(table, ActorAccessor.ALPHA, .75f)
-								.target(0))
-						.push(Tween.to(table, ActorAccessor.Y, .75f)
-								.target(table.getY() - 50)
+						.push(Tween.to(table, ActorAccessor.ALPHA, .75f).target(0))
+						.push(Tween.to(table, ActorAccessor.Y, .75f).target(table.getY() - 50)
 								.setCallback(new TweenCallback() {
 
 									@Override
-									public void onEvent(int type,
-											BaseTween<?> source) {
+									public void onEvent(int type, BaseTween<?> source) {
 										Gdx.app.exit();
 									}
 								})).end().start(tweenManager);
@@ -129,7 +151,8 @@ public class MainMenu implements Screen {
 		table.debug();
 		// putting stuff together
 		table.add(heading).spaceBottom(100).row();
-		table.add(buttonPlay).spaceBottom(15).row();
+		table.add(buttonEditor).spaceBottom(15).row();
+		table.add(buttonTest).spaceBottom(15).row();
 		table.add(buttonSettings).spaceBottom(15).row();
 		table.add(buttonExit);
 
@@ -140,35 +163,27 @@ public class MainMenu implements Screen {
 		Tween.registerAccessor(Actor.class, new ActorAccessor());
 
 		// heading color animation
-		Timeline.createSequence()
-				.beginSequence()
-				.push(Tween.to(heading, ActorAccessor.RGB, .5f).target(0, 0, 1))
+		Timeline.createSequence().beginSequence().push(Tween.to(heading, ActorAccessor.RGB, .5f).target(0, 0, 1))
 				.push(Tween.to(heading, ActorAccessor.RGB, .5f).target(0, 1, 0))
 				.push(Tween.to(heading, ActorAccessor.RGB, .5f).target(1, 0, 0))
 				.push(Tween.to(heading, ActorAccessor.RGB, .5f).target(1, 1, 0))
 				.push(Tween.to(heading, ActorAccessor.RGB, .5f).target(0, 1, 1))
 				.push(Tween.to(heading, ActorAccessor.RGB, .5f).target(1, 0, 1))
-				.push(Tween.to(heading, ActorAccessor.RGB, .5f).target(1, 1, 1))
-				.end().repeat(Tween.INFINITY, 0).start(tweenManager);
+				.push(Tween.to(heading, ActorAccessor.RGB, .5f).target(1, 1, 1)).end().repeat(Tween.INFINITY, 0)
+				.start(tweenManager);
 
 		// heading and buttons fade-in
-		Timeline.createSequence()
-				.beginSequence()
-				.push(Tween.set(buttonPlay, ActorAccessor.ALPHA).target(0))
+		Timeline.createSequence().beginSequence().push(Tween.set(buttonEditor, ActorAccessor.ALPHA).target(0))
 				.push(Tween.set(buttonSettings, ActorAccessor.ALPHA).target(0))
 				.push(Tween.set(buttonExit, ActorAccessor.ALPHA).target(0))
 				.push(Tween.from(heading, ActorAccessor.ALPHA, .25f).target(0))
-				.push(Tween.to(buttonPlay, ActorAccessor.ALPHA, .25f).target(1))
-				.push(Tween.to(buttonSettings, ActorAccessor.ALPHA, .25f)
-						.target(1))
-				.push(Tween.to(buttonExit, ActorAccessor.ALPHA, .25f).target(1))
-				.end().start(tweenManager);
+				.push(Tween.to(buttonEditor, ActorAccessor.ALPHA, .25f).target(1))
+				.push(Tween.to(buttonSettings, ActorAccessor.ALPHA, .25f).target(1))
+				.push(Tween.to(buttonExit, ActorAccessor.ALPHA, .25f).target(1)).end().start(tweenManager);
 
 		// table fade-in
-		Tween.from(table, ActorAccessor.ALPHA, .75f).target(0)
-				.start(tweenManager);
-		Tween.from(table, ActorAccessor.Y, .75f)
-				.target(Gdx.graphics.getHeight() / 8).start(tweenManager);
+		Tween.from(table, ActorAccessor.ALPHA, .75f).target(0).start(tweenManager);
+		Tween.from(table, ActorAccessor.Y, .75f).target(Gdx.graphics.getHeight() / 8).start(tweenManager);
 
 		tweenManager.update(Gdx.graphics.getDeltaTime());
 	}
