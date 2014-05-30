@@ -15,7 +15,6 @@ import us.rockhopper.entropy.entities.Gyroscope;
 import us.rockhopper.entropy.entities.Thruster;
 import us.rockhopper.entropy.gui.PartImage;
 import us.rockhopper.entropy.utility.FileIO;
-import us.rockhopper.entropy.utility.Layout;
 import us.rockhopper.entropy.utility.Part;
 import us.rockhopper.entropy.utility.PartClassAdapter;
 
@@ -810,96 +809,6 @@ public class ShipEditor extends ScreenAdapter {
 		info.clear();
 		activePart = null;
 		deleteMode = false;
-	}
-
-	/**
-	 * Takes a list of Images which hold part data, and returns the parts appropriately sorted into a layout.
-	 * 
-	 * @param grid
-	 *            the grid of parts.
-	 * @return a sorted layout of the parts.
-	 */
-	protected Layout toLayout(ArrayList<PartImage> grid) {
-
-		// Find the bottom-left-corner of the ship.
-		float lowX = Integer.MAX_VALUE;
-		float lowY = Integer.MAX_VALUE;
-
-		// Find the top-right-corner of the ship.
-		float highX = Integer.MIN_VALUE;
-		float highY = Integer.MIN_VALUE;
-
-		// Find the lowest x-coordinate of the pieces.
-		for (int i = 0; i < grid.size(); ++i) {
-			PartImage button = grid.get(i);
-			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(button.getWidth() / 2f, button
-					.getHeight() / 2f));
-			if (buttonCoords.x < lowX) {
-				lowX = buttonCoords.x;
-			}
-		}
-
-		// Find the lowest y-coordinate of the pieces.
-		for (int i = 0; i < grid.size(); ++i) {
-			PartImage button = grid.get(i);
-			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(button.getWidth() / 2f, button
-					.getHeight() / 2f));
-			if (buttonCoords.y < lowY) {
-				lowY = buttonCoords.y;
-			}
-		}
-
-		// Find the highest x-coordinate of the pieces.
-		for (int i = 0; i < grid.size(); ++i) {
-			PartImage button = grid.get(i);
-			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(button.getWidth() / 2f, button
-					.getHeight() / 2f));
-			if (buttonCoords.x > highX) {
-				highX = buttonCoords.x;
-			}
-		}
-
-		// Find the highest y-coordinate of the pieces.
-		for (int i = 0; i < grid.size(); ++i) {
-			PartImage button = grid.get(i);
-			Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(button.getWidth() / 2f, button
-					.getHeight() / 2f));
-			if (buttonCoords.y > highY) {
-				highY = buttonCoords.y;
-			}
-		}
-
-		// Figure out the width and height of the required layout.
-		int width = 1 + (int) (highX - lowX) / 32;
-		int height = 1 + (int) (highY - lowY) / 32;
-		Layout layout = new Layout(width, height);
-
-		// Run through every piece in the grid and determine their spots in the
-		// layout.
-		for (int i = 0; i < (width); ++i) {
-			for (int j = 0; j < (height); ++j) {
-				for (int k = 0; k < grid.size(); ++k) {
-					PartImage button = grid.get(k);
-					Vector2 buttonCoords = button.localToStageCoordinates(new Vector2(button.getWidth() / 2f, button
-							.getHeight() / 2f));
-					// If an Image exists with these exact coordinates...
-					if (button.getPart() != null && buttonCoords.x == lowX + (i * 32)
-							&& buttonCoords.y == lowY + (j * 32)) {
-						// Set its location in the Layout.
-						grid.get(k).getPart().setGridPosition(new Integer(i), new Integer(j));
-						layout.setPart(grid.get(k).getPart(), new Integer(i), new Integer(j));
-						System.out.println(button.getPart() + " is at " + button.getPart().getGridX() + " "
-								+ button.getPart().getGridY() + " or " + i + " " + j);
-						break;
-					} else {
-						// No part here, set null.
-						layout.setPart(null, i, j);
-					}
-				}
-			}
-		}
-
-		return layout;
 	}
 
 	public void normalize() {
