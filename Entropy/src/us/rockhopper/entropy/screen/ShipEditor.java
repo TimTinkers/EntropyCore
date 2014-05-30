@@ -221,8 +221,18 @@ public class ShipEditor extends ScreenAdapter {
 								image.setRotation(activePart.getRotation());
 								image.setGridX(gridX);
 								image.setGridY(gridY);
-								image.setPart(activePart.clone().setGridPosition(gridX, gridY));
+								image.setPart(activePart.clone());
+								image.getPart().setGridPosition(gridX, gridY);
 								image.getPart().setOccupiedCells(image.getOccupiedCells());
+
+								// Add the part associated with the image into the parts ArrayList. Create a
+								// new array of nodes to prevent reference errors.
+								int[] newArray = new int[activePart.getAttachmentNodes().length];
+								for (int i = 0; i < activePart.getAttachmentNodes().length; ++i) {
+									newArray[i] = new Integer(activePart.getAttachmentNodes()[i]);
+								}
+
+								image.getPart().setAttachmentNodes(newArray);
 
 								// Image positioning is dependent on its rotation
 								int rotIndex = (int) (Math.abs(image.getRotation()) / 90) % 4;
@@ -283,15 +293,8 @@ public class ShipEditor extends ScreenAdapter {
 												occupiedTiles.add(vector);
 											}
 
-											// Add the part associated with the image into the parts ArrayList. Create a
-											// new array of nodes to prevent reference errors.
-											int[] newArray = new int[activePart.getAttachmentNodes().length];
-											for (int i = 0; i < activePart.getAttachmentNodes().length; ++i) {
-												newArray[i] = new Integer(activePart.getAttachmentNodes()[i]);
-											}
-
 											// Create new part to attach
-											Part part = image.getPart().clone();
+											Part part = image.getPart();
 
 											// Add any part-specific actions
 											if (part instanceof Thruster) {
@@ -306,7 +309,7 @@ public class ShipEditor extends ScreenAdapter {
 
 											// Now modify and add the part
 											part.setAttachmentNodes(newArray);
-											part.setGridPosition(gridX, gridY);
+											// part.setGridPosition(gridX, gridY);
 
 											// The command module for this ship was potentially deleted. If this is a
 											// command module, insert it once more as the first element in the parts
@@ -567,74 +570,6 @@ public class ShipEditor extends ScreenAdapter {
 				if (activePart != null && activeImage != null && keycode == Keys.E) {
 					activeImage.setRotation(activeImage.getRotation() - 90);
 					activePart.rotateRight();
-				}
-				// Use WASD to move pieces around the grid.
-				if (keycode == Keys.W) {
-					for (PartImage image : partImages) {
-						image.setGridY(image.getGridY() - 1);
-
-						// Reposition the image.
-						int rotIndex = (int) (Math.abs(image.getRotation()) / 90) % 4;
-						if ((image.getWidth() != image.getHeight()) && (rotIndex == 1 || rotIndex == 3)) {
-							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f + image.getWidth()
-									/ 2f, (image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f - image.getHeight()
-									/ 4f);
-						} else {
-							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f,
-									(image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f);
-						}
-					}
-				}
-
-				if (keycode == Keys.A) {
-					for (PartImage image : partImages) {
-						image.setGridX(image.getGridX() + 1);
-
-						// Reposition the image.
-						int rotIndex = (int) (Math.abs(image.getRotation()) / 90) % 4;
-						if ((image.getWidth() != image.getHeight()) && (rotIndex == 1 || rotIndex == 3)) {
-							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f + image.getWidth()
-									/ 2f, (image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f - image.getHeight()
-									/ 4f);
-						} else {
-							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f,
-									(image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f);
-						}
-					}
-				}
-
-				if (keycode == Keys.S) {
-					for (PartImage image : partImages) {
-						image.setGridY(image.getGridY() + 1);
-
-						// Reposition the image.
-						int rotIndex = (int) (Math.abs(image.getRotation()) / 90) % 4;
-						if ((image.getWidth() != image.getHeight()) && (rotIndex == 1 || rotIndex == 3)) {
-							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f + image.getWidth()
-									/ 2f, (image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f - image.getHeight()
-									/ 4f);
-						} else {
-							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f,
-									(image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f);
-						}
-					}
-				}
-
-				if (keycode == Keys.D) {
-					for (PartImage image : partImages) {
-						image.setGridX(image.getGridX() - 1);
-
-						// Reposition the image.
-						int rotIndex = (int) (Math.abs(image.getRotation()) / 90) % 4;
-						if ((image.getWidth() != image.getHeight()) && (rotIndex == 1 || rotIndex == 3)) {
-							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f + image.getWidth()
-									/ 2f, (image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f - image.getHeight()
-									/ 4f);
-						} else {
-							image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f,
-									(image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f);
-						}
-					}
 				}
 				return true;
 			}

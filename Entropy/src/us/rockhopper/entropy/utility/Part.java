@@ -228,6 +228,7 @@ public abstract class Part implements Cloneable {
 			Part newPart = (Part) super.clone();
 			newPart.setBody(body);
 			newPart.setGridPosition(gridX, gridY);
+			newPart.setAttachmentNodes(null);
 			return newPart;
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();

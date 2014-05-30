@@ -6,6 +6,7 @@ import java.util.HashMap;
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
 import us.rockhopper.entropy.utility.Part;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -135,10 +136,17 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		// are positioned accordingly.
 		Cockpit cockpit = new Cockpit(parts.get(0));
 
-		bodyDef.position.set(cockpit.getGridX() + ((cockpit.getWidth() * 16) / PIXELS_TO_METERS), cockpit.getGridY()
-				+ ((cockpit.getHeight() * 16) / this.PIXELS_TO_METERS));
-
 		bodyDef.angle = (float) Math.toRadians(cockpit.getRotation());
+		// Reposition the image.
+		int rotIndex = (int) (Math.abs(cockpit.getRotation()) / 90) % 4;
+		if ((cockpit.getWidth() != cockpit.getHeight()) && (rotIndex == 1 || rotIndex == 3)) {
+			bodyDef.position.set(cockpit.getGridX() + (2f * cockpit.getWidth()),
+					cockpit.getGridY() + (cockpit.getHeight() * 0.75f));
+		} else {
+			bodyDef.position.set(cockpit.getGridX() + cockpit.getWidth() / 2f, cockpit.getGridY() + cockpit.getHeight()
+					/ 2f);
+		}
+
 		System.out.println("Cockpit with info: " + cockpit.getGridX() + " " + cockpit.getGridY() + " rotation "
 				+ cockpit.getRotation());
 		PolygonShape shape = new PolygonShape();
@@ -155,14 +163,20 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		for (int i = 1; i < parts.size(); ++i) {
 			if (parts.get(i) != null) {
 				Part part = parts.get(i);
-				System.out.println("Looking at a " + part.getName() + " at position " + part.getGridX() + ", "
-						+ part.getGridY());
-
-				// Reposition the body.
-				bodyDef.position.set(part.getGridX() + ((part.getWidth() * 16) / PIXELS_TO_METERS), part.getGridY()
-						+ ((part.getHeight() * 16) / this.PIXELS_TO_METERS));
-
 				bodyDef.angle = (float) Math.toRadians(part.getRotation());
+				// Reposition the image.
+				rotIndex = (int) (Math.abs(part.getRotation()) / 90) % 4;
+				if ((part.getWidth() != part.getHeight()) && (rotIndex == 1)) {
+					bodyDef.position.set(part.getGridX() + (part.getWidth()), part.getGridY()
+							+ (part.getHeight() * 0.25f));
+				} else if ((part.getWidth() != part.getHeight()) && (rotIndex == 3)) {
+					bodyDef.position.set(part.getGridX() + (part.getWidth()/2f), part.getGridY()
+							+ (part.getHeight() * 0.5f));
+				} else {
+					bodyDef.position.set(part.getGridX() + part.getWidth() / 2f, part.getGridY() + part.getHeight()
+							/ 2f);
+				}
+
 				shape = new PolygonShape();
 				shape.setAsBox(part.getWidth() / 2f, part.getHeight() / 2f);
 				fixtureDef.density = part.getDensity();
