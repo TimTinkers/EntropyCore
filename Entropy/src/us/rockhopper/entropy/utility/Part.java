@@ -1,7 +1,9 @@
 package us.rockhopper.entropy.utility;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 
 public abstract class Part implements Cloneable {
@@ -20,9 +22,9 @@ public abstract class Part implements Cloneable {
 	private int health;
 	private int[] attachmentNodes;
 	private int rotation;
+	private ArrayList<Vector2> occupiedTiles = new ArrayList<Vector2>();
 
-	public Part(int gridX, int gridY, int height, int width, float density,
-			String sprite) {
+	public Part(int gridX, int gridY, int height, int width, float density, String sprite) {
 		this.gridX = gridX;
 		this.gridY = gridY;
 		this.height = height;
@@ -30,6 +32,15 @@ public abstract class Part implements Cloneable {
 		this.density = density;
 		this.sprite = sprite;
 		this.id = UUID.randomUUID();
+	}
+
+	public Part setOccupiedCells(ArrayList<Vector2> tiles) {
+		this.occupiedTiles = tiles;
+		return this;
+	}
+
+	public ArrayList<Vector2> getOccupiedCells() {
+		return this.occupiedTiles;
 	}
 
 	public int getGridX() {
@@ -187,9 +198,8 @@ public abstract class Part implements Cloneable {
 	}
 
 	/**
-	 * THIS IS ONLY TO BE USED AFTER SHIP CREATION, WHEN ATTACHMENT NODES NO
-	 * LONGER MATTER. IN ALL CONSTRUCTION ASPECTS USE rotateLeft() and
-	 * rotateRight() ONLY.
+	 * THIS IS ONLY TO BE USED AFTER SHIP CREATION, WHEN ATTACHMENT NODES NO LONGER MATTER. IN ALL CONSTRUCTION ASPECTS
+	 * USE rotateLeft() and rotateRight() ONLY.
 	 * 
 	 * @param rotation
 	 *            the integer rotation to set to the part.

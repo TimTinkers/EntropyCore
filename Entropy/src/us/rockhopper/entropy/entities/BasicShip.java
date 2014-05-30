@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
-import us.rockhopper.entropy.utility.Layout;
 import us.rockhopper.entropy.utility.Part;
 
 import com.badlogic.gdx.InputAdapter;
@@ -30,17 +29,13 @@ import com.badlogic.gdx.utils.JsonValue;
  */
 public class BasicShip extends InputAdapter implements Json.Serializable {
 
+	private final float PIXELS_TO_METERS = 16;
 	private World world;
-	private Vector2 cockpitPosition;
-	private int width;
-	private int height;
 	private ArrayList<Part> parts = new ArrayList<Part>();
-	private Layout setup;
 	private HashMap<Integer, ArrayList<Part>> keyActions = new HashMap<Integer, ArrayList<Part>>();
 
 	/**
-	 * Creates a ship object, which contains all information it would need to
-	 * later render itself.
+	 * Creates a ship object, which contains all information it would need to later render itself.
 	 * 
 	 * @param cockpitX
 	 *            The x-coordinate of the cockpit.
@@ -51,16 +46,10 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 	 * @param height
 	 *            The height of the ship.
 	 * @param parts
-	 *            All parts on the ship. The first Part in this list MUST be the
-	 *            Cockpit of the ship.
+	 *            All parts on the ship. The first Part in this list MUST be the Cockpit of the ship.
 	 */
-	public BasicShip(int cockpitX, int cockpitY, int width, int height,
-			ArrayList<Part> parts, Layout setup) {
-		this.cockpitPosition = new Vector2(cockpitX, cockpitY);
+	public BasicShip(int cockpitX, int cockpitY, ArrayList<Part> parts) {
 		this.parts = parts;
-		this.width = width;
-		this.height = height;
-		this.setup = setup;
 	}
 
 	/**
@@ -73,8 +62,8 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 	}
 
 	/**
-	 * When a key is pressed, all triggerables associated with the key are told
-	 * that one of their keys have been pressed.
+	 * When a key is pressed, all triggerables associated with the key are told that one of their keys have been
+	 * pressed.
 	 * 
 	 * @param keycode
 	 *            the key which was released.
@@ -83,8 +72,7 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 	public boolean keyDown(int keycode) {
 		if (keyActions.containsKey(keycode)) {
 			for (Part trigger : keyActions.get(keycode)) {
-				System.out.println("The keyaction hashmap contains the code "
-						+ keycode);
+				System.out.println("The keyaction hashmap contains the code " + keycode);
 				trigger.trigger(keycode);
 			}
 			return true;
@@ -94,8 +82,8 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 	}
 
 	/**
-	 * When a key is released, all triggerables associated with the key are told
-	 * that one of their keys has been released.
+	 * When a key is released, all triggerables associated with the key are told that one of their keys has been
+	 * released.
 	 * 
 	 * @param keycode
 	 *            the key which was released.
@@ -122,23 +110,13 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		this.world = world;
 	}
 
-	public int getWidth() {
-		return this.width;
-	}
-
-	public int getHeight() {
-		return this.height;
-	}
-
 	public Vector2 getCockpitPosition() {
-		return this.cockpitPosition;
+		return new Vector2(parts.get(0).getBody().getPosition().x, parts.get(0).getBody().getPosition().y);
 	}
 
 	/**
-	 * The ship is created: all of its parts are created in the world that has
-	 * been set for it, the parts are welded together according to their
-	 * placement in the ship editor, and all triggers are associated with their
-	 * keys.
+	 * The ship is created: all of its parts are created in the world that has been set for it, the parts are welded
+	 * together according to their placement in the ship editor, and all triggers are associated with their keys.
 	 */
 	public void create() {
 		// Things that don't need to change.
@@ -157,41 +135,41 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		// are positioned accordingly.
 		Cockpit cockpit = new Cockpit(parts.get(0));
 
-		bodyDef.position.set(cockpitPosition.x, cockpitPosition.y);
+		bodyDef.position.set(cockpit.getGridX() + ((cockpit.getWidth() * 16) / PIXELS_TO_METERS), cockpit.getGridY()
+				+ ((cockpit.getHeight() * 16) / this.PIXELS_TO_METERS));
+
 		bodyDef.angle = (float) Math.toRadians(cockpit.getRotation());
-		System.out.println("Cockpit with info: " + cockpit.getGridX() + " "
-				+ cockpit.getGridY() + " rotation " + cockpit.getRotation());
+		System.out.println("Cockpit with info: " + cockpit.getGridX() + " " + cockpit.getGridY() + " rotation "
+				+ cockpit.getRotation());
 		PolygonShape shape = new PolygonShape();
 		shape.setAsBox(cockpit.getWidth() / 2f, cockpit.getHeight() / 2f);
 		fixtureDef.density = cockpit.getDensity();
 		fixtureDef.shape = shape;
 		body = world.createBody(bodyDef);
-		body.createFixture(fixtureDef).setUserData(
-				new Box2DSprite(new Sprite(new Texture(cockpit.getSprite()))));
+		body.createFixture(fixtureDef).setUserData(new Box2DSprite(new Sprite(new Texture(cockpit.getSprite()))));
 		cockpit.setBody(body);
 		parts.get(0).setBody(body);
-		// Need to set this part's body in the Layout for the ship as well.
-		System.out.println(cockpit.getGridX() + " " + cockpit.getGridY());
-		setup.getPart(cockpit.getGridX(), cockpit.getGridY()).setBody(body);
 		shape.dispose();
 
 		// Creating and attaching remaining parts to Ship.
 		for (int i = 1; i < parts.size(); ++i) {
 			if (parts.get(i) != null) {
 				Part part = parts.get(i);
-				bodyDef.position.set(part.getGridX(), part.getGridY());
+				System.out.println("Looking at a " + part.getName() + " at position " + part.getGridX() + ", "
+						+ part.getGridY());
+
+				// Reposition the body.
+				bodyDef.position.set(part.getGridX() + ((part.getWidth() * 16) / PIXELS_TO_METERS), part.getGridY()
+						+ ((part.getHeight() * 16) / this.PIXELS_TO_METERS));
+
 				bodyDef.angle = (float) Math.toRadians(part.getRotation());
 				shape = new PolygonShape();
 				shape.setAsBox(part.getWidth() / 2f, part.getHeight() / 2f);
 				fixtureDef.density = part.getDensity();
 				fixtureDef.shape = shape;
 				body = world.createBody(bodyDef);
-				body.createFixture(fixtureDef).setUserData(
-						new Box2DSprite(new Sprite(
-								new Texture(part.getSprite()))));
+				body.createFixture(fixtureDef).setUserData(new Box2DSprite(new Sprite(new Texture(part.getSprite()))));
 				part.setBody(body);
-				setup.getPart(part.getGridX(), part.getGridY()).setBody(body);
-				setup.setPart(part, part.getGridX(), part.getGridY());
 				shape.dispose();
 			}
 		}
@@ -199,25 +177,20 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 		// Weld all adjacent parts together.
 		System.out.println(parts.size());
 		for (Part part : parts) {
-			System.out.println("Looking at " + part + " " + part.getGridX()
-					+ " " + part.getGridY());
-			if (!setup.getAdjacent(part).isEmpty()) {
-				System.out.println("here");
-				for (Part adjacent : setup.getAdjacent(part)) {
-					// if (part.getGridX() != adjacent.getGridX()
-					// && part.getGridY() != adjacent.getGridY()) {
-					System.out.println(part);
-					System.out.println(adjacent);
-					System.out.println(part.getBody().getPosition());
-					System.out.println(adjacent.getBody().getPosition());
-					weldJointDef.initialize(adjacent.getBody(), part.getBody(),
-							new Vector2(
-									(part.getBody().getPosition().x + adjacent
-											.getBody().getPosition().x) / 2,
-									(part.getBody().getPosition().y + adjacent
-											.getBody().getPosition().y) / 2));
-					world.createJoint(weldJointDef);
-					// }
+			System.out.println("Looking at " + part + " " + part.getGridX() + " " + part.getGridY());
+			for (int i = 0; i < 4; ++i) {
+				ArrayList<Part> adjacents = getAdjacent(part, i);
+				if (!adjacents.isEmpty()) {
+					for (Part adjacent : adjacents) {
+						System.out.println(part);
+						System.out.println(adjacent);
+						System.out.println(part.getBody().getPosition());
+						System.out.println(adjacent.getBody().getPosition());
+						weldJointDef.initialize(adjacent.getBody(), part.getBody(), new Vector2((part.getBody()
+								.getPosition().x + adjacent.getBody().getPosition().x) / 2, (part.getBody()
+								.getPosition().y + adjacent.getBody().getPosition().y) / 2));
+						world.createJoint(weldJointDef);
+					}
 				}
 			}
 		}
@@ -232,8 +205,7 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 							triggerList.add(trigger);
 							keyActions.put(trigger.getKeys()[i], triggerList);
 						} else {
-							ArrayList<Part> triggerList = keyActions
-									.get(trigger.getKeys()[i]);
+							ArrayList<Part> triggerList = keyActions.get(trigger.getKeys()[i]);
 							triggerList.add(trigger);
 							keyActions.put(trigger.getKeys()[i], triggerList);
 						}
@@ -241,6 +213,104 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 				}
 			}
 		}
+	}
+
+	private ArrayList<Part> getAdjacent(Part basePart, int direction) {
+		// Instantiate the list
+		ArrayList<Part> list = new ArrayList<>();
+		list.clear();
+		// Get grid-Width and grid-Height
+		Texture texture = new Texture(basePart.getSprite());
+		int rotIndex = (int) (Math.abs(basePart.getRotation()) / 90) % 4;
+		int tilesX = 0;
+		int tilesY = 0;
+		if (rotIndex == 1 || rotIndex == 3) {
+			System.out.println();
+			tilesX = (int) texture.getHeight() / 16;
+			tilesY = (int) texture.getWidth() / 16;
+		} else {
+			tilesX = (int) texture.getWidth() / 16;
+			tilesY = (int) texture.getHeight() / 16;
+		}
+
+		int gridX = basePart.getGridX();
+		int gridY = basePart.getGridY();
+
+		// Find all grid tiles along the given edge.
+		switch (direction) {
+		case 0:
+			// For the entire width of the image
+			for (int i = 0; i < tilesX; ++i) {
+				// x is each x grid
+				int adjacentX = gridX + i;
+				// for every image thus far
+				for (int j = 0; j < parts.size(); ++j) {
+					Part partImage = parts.get(j);
+					// if it overlaps any of the points along the top
+					// edge, add it to the list of images adjacent in
+					// that direction
+					ArrayList<Vector2> occupied = partImage.getOccupiedCells();
+					if (occupied.contains(new Vector2(adjacentX, (gridY + tilesY))) && !list.contains(partImage)) {
+						list.add(partImage);
+					}
+				}
+			}
+			break;
+		case 1:
+			// For the entire height of the image
+			for (int i = 0; i < tilesY; ++i) {
+				// y is each y grid
+				int adjacentY = gridY + i;
+				// for every image thus far
+				for (int j = 0; j < parts.size(); ++j) {
+					Part partImage = parts.get(j);
+					// if it overlaps any of the points along the right
+					// edge, add it to the list of images adjacent in
+					// that direction
+					ArrayList<Vector2> occupied = partImage.getOccupiedCells();
+					if (occupied.contains(new Vector2(gridX + tilesX, adjacentY)) && !list.contains(partImage)) {
+						list.add(partImage);
+					}
+				}
+			}
+			break;
+		case 2:
+			// For the entire width of the image
+			for (int i = 0; i < tilesX; ++i) {
+				// x is each x grid
+				int adjacentX = gridX + i;
+				// for every image thus far
+				for (int j = 0; j < parts.size(); ++j) {
+					Part partImage = parts.get(j);
+					// if it overlaps any of the points along the bottom
+					// edge, add it to the list of images adjacent in
+					// that direction
+					ArrayList<Vector2> occupied = partImage.getOccupiedCells();
+					if (occupied.contains(new Vector2(adjacentX, gridY - 1)) && !list.contains(partImage)) {
+						list.add(partImage);
+					}
+				}
+			}
+			break;
+		case 3:
+			// For the entire height of the image
+			for (int i = 0; i < tilesY; ++i) {
+				// y is each y grid
+				int adjacentY = gridY + i;
+				// for every image thus far
+				for (int j = 0; j < parts.size(); ++j) {
+					Part partImage = parts.get(j);
+					// if it overlaps any of the points along the left
+					// edge, add it to the list of images adjacent in
+					// that direction
+					ArrayList<Vector2> occupied = partImage.getOccupiedCells();
+					if (occupied.contains(new Vector2(gridX - 1, adjacentY)) && !list.contains(partImage)) {
+						list.add(partImage);
+					}
+				}
+			}
+		}
+		return list;
 	}
 
 	@Override
@@ -251,13 +321,8 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 	@Override
 	public void read(Json json, JsonValue jsonData) {
 		world = json.readValue(World.class, jsonData);
-		cockpitPosition = json.readValue(Vector2.class, jsonData);
-		width = jsonData.getInt("width");
-		height = jsonData.getInt("height");
-		parts = json.readValue("triggers", ArrayList.class, Part.class,
-				jsonData);
+		parts = json.readValue("triggers", ArrayList.class, Part.class, jsonData);
 		parts = json.readValue("parts", ArrayList.class, Part.class, jsonData);
-		keyActions = json.readValue("keyActions", HashMap.class,
-				ArrayList.class, jsonData);
+		keyActions = json.readValue("keyActions", HashMap.class, ArrayList.class, jsonData);
 	}
 }

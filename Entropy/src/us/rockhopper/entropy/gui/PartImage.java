@@ -55,7 +55,6 @@ public class PartImage extends Image {
 		int tilesX = 0;
 		int tilesY = 0;
 		if (rotIndex == 1 || rotIndex == 3) {
-			System.out.println();
 			tilesX = (int) getHeight() / 16;
 			tilesY = (int) getWidth() / 16;
 		} else {
@@ -150,34 +149,4 @@ public class PartImage extends Image {
 		return result;
 	}
 
-	// /**
-	// * Takes another PartImage (ASSUMED TO BE AN ADJACENT PART) and determines the direction towards it.
-	// *
-	// * @param adjacent
-	// * @return
-	// */
-	// public int getDirectionTo(PartImage adjacent) {
-	// // Get the coordinates of the origins
-	// Vector2 adjacentCoords = adjacent.localToStageCoordinates(new Vector2(adjacent.getWidth() / 2f, adjacent
-	// .getHeight() / 2f));
-	// Vector2 originCoords = this.localToStageCoordinates(new Vector2(getWidth() / 2f, getHeight() / 2f));
-	//
-	// if (adjacentCoords.y > originCoords.y) {
-	// // Top
-	// return 0;
-	// }//Doesn't work--what happens when pieces have both a ggreater y and x? TODO
-	// if (adjacentCoords.x >= gridX + tilesX) {
-	// // Right
-	// return 1;
-	// }
-	// if (otherY < gridY) {
-	// // Bottom
-	// return 2;
-	// }
-	// if (otherX < gridX) {
-	// // Left
-	// return 3;
-	// }
-	// throw new RuntimeException("Unable to find direction towards this piece.");
-	// }
 }
