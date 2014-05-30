@@ -1,7 +1,5 @@
 package us.rockhopper.entropy.screen;
 
-import javax.swing.JFileChooser;
-
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
 import us.rockhopper.entropy.entities.BasicShip;
 import us.rockhopper.entropy.utility.FileIO;
@@ -29,7 +27,7 @@ public class GameStart implements Screen {
 
 	private TiledDrawable background;
 
-	private String defaultFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
+	private String defaultFolder = "data";
 	private World world;
 	private Box2DDebugRenderer debugRenderer;
 	private SpriteBatch batch;
@@ -62,8 +60,8 @@ public class GameStart implements Screen {
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
 		// Draw background
-		background.draw(batch, -Gdx.graphics.getWidth() / 2, -Gdx.graphics.getHeight() / 2, Gdx.graphics.getWidth() * 8,
-				Gdx.graphics.getHeight() * 8);
+		background.draw(batch, -Gdx.graphics.getWidth() / 2, -Gdx.graphics.getHeight() / 2,
+				Gdx.graphics.getWidth() * 8, Gdx.graphics.getHeight() * 8);
 		Box2DSprite.draw(batch, world);
 		batch.end();
 
@@ -87,7 +85,7 @@ public class GameStart implements Screen {
 		camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
 		// Deserialize and get ship from file
-		String filePath = defaultFolder + "\\EntropyShips\\" + shipName + ".json";
+		String filePath = defaultFolder + "/ships/" + shipName + ".json";
 		String shipJSON = FileIO.read(filePath);
 		GsonBuilder gson = new GsonBuilder();
 		gson.registerTypeAdapter(Part.class, new PartClassAdapter());
@@ -109,7 +107,7 @@ public class GameStart implements Screen {
 
 			@Override
 			public boolean scrolled(int amount) {
-				camera.zoom += amount / 125f;
+				camera.zoom += amount / 60f;
 				return true;
 			}
 
