@@ -6,7 +6,6 @@ import java.util.HashMap;
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
 import us.rockhopper.entropy.utility.Part;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -30,7 +29,6 @@ import com.badlogic.gdx.utils.JsonValue;
  */
 public class BasicShip extends InputAdapter implements Json.Serializable {
 
-	private final float PIXELS_TO_METERS = 16;
 	private World world;
 	private ArrayList<Part> parts = new ArrayList<Part>();
 	private HashMap<Integer, ArrayList<Part>> keyActions = new HashMap<Integer, ArrayList<Part>>();
