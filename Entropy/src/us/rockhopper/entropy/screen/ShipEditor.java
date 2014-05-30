@@ -47,6 +47,13 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TiledDrawable;
 import com.google.gson.GsonBuilder;
 
+/**
+ * Allows ships to be created, edited, saved, loaded, tested, and deleted.
+ * 
+ * @author Tim Clancy
+ * @version 5.30.14
+ * 
+ */
 public class ShipEditor extends ScreenAdapter {
 
 	private TiledDrawable background;
@@ -59,6 +66,7 @@ public class ShipEditor extends ScreenAdapter {
 	private Table selections;
 	private Table tabbed;
 	private Table info;
+	private Table screen;
 
 	private String defaultFolder = "data";
 
@@ -137,6 +145,7 @@ public class ShipEditor extends ScreenAdapter {
 		final TextButton buttonWeaponry = new TextButton("Weaponry", skin, "default");
 		final TextButton buttonTools = new TextButton("Editing", skin, "default");
 		final TextButton buttonSave = new TextButton("Save", skin, "default");
+		final TextButton buttonLoad = new TextButton("Browse Ships", skin, "default");
 		final TextButton buttonTest = new TextButton("Test Flight", skin, "default");
 
 		final TextField nameField = new TextField("Ship Name", skin, "default");
@@ -624,13 +633,13 @@ public class ShipEditor extends ScreenAdapter {
 			weaponry.add(part);
 		}
 
+		screen = new Table(skin);
 		selections = new Table(skin);
 		info = new Table(skin);
-		info.setBackground(new TextureRegionDrawable(new TextureRegion(new Texture("assets/img/tableBack.png"))));
 		tabbed = new Table(skin);
-		tabbed.setBackground(new TextureRegionDrawable(new TextureRegion(new Texture("assets/img/tableBack.png"))));
-		selections.setFillParent(true);
-		selections.debug();
+		selections.setBackground(new TextureRegionDrawable(new TextureRegion(new Texture("assets/img/tableBack.png"))));
+		screen.setFillParent(true);
+		screen.debug();
 
 		itemChooseListener = new ClickListener() {
 
@@ -806,8 +815,9 @@ public class ShipEditor extends ScreenAdapter {
 					}
 					ShipSelectDialog dialog = new ShipSelectDialog("", skin, ships);
 					dialog.show(stage);
+				} else if (event.getListenerActor() == buttonLoad) {
+					System.out.println("Load!");
 				}
-
 			}
 		};
 
@@ -819,23 +829,25 @@ public class ShipEditor extends ScreenAdapter {
 		buttonTools.addListener(tabChooseListener);
 		buttonSave.addListener(tabChooseListener);
 		buttonTest.addListener(tabChooseListener);
-		selections.left().top();
+		buttonLoad.addListener(tabChooseListener);
 		selections.defaults().fillX();
-		selections.add(buttonCommand);
-		selections.add(buttonControl);
-		selections.add(buttonThrust);
-		selections.add(buttonHull);
-		selections.add(buttonWeaponry);
-		selections.add(nameField);
-		selections.add(buttonSave);
-		selections.row();
-		selections.add(tabbed).colspan(5);
-		selections.add(buttonTools);
-		selections.add(buttonTest);
-		selections.row();
-		selections.add(info).colspan(5);
-
-		stage.addActor(selections);
+		selections.add(buttonCommand).pad(2);
+		selections.add(buttonControl).pad(2);
+		selections.add(buttonThrust).pad(2);
+		selections.add(buttonHull).pad(2);
+		selections.add(buttonWeaponry).pad(2);
+		selections.add(buttonTools).pad(2);
+		selections.add(nameField).row();
+		selections.add(tabbed).colspan(6);
+		selections.add(buttonSave).row();
+		selections.add().colspan(6);
+		selections.add(buttonLoad).row();
+		selections.add().colspan(6);
+		selections.add(buttonTest).row();
+		selections.add(info).colspan(6);
+		screen.left().top();
+		screen.add(selections);
+		stage.addActor(screen);
 
 		stage.addAction(sequence(moveTo(0, stage.getHeight()), moveTo(0, 0, .5f))); // coming in from top animation
 	}
