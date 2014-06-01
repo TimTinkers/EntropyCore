@@ -52,7 +52,7 @@ import com.google.gson.GsonBuilder;
  * Allows ships to be created, edited, saved, loaded, tested, and deleted.
  * 
  * @author Tim Clancy
- * @version 5.30.14
+ * @version 5.31.14
  * 
  */
 public class ShipEditor extends ScreenAdapter {
@@ -811,7 +811,7 @@ public class ShipEditor extends ScreenAdapter {
 						Ship ship = gson.create().fromJson(shipJSON, Ship.class);
 						ships.add(ship);
 					}
-					ShipSelectDialog dialog = new ShipSelectDialog("", skin, ships);
+					ShipSelectDialog dialog = new ShipSelectDialog("", skin, ships, parts);
 					dialog.show(stage);
 				} else if (event.getListenerActor() == buttonLoad) {
 					final ArrayList<Ship> ships = new ArrayList<Ship>();

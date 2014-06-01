@@ -93,7 +93,7 @@ public class MainMenu implements Screen {
 		buttonEditor.pad(15);
 
 		TextButton buttonTest = new TextButton("Test Flight", skin, "default");
-		
+
 		buttonTest.addListener(new ClickListener() {
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
@@ -107,7 +107,7 @@ public class MainMenu implements Screen {
 					Ship ship = gson.create().fromJson(shipJSON, Ship.class);
 					ships.add(ship);
 				}
-				ShipSelectDialog dialog = new ShipSelectDialog("", skin, ships);
+				ShipSelectDialog dialog = new ShipSelectDialog("", skin, ships, null);
 				dialog.show(stage);
 			}
 		});
