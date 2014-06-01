@@ -757,46 +757,56 @@ public class ShipEditor extends ScreenAdapter {
 				// Instantiate the ship and move onto the next screen.
 				else if (event.getListenerActor() == buttonSave) {
 					if (!parts.isEmpty()) {
-						Ship ship = new Ship(nameField.getText(), parts);
+						if (parts.get(0) instanceof Cockpit) {
+							Ship ship = new Ship(nameField.getText(), parts);
 
-						// Serialize and write to file
-						GsonBuilder gson = new GsonBuilder();
-						gson.registerTypeAdapter(Part.class, new PartClassAdapter());
-						final String shipJSON = gson.setPrettyPrinting().create().toJson(ship);
-						if (FileIO.exists(defaultFolder + "/ships/" + nameField.getText() + ".json")) {
-							new Dialog("", skin) {
-								{
-									text("Ship \"" + nameField.getText()
-											+ "\" already exists.\nWould you like to overwrite it?");
-									button("Yes", true);
-									button("No", false);
-								}
-
-								protected void result(Object object) {
-									System.out.println("Chosen: " + object);
-									boolean bool = (Boolean) object;
-									if (bool == true) {
-										new Dialog("", skin) {
-											{
-												text("Your ship has been saved.");
-											}
-										}.show(stage).addAction(
-												sequence(alpha(1f, 0.3f), Actions.delay(0.4f), alpha(0f, 0.3f),
-														Actions.removeActor()));
-										FileIO.write(defaultFolder + "/ships/" + nameField.getText() + ".json",
-												shipJSON);
+							// Serialize and write to file
+							GsonBuilder gson = new GsonBuilder();
+							gson.registerTypeAdapter(Part.class, new PartClassAdapter());
+							final String shipJSON = gson.setPrettyPrinting().create().toJson(ship);
+							if (FileIO.exists(defaultFolder + "/ships/" + nameField.getText() + ".json")) {
+								new Dialog("", skin) {
+									{
+										text("Ship \"" + nameField.getText()
+												+ "\" already exists.\nWould you like to overwrite it?");
+										button("Yes", true);
+										button("No", false);
 									}
-								}
-							}.show(stage);
+
+									protected void result(Object object) {
+										System.out.println("Chosen: " + object);
+										boolean bool = (Boolean) object;
+										if (bool == true) {
+											new Dialog("", skin) {
+												{
+													text("Your ship has been saved.");
+												}
+											}.show(stage).addAction(
+													sequence(alpha(1f, 0.3f), Actions.delay(0.4f), alpha(0f, 0.3f),
+															Actions.removeActor()));
+											FileIO.write(defaultFolder + "/ships/" + nameField.getText() + ".json",
+													shipJSON);
+										}
+									}
+								}.show(stage);
+							} else {
+								new Dialog("", skin) {
+									{
+										text("Your ship has been saved.");
+									}
+								}.show(stage).addAction(
+										sequence(alpha(1f, 0.3f), Actions.delay(0.4f), alpha(0f, 0.3f),
+												Actions.removeActor()));
+								FileIO.write(defaultFolder + "/ships/" + nameField.getText() + ".json", shipJSON);
+							}
 						} else {
 							new Dialog("", skin) {
 								{
-									text("Your ship has been saved.");
+									text("You need a command module on your ship!");
 								}
 							}.show(stage).addAction(
 									sequence(alpha(1f, 0.3f), Actions.delay(0.4f), alpha(0f, 0.3f),
 											Actions.removeActor()));
-							FileIO.write(defaultFolder + "/ships/" + nameField.getText() + ".json", shipJSON);
 						}
 					} else {
 						new Dialog("", skin) {
