@@ -31,6 +31,10 @@ public class FileIO {
 		return jsonString;
 	}
 
+	public static void delete(String filePath) {
+		System.out.println("File deleted.");
+	}
+
 	public static ArrayList<File> getFilesForFolder(final File folder) {
 		ArrayList<File> files = new ArrayList<File>();
 		for (final File fileEntry : folder.listFiles()) {
