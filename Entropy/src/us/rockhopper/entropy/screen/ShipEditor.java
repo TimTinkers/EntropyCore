@@ -12,6 +12,7 @@ import us.rockhopper.entropy.entities.Gyroscope;
 import us.rockhopper.entropy.entities.Ship;
 import us.rockhopper.entropy.entities.Thruster;
 import us.rockhopper.entropy.gui.PartImage;
+import us.rockhopper.entropy.gui.ShipLoadDialog;
 import us.rockhopper.entropy.gui.ShipSelectDialog;
 import us.rockhopper.entropy.utility.FileIO;
 import us.rockhopper.entropy.utility.Part;
@@ -106,6 +107,7 @@ public class ShipEditor extends ScreenAdapter {
 		batch.begin();
 		// Draw part overlay
 		if (activePart != null) {
+			// TODO Make the overlay for the images a ninepatch so it sizes properly
 			Sprite sprite = new Sprite(new Texture("assets/img/overlay.png"));
 			sprite.setPosition(activePartX - sWidth / 2, activePartY - sHeight / 2);
 			sprite.setSize(activeImage.getWidth(), activeImage.getHeight());
@@ -126,7 +128,6 @@ public class ShipEditor extends ScreenAdapter {
 		camera.viewportHeight = height;
 		sWidth = width;
 		sHeight = height;
-		System.out.println("Resized to " + sWidth + " " + sHeight);
 	}
 
 	@Override
@@ -816,7 +817,18 @@ public class ShipEditor extends ScreenAdapter {
 					ShipSelectDialog dialog = new ShipSelectDialog("", skin, ships);
 					dialog.show(stage);
 				} else if (event.getListenerActor() == buttonLoad) {
-					System.out.println("Load!");
+					final ArrayList<Ship> ships = new ArrayList<Ship>();
+					// Load all ships into this list.
+					String shipPath = defaultFolder + "/ships/";
+					for (File file : FileIO.getFilesForFolder(new File(shipPath))) {
+						String shipJSON = FileIO.read(file.getAbsolutePath());
+						GsonBuilder gson = new GsonBuilder();
+						gson.registerTypeAdapter(Part.class, new PartClassAdapter());
+						Ship ship = gson.create().fromJson(shipJSON, Ship.class);
+						ships.add(ship);
+					}
+					ShipLoadDialog dialog = new ShipLoadDialog("", skin, ships);
+					dialog.show(stage);
 				}
 			}
 		};
@@ -837,7 +849,7 @@ public class ShipEditor extends ScreenAdapter {
 		selections.add(buttonHull).pad(2);
 		selections.add(buttonWeaponry).pad(2);
 		selections.add(buttonTools).pad(2);
-		selections.add(nameField).row();
+		selections.add(nameField).pad(2).row();
 		selections.add(tabbed).colspan(6);
 		selections.add(buttonSave).row();
 		selections.add().colspan(6);

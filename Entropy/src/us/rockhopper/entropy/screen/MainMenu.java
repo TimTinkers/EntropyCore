@@ -93,6 +93,7 @@ public class MainMenu implements Screen {
 		buttonEditor.pad(15);
 
 		TextButton buttonTest = new TextButton("Test Flight", skin, "default");
+		
 		buttonTest.addListener(new ClickListener() {
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
