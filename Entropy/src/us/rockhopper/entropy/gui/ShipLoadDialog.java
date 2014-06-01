@@ -47,11 +47,11 @@ public class ShipLoadDialog extends Dialog {
 				toggleGroup.add(button);
 				this.getContentTable().add(button);
 			}
+			button("Load", "load");
+			button("Delete", "delete");
 		} else {
 			text("You need to make a ship before you can load one.");
 		}
-		button("Load", "load");
-		button("Delete", "delete");
 		button("Cancel", "cancel");
 	}
 
@@ -59,7 +59,7 @@ public class ShipLoadDialog extends Dialog {
 	protected void result(Object object) {
 		String result = (String) object;
 		if (result.equals("cancel")) {
-			//this.addAction(sequence(alpha(1f), Actions.delay(0.3f), alpha(0f, 0.6f), Actions.removeActor()));
+			this.addAction(sequence(alpha(1f), Actions.delay(0.3f), alpha(0f, 0.6f), Actions.removeActor()));
 		} else if (result.equals("load")) {
 			System.out.println(shipToLoad);
 			this.addAction(sequence(alpha(1f), Actions.delay(0.3f), alpha(0f, 0.6f), Actions.removeActor()));
