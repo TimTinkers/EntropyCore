@@ -32,7 +32,12 @@ public class FileIO {
 	}
 
 	public static void delete(String filePath) {
-		System.out.println("File deleted.");
+		try {
+			File file = new File(filePath);
+			file.delete();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static ArrayList<File> getFilesForFolder(final File folder) {
