@@ -81,6 +81,7 @@ public class ShipEditor extends ScreenAdapter {
 	private Part activePart;
 	private float activePartX, activePartY;
 	private int sWidth, sHeight;
+	private int totalCost;
 
 	ArrayList<Vector2> occupiedTiles = new ArrayList<Vector2>();
 	ArrayList<PartImage> partImages = new ArrayList<PartImage>();
@@ -152,6 +153,7 @@ public class ShipEditor extends ScreenAdapter {
 		final TextField nameField = new TextField("Ship Name", skin, "default");
 		final TextField forwardField = new TextField("Forward", skin, "default");
 		final TextField reverseField = new TextField("Reverse", skin, "default");
+		final Label cost = new Label("Total cost: " + totalCost, skin, "default");
 
 		// Initialize input processing
 		InputMultiplexer multiplexer = new InputMultiplexer();
@@ -338,6 +340,8 @@ public class ShipEditor extends ScreenAdapter {
 
 											// Designate that this image be rendered
 											partImages.add(image);
+											totalCost += part.getCost();
+											cost.setText("Total cost: " + totalCost);
 										} else {
 											new Dialog("", skin) {
 												{
@@ -375,6 +379,8 @@ public class ShipEditor extends ScreenAdapter {
 						if (deleted != null) {
 							partImages.remove(deleted);
 							parts.remove(deleted.getPart());
+							totalCost -= deleted.getPart().getCost();
+							cost.setText("Total cost: " + totalCost);
 							for (Vector2 vector : deleted.getOccupiedCells()) {
 								occupiedTiles.remove(vector);
 							}
@@ -846,7 +852,8 @@ public class ShipEditor extends ScreenAdapter {
 		selections.add(buttonHull).pad(2);
 		selections.add(buttonWeaponry).pad(2);
 		selections.add(buttonTools).pad(2);
-		selections.add(nameField).pad(2).row();
+		selections.add(nameField).pad(2);
+		selections.add(cost).pad(2).row();
 		selections.add(tabbed).colspan(6);
 		selections.add(buttonSave).row();
 		selections.add().colspan(6);
