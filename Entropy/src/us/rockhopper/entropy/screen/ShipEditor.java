@@ -178,7 +178,6 @@ public class ShipEditor extends ScreenAdapter {
 						image.getPart().setGridPosition(image.getGridX() + dX, image.getGridY() + dY);
 
 						for (Vector2 vector : image.getOccupiedCells()) {
-							System.out.println("Marking as occupied " + vector.x + " " + vector.y);
 							image.getPart().setOccupiedCells(image.getOccupiedCells());
 							occupiedTiles.add(vector);
 						}
@@ -297,7 +296,6 @@ public class ShipEditor extends ScreenAdapter {
 
 											// Mark all tiles covered by this part as occupied
 											for (Vector2 vector : image.getOccupiedCells()) {
-												System.out.println("Marking as occupied " + vector.x + " " + vector.y);
 												occupiedTiles.add(vector);
 											}
 
@@ -537,7 +535,6 @@ public class ShipEditor extends ScreenAdapter {
 				if (rotIndex == 1 || rotIndex == 3) {
 					tilesX = (int) image.getHeight() / 16;
 					tilesY = (int) image.getWidth() / 16;
-					System.out.println("These coordinates are " + tilesX + " " + tilesY);
 				} else {
 					tilesX = (int) image.getWidth() / 16;
 					tilesY = (int) image.getHeight() / 16;
@@ -733,19 +730,19 @@ public class ShipEditor extends ScreenAdapter {
 					remove.addListener(new ClickListener() {
 						@Override
 						public void clicked(InputEvent event, float x, float y) {
-							Label deleteState = new Label("Delete mode is enabled.", skin, "default");
-							deleteState.addAction(sequence(alpha(0f), alpha(1f, 0.6f)));
+							String deleteString = "disabled";
 							if (!deleteMode) {
-								info.add(deleteState);
+								deleteString = "enabled";
 								deleteMode = true;
 							} else {
-								info.clear();
-								deleteState.setText("Delete mode is disabled.");
-								deleteState.addAction(sequence(alpha(1f), Actions.delay(0.3f), alpha(0f, 0.6f),
-										Actions.removeActor()));
-								info.add(deleteState);
+								deleteString = "disabled";
 								deleteMode = false;
 							}
+							Dialog dialog = new Dialog("", skin);
+							dialog.add(new Label("Delete mode is " + deleteString + ".", skin));
+							dialog.show(stage).addAction(
+									sequence(alpha(1f, 0.3f), Actions.delay(0.6f), alpha(0f, 0.3f),
+											Actions.removeActor()));
 						}
 					});
 					tabbed.add(remove);
