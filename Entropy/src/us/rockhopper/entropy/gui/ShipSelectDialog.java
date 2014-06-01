@@ -29,6 +29,7 @@ public class ShipSelectDialog extends Dialog {
 				System.out.println("You chose " + event.getListenerActor().getName());
 				((Game) Gdx.app.getApplicationListener()).setScreen(new TestFlight(event.getListenerActor().getName()));
 			} else {
+				shipToPlay = event.getListenerActor().getName();
 				new Dialog("", skin) {
 					{
 						text("Warning! All unsaved progress will be lost if you continue.");
@@ -39,9 +40,7 @@ public class ShipSelectDialog extends Dialog {
 					protected void result(Object object) {
 						boolean bool = (Boolean) object;
 						if (bool == true) {
-							// TODO this is still null
-							((Game) Gdx.app.getApplicationListener()).setScreen(new TestFlight(event.getListenerActor()
-									.getName()));
+							((Game) Gdx.app.getApplicationListener()).setScreen(new TestFlight(shipToPlay));
 						} else {
 							this.addAction(sequence(alpha(1f), Actions.delay(0.3f), alpha(0f, 0.6f),
 									Actions.removeActor()));
