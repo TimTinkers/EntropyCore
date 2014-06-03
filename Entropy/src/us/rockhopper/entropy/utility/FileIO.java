@@ -21,8 +21,7 @@ public class FileIO {
 	public static String read(String filePath) {
 		String jsonString = "";
 		try {
-			List<String> lines = Files.readLines(new File(filePath),
-					Charsets.UTF_8);
+			List<String> lines = Files.readLines(new File(filePath), Charsets.UTF_8);
 			for (String line : lines) {
 				jsonString += line;
 			}
@@ -32,13 +31,21 @@ public class FileIO {
 		return jsonString;
 	}
 
+	public static void delete(String filePath) {
+		try {
+			File file = new File(filePath);
+			file.delete();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	public static ArrayList<File> getFilesForFolder(final File folder) {
 		ArrayList<File> files = new ArrayList<File>();
 		for (final File fileEntry : folder.listFiles()) {
 			if (fileEntry.isFile()) {
 				String temp = fileEntry.getName();
-				if ((temp.substring(temp.lastIndexOf('.') + 1, temp.length())
-						.toLowerCase()).equals("json"))
+				if ((temp.substring(temp.lastIndexOf('.') + 1, temp.length()).toLowerCase()).equals("json"))
 					files.add(fileEntry);
 			}
 		}
@@ -46,8 +53,6 @@ public class FileIO {
 	}
 
 	public static boolean exists(String string) {
-		// TODO Auto-generated method stub
-		System.out.println("FIX THE EXISTS METHOD");
-		return true;
+		return new File(string).isFile();
 	}
 }

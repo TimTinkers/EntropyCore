@@ -1,7 +1,7 @@
 package us.rockhopper.entropy.screen;
 
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
-import us.rockhopper.entropy.entities.BasicShip;
+import us.rockhopper.entropy.entities.Ship;
 import us.rockhopper.entropy.utility.FileIO;
 import us.rockhopper.entropy.utility.Part;
 import us.rockhopper.entropy.utility.PartClassAdapter;
@@ -23,7 +23,7 @@ import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.utils.TiledDrawable;
 import com.google.gson.GsonBuilder;
 
-public class GameStart implements Screen {
+public class TestFlight implements Screen {
 
 	private TiledDrawable background;
 
@@ -37,9 +37,9 @@ public class GameStart implements Screen {
 	private final float TIMESTEP = 1 / 60f;
 	private final int VELOCITYITERATIONS = 8, POSITIONITERATIONS = 3;
 
-	private BasicShip ship;
+	private Ship ship;
 
-	public GameStart(String shipName) {
+	public TestFlight(String shipName) {
 		this.shipName = shipName;
 	}
 
@@ -65,7 +65,7 @@ public class GameStart implements Screen {
 		Box2DSprite.draw(batch, world);
 		batch.end();
 
-		debugRenderer.render(world, camera.combined);
+		//debugRenderer.render(world, camera.combined);
 	}
 
 	@Override
@@ -89,8 +89,7 @@ public class GameStart implements Screen {
 		String shipJSON = FileIO.read(filePath);
 		GsonBuilder gson = new GsonBuilder();
 		gson.registerTypeAdapter(Part.class, new PartClassAdapter());
-		ship = gson.create().fromJson(shipJSON, BasicShip.class);
-		System.out.println("Initializing ship!");
+		ship = gson.create().fromJson(shipJSON, Ship.class);
 		ship.setWorld(world);
 		ship.create();
 		Gdx.input.setInputProcessor(new InputMultiplexer(new InputAdapter() {

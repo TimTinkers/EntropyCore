@@ -7,16 +7,17 @@ import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
 import java.io.File;
 import java.util.ArrayList;
 
-import us.rockhopper.entropy.entities.BasicShip;
 import us.rockhopper.entropy.entities.Cockpit;
 import us.rockhopper.entropy.entities.Gyroscope;
+import us.rockhopper.entropy.entities.Ship;
 import us.rockhopper.entropy.entities.Thruster;
 import us.rockhopper.entropy.gui.PartImage;
+import us.rockhopper.entropy.gui.ShipLoadDialog;
+import us.rockhopper.entropy.gui.ShipSelectDialog;
 import us.rockhopper.entropy.utility.FileIO;
 import us.rockhopper.entropy.utility.Part;
 import us.rockhopper.entropy.utility.PartClassAdapter;
 
-import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
@@ -47,18 +48,29 @@ import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.scenes.scene2d.utils.TiledDrawable;
 import com.google.gson.GsonBuilder;
 
+/**
+ * Allows ships to be created, edited, saved, loaded, tested, and deleted.
+ * 
+ * @author Tim Clancy
+ * @version 5.31.14
+ * 
+ */
 public class ShipEditor extends ScreenAdapter {
 
 	private TiledDrawable background;
+	private boolean loading;
+	private String shipName;
 
 	private Stage stage;
 	private Skin skin;
 	private OrthographicCamera camera;
 	private SpriteBatch batch;
+	private ShipLoadDialog loadDialog;
 
 	private Table selections;
 	private Table tabbed;
 	private Table info;
+	private Table screen;
 
 	private String defaultFolder = "data";
 
@@ -72,6 +84,7 @@ public class ShipEditor extends ScreenAdapter {
 	private Part activePart;
 	private float activePartX, activePartY;
 	private int sWidth, sHeight;
+	private int totalCost;
 
 	ArrayList<Vector2> occupiedTiles = new ArrayList<Vector2>();
 	ArrayList<PartImage> partImages = new ArrayList<PartImage>();
@@ -79,25 +92,34 @@ public class ShipEditor extends ScreenAdapter {
 	private Image activeImage;
 	private ClickListener itemChooseListener;
 
+	public ShipEditor() {
+	}
+
+	public ShipEditor(String shipName) {
+		this.shipName = shipName;
+		loading = true;
+	}
+
 	@Override
 	public void render(float delta) {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		camera.update();
-		stage.act(delta);
 
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
 		// Draw background
 		background.draw(batch, -sWidth / 2, -sHeight / 2, sWidth, sHeight);
-		for (Image image : partImages) {
-			image.draw(batch, 1f);
+		if (!loading) {
+			for (Image image : partImages) {
+				image.draw(batch, 1f);
+			}
 		}
 		batch.end();
 		stage.draw();
 		batch.begin();
 		// Draw part overlay
 		if (activePart != null) {
+			// TODO Make the overlay for the images a ninepatch so it sizes properly
 			Sprite sprite = new Sprite(new Texture("assets/img/overlay.png"));
 			sprite.setPosition(activePartX - sWidth / 2, activePartY - sHeight / 2);
 			sprite.setSize(activeImage.getWidth(), activeImage.getHeight());
@@ -106,6 +128,13 @@ public class ShipEditor extends ScreenAdapter {
 		batch.end();
 
 		Table.drawDebug(stage);
+
+		// Refresh the deletion warning dialog
+		if (loadDialog != null) {
+			loadDialog.refresh();
+		}
+		camera.update();
+		stage.act(delta);
 	}
 
 	@Override
@@ -118,11 +147,48 @@ public class ShipEditor extends ScreenAdapter {
 		camera.viewportHeight = height;
 		sWidth = width;
 		sHeight = height;
-		System.out.println("Resized to " + sWidth + " " + sHeight);
 	}
 
 	@Override
 	public void show() {
+
+		if (shipName != null) {
+			// If loading, show the ship.
+			// Deserialize and get ship from file
+			String filePath = defaultFolder + "/ships/" + shipName + ".json";
+			if (FileIO.exists(filePath)) {
+				String shipJSON = FileIO.read(filePath);
+				GsonBuilder gson1 = new GsonBuilder();
+				gson1.registerTypeAdapter(Part.class, new PartClassAdapter());
+				Ship ship = gson1.create().fromJson(shipJSON, Ship.class);
+				occupiedTiles.clear();
+				for (Part part : ship.getParts()) {
+					parts.add(part);
+					PartImage image = new PartImage(part, new Texture(part.getSprite()));
+					image.setOrigin(image.getWidth() / 2f, image.getHeight() / 2f);
+					image.setGridX(part.getGridX());
+					image.setGridY(part.getGridY());
+					image.setRotation(part.getRotation());
+					image.getPart().setGridPosition(image.getGridX(), image.getGridY());
+					for (Vector2 vector : image.getOccupiedCells()) {
+						image.getPart().setOccupiedCells(image.getOccupiedCells());
+						occupiedTiles.add(vector);
+					}
+					// Reposition the image.
+					int rotIndex = (int) (Math.abs(image.getRotation()) / 90) % 4;
+					if ((image.getWidth() != image.getHeight()) && (rotIndex == 1 || rotIndex == 3)) {
+						image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f + image.getWidth()
+								/ 2f, (image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f - image.getHeight() / 4f);
+					} else {
+						image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f,
+								(image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f);
+					}
+					partImages.add(image);
+				}
+			}
+			loading = false;
+		}
+
 		// Sprite rendering
 		background = new TiledDrawable(new TextureRegion(new Texture("assets/img/grid.png")));
 		batch = new SpriteBatch();
@@ -136,11 +202,14 @@ public class ShipEditor extends ScreenAdapter {
 		final TextButton buttonHull = new TextButton("Hull", skin, "default");
 		final TextButton buttonWeaponry = new TextButton("Weaponry", skin, "default");
 		final TextButton buttonTools = new TextButton("Editing", skin, "default");
-		final TextButton buttonGo = new TextButton("Start", skin, "default");
+		final TextButton buttonSave = new TextButton("Save", skin, "default");
+		final TextButton buttonLoad = new TextButton("Browse Ships", skin, "default");
+		final TextButton buttonTest = new TextButton("Test Flight", skin, "default");
 
 		final TextField nameField = new TextField("Ship Name", skin, "default");
 		final TextField forwardField = new TextField("Forward", skin, "default");
 		final TextField reverseField = new TextField("Reverse", skin, "default");
+		final Label cost = new Label("Total cost: " + totalCost, skin, "default");
 
 		// Initialize input processing
 		InputMultiplexer multiplexer = new InputMultiplexer();
@@ -167,7 +236,6 @@ public class ShipEditor extends ScreenAdapter {
 						image.getPart().setGridPosition(image.getGridX() + dX, image.getGridY() + dY);
 
 						for (Vector2 vector : image.getOccupiedCells()) {
-							System.out.println("Marking as occupied " + vector.x + " " + vector.y);
 							image.getPart().setOccupiedCells(image.getOccupiedCells());
 							occupiedTiles.add(vector);
 						}
@@ -253,9 +321,7 @@ public class ShipEditor extends ScreenAdapter {
 									for (int i = 0; i < 4; ++i) {
 										ArrayList<PartImage> temp = getAdjacent(image, i);
 										if (!temp.isEmpty()) {
-											System.out.println("Found " + temp.size() + " pieces in direction " + i);
 											for (PartImage part : temp) {
-												System.out.println("There is a part here, " + part.getPart().getName());
 												adjacentImages.add(part);
 												directions.add(i);
 											}
@@ -286,7 +352,6 @@ public class ShipEditor extends ScreenAdapter {
 
 											// Mark all tiles covered by this part as occupied
 											for (Vector2 vector : image.getOccupiedCells()) {
-												System.out.println("Marking as occupied " + vector.x + " " + vector.y);
 												occupiedTiles.add(vector);
 											}
 
@@ -329,6 +394,8 @@ public class ShipEditor extends ScreenAdapter {
 
 											// Designate that this image be rendered
 											partImages.add(image);
+											totalCost += part.getCost();
+											cost.setText("Total cost: " + totalCost);
 										} else {
 											new Dialog("", skin) {
 												{
@@ -366,15 +433,13 @@ public class ShipEditor extends ScreenAdapter {
 						if (deleted != null) {
 							partImages.remove(deleted);
 							parts.remove(deleted.getPart());
+							totalCost -= deleted.getPart().getCost();
+							cost.setText("Total cost: " + totalCost);
 							for (Vector2 vector : deleted.getOccupiedCells()) {
 								occupiedTiles.remove(vector);
 							}
 
-						}// TODO seems like all of this is working. Now you need to figure out how to make it delete
-							// everything left unattached to the primary command module. If the primary module is
-							// deleted,
-							// delete everything. Unless there's another command module, in which case, make that the
-							// primary command module. And then check to delete anything not attached to it.
+						}
 						deleted = null;
 					}
 				}
@@ -526,7 +591,6 @@ public class ShipEditor extends ScreenAdapter {
 				if (rotIndex == 1 || rotIndex == 3) {
 					tilesX = (int) image.getHeight() / 16;
 					tilesY = (int) image.getWidth() / 16;
-					System.out.println("These coordinates are " + tilesX + " " + tilesY);
 				} else {
 					tilesX = (int) image.getWidth() / 16;
 					tilesY = (int) image.getHeight() / 16;
@@ -623,13 +687,13 @@ public class ShipEditor extends ScreenAdapter {
 			weaponry.add(part);
 		}
 
+		screen = new Table(skin);
 		selections = new Table(skin);
 		info = new Table(skin);
-		info.setBackground(new TextureRegionDrawable(new TextureRegion(new Texture("assets/img/tableBack.png"))));
 		tabbed = new Table(skin);
-		tabbed.setBackground(new TextureRegionDrawable(new TextureRegion(new Texture("assets/img/tableBack.png"))));
-		selections.setFillParent(true);
-		selections.debug();
+		selections.setBackground(new TextureRegionDrawable(new TextureRegion(new Texture("assets/img/tableBack.png"))));
+		screen.setFillParent(true);
+		screen.debug();
 
 		itemChooseListener = new ClickListener() {
 
@@ -722,51 +786,113 @@ public class ShipEditor extends ScreenAdapter {
 					remove.addListener(new ClickListener() {
 						@Override
 						public void clicked(InputEvent event, float x, float y) {
-							Label deleteState = new Label("Delete mode is enabled.", skin, "default");
-							deleteState.addAction(sequence(alpha(0f), alpha(1f, 0.6f)));
+							String deleteString = "disabled";
 							if (!deleteMode) {
-								info.add(deleteState);
+								deleteString = "enabled";
 								deleteMode = true;
 							} else {
-								info.clear();
-								deleteState.setText("Delete mode is disabled.");
-								deleteState.addAction(sequence(alpha(1f), Actions.delay(0.3f), alpha(0f, 0.6f),
-										Actions.removeActor()));
-								info.add(deleteState);
+								deleteString = "disabled";
 								deleteMode = false;
 							}
+							Dialog dialog = new Dialog("", skin);
+							dialog.add(new Label("Delete mode is " + deleteString + ".", skin));
+							dialog.show(stage).addAction(
+									sequence(alpha(1f, 0.3f), Actions.delay(0.6f), alpha(0f, 0.3f),
+											Actions.removeActor()));
 						}
 					});
 					tabbed.add(remove);
 				}
 
 				// Instantiate the ship and move onto the next screen.
-				else if (event.getListenerActor() == buttonGo) {
-					BasicShip ship = new BasicShip(parts.get(0).getGridX(), parts.get(0).getGridY(), parts);
+				else if (event.getListenerActor() == buttonSave) {
+					if (!parts.isEmpty()) {
+						if (parts.get(0) instanceof Cockpit) {
+							Ship ship = new Ship(nameField.getText(), parts);
 
-					// Serialize and write to file
-					GsonBuilder gson = new GsonBuilder();
-					gson.registerTypeAdapter(Part.class, new PartClassAdapter());
-					final String shipJSON = gson.setPrettyPrinting().create().toJson(ship);
-					if (FileIO.exists(defaultFolder + "\\Ships\\" + nameField.getText() + ".json")) {
+							// Serialize and write to file
+							GsonBuilder gson = new GsonBuilder();
+							gson.registerTypeAdapter(Part.class, new PartClassAdapter());
+							final String shipJSON = gson.setPrettyPrinting().create().toJson(ship);
+							if (FileIO.exists(defaultFolder + "/ships/" + nameField.getText() + ".json")) {
+								new Dialog("", skin) {
+									{
+										text("Ship \"" + nameField.getText()
+												+ "\" already exists.\nWould you like to overwrite it?");
+										button("Yes", true);
+										button("No", false);
+									}
+
+									protected void result(Object object) {
+										System.out.println("Chosen: " + object);
+										boolean bool = (Boolean) object;
+										if (bool == true) {
+											new Dialog("", skin) {
+												{
+													text("Your ship has been saved.");
+												}
+											}.show(stage).addAction(
+													sequence(alpha(1f, 0.3f), Actions.delay(0.4f), alpha(0f, 0.3f),
+															Actions.removeActor()));
+											FileIO.write(defaultFolder + "/ships/" + nameField.getText() + ".json",
+													shipJSON);
+										}
+									}
+								}.show(stage);
+							} else {
+								new Dialog("", skin) {
+									{
+										text("Your ship has been saved.");
+									}
+								}.show(stage).addAction(
+										sequence(alpha(1f, 0.3f), Actions.delay(0.4f), alpha(0f, 0.3f),
+												Actions.removeActor()));
+								FileIO.write(defaultFolder + "/ships/" + nameField.getText() + ".json", shipJSON);
+							}
+						} else {
+							new Dialog("", skin) {
+								{
+									text("You need a command module on your ship!");
+								}
+							}.show(stage).addAction(
+									sequence(alpha(1f, 0.3f), Actions.delay(0.4f), alpha(0f, 0.3f),
+											Actions.removeActor()));
+						}
+					} else {
 						new Dialog("", skin) {
 							{
-								text("Ship " + nameField.getText() + " already exists. Would you like to overwrite it?");
-								button("Yes", true);
-								button("No", false);
+								text("You need parts on your ship!");
 							}
-
-							protected void result(Object object) {
-								System.out.println("Chosen: " + object);
-								boolean bool = (Boolean) object;
-								if (bool == true) {
-									FileIO.write(defaultFolder + "/ships/" + nameField.getText() + ".json", shipJSON);
-									((Game) Gdx.app.getApplicationListener()).setScreen(new GameStart(nameField
-											.getText()));
-								}
-							}
-						}.show(stage);
+						}.show(stage).addAction(
+								sequence(alpha(1f, 0.3f), Actions.delay(0.4f), alpha(0f, 0.3f), Actions.removeActor()));
 					}
+				} else if (event.getListenerActor() == buttonTest) {
+					final ArrayList<Ship> ships = new ArrayList<Ship>();
+					// Load all ships into this list.
+					String shipPath = defaultFolder + "/ships/";
+					for (File file : FileIO.getFilesForFolder(new File(shipPath))) {
+						String shipJSON = FileIO.read(file.getAbsolutePath());
+						GsonBuilder gson = new GsonBuilder();
+						gson.registerTypeAdapter(Part.class, new PartClassAdapter());
+						Ship ship = gson.create().fromJson(shipJSON, Ship.class);
+						ships.add(ship);
+					}
+					ShipSelectDialog dialog = new ShipSelectDialog("", skin, ships, parts);
+					dialog.show(stage);
+				} else if (event.getListenerActor() == buttonLoad) {
+					final ArrayList<Ship> ships = new ArrayList<Ship>();
+					// Load all ships into this list.
+					String shipPath = defaultFolder + "/ships/";
+					for (File file : FileIO.getFilesForFolder(new File(shipPath))) {
+						String shipJSON = FileIO.read(file.getAbsolutePath());
+						GsonBuilder gson = new GsonBuilder();
+						gson.registerTypeAdapter(Part.class, new PartClassAdapter());
+						Ship ship = gson.create().fromJson(shipJSON, Ship.class);
+						ships.add(ship);
+					}
+					ShipLoadDialog dialog = new ShipLoadDialog("", skin, ships);
+					loadDialog = dialog;
+					dialog.show(stage);
 				}
 			}
 		};
@@ -777,23 +903,28 @@ public class ShipEditor extends ScreenAdapter {
 		buttonHull.addListener(tabChooseListener);
 		buttonWeaponry.addListener(tabChooseListener);
 		buttonTools.addListener(tabChooseListener);
-		buttonGo.addListener(tabChooseListener);
-		selections.left().top();
+		buttonSave.addListener(tabChooseListener);
+		buttonTest.addListener(tabChooseListener);
+		buttonLoad.addListener(tabChooseListener);
 		selections.defaults().fillX();
-		selections.add(buttonCommand);
-		selections.add(buttonControl);
-		selections.add(buttonThrust);
-		selections.add(buttonHull);
-		selections.add(buttonWeaponry);
-		selections.add(nameField);
-		selections.add(buttonGo);
-		selections.row();
-		selections.add(tabbed).colspan(5);
-		selections.add(buttonTools);
-		selections.row();
-		selections.add(info).colspan(5);
-
-		stage.addActor(selections);
+		selections.add(buttonCommand).pad(2);
+		selections.add(buttonControl).pad(2);
+		selections.add(buttonThrust).pad(2);
+		selections.add(buttonHull).pad(2);
+		selections.add(buttonWeaponry).pad(2);
+		selections.add(buttonTools).pad(2);
+		selections.add(nameField).pad(2);
+		selections.add(cost).pad(2).row();
+		selections.add(tabbed).colspan(6);
+		selections.add(buttonSave).row();
+		selections.add().colspan(6);
+		selections.add(buttonLoad).row();
+		selections.add().colspan(6);
+		selections.add(buttonTest).row();
+		selections.add(info).colspan(6);
+		screen.left().top();
+		screen.add(selections);
+		stage.addActor(screen);
 
 		stage.addAction(sequence(moveTo(0, stage.getHeight()), moveTo(0, 0, .5f))); // coming in from top animation
 	}

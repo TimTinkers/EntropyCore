@@ -11,8 +11,8 @@ public abstract class Part implements Cloneable {
 	private int gridX;
 	private int gridY;
 	private final UUID id;
-	private int height;
-	private int width;
+	private float height;
+	private float width;
 	private float density;
 	private String sprite;
 	private Body body;
@@ -24,7 +24,7 @@ public abstract class Part implements Cloneable {
 	private int rotation;
 	private ArrayList<Vector2> occupiedTiles = new ArrayList<Vector2>();
 
-	public Part(int gridX, int gridY, int height, int width, float density, String sprite) {
+	public Part(int gridX, int gridY, float height, float width, float density, String sprite) {
 		this.gridX = gridX;
 		this.gridY = gridY;
 		this.height = height;
@@ -56,7 +56,7 @@ public abstract class Part implements Cloneable {
 		return this;
 	}
 
-	public int getHeight() {
+	public float getHeight() {
 		return height;
 	}
 
@@ -65,7 +65,7 @@ public abstract class Part implements Cloneable {
 		return this;
 	}
 
-	public int getWidth() {
+	public float getWidth() {
 		return width;
 	}
 

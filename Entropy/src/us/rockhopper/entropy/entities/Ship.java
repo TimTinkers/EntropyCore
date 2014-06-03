@@ -27,8 +27,9 @@ import com.badlogic.gdx.utils.JsonValue;
  * @author Ian Tang
  * @version 5.21.14
  */
-public class BasicShip extends InputAdapter implements Json.Serializable {
+public class Ship extends InputAdapter implements Json.Serializable {
 
+	private String name;
 	private World world;
 	private ArrayList<Part> parts = new ArrayList<Part>();
 	private HashMap<Integer, ArrayList<Part>> keyActions = new HashMap<Integer, ArrayList<Part>>();
@@ -47,8 +48,9 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 	 * @param parts
 	 *            All parts on the ship. The first Part in this list MUST be the Cockpit of the ship.
 	 */
-	public BasicShip(int cockpitX, int cockpitY, ArrayList<Part> parts) {
+	public Ship(String name, ArrayList<Part> parts) {
 		this.parts = parts;
+		this.name = name;
 	}
 
 	/**
@@ -168,7 +170,7 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 					bodyDef.position.set(part.getGridX() + (part.getWidth()), part.getGridY()
 							+ (part.getHeight() * 0.25f));
 				} else if ((part.getWidth() != part.getHeight()) && (rotIndex == 3)) {
-					bodyDef.position.set(part.getGridX() + (part.getWidth()/2f), part.getGridY()
+					bodyDef.position.set(part.getGridX() + (part.getWidth() / 2f), part.getGridY()
 							+ (part.getHeight() * 0.5f));
 				} else {
 					bodyDef.position.set(part.getGridX() + part.getWidth() / 2f, part.getGridY() + part.getHeight()
@@ -225,6 +227,10 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 				}
 			}
 		}
+	}
+
+	public String getName() {
+		return this.name;
 	}
 
 	private ArrayList<Part> getAdjacent(Part basePart, int direction) {
@@ -323,6 +329,10 @@ public class BasicShip extends InputAdapter implements Json.Serializable {
 			}
 		}
 		return list;
+	}
+
+	public ArrayList<Part> getParts() {
+		return this.parts;
 	}
 
 	@Override
