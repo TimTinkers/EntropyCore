@@ -184,6 +184,7 @@ public class ShipEditor extends ScreenAdapter {
 								(image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f);
 					}
 					partImages.add(image);
+					totalCost += image.getPart().getCost();
 				}
 			}
 			loading = false;
