@@ -67,7 +67,7 @@ public class Weapon extends Part {
 		} else if (reload == reloadTime
 				&& (weaponType.equalsIgnoreCase("TorpedoLauncher"))) {
 			MissileProjectile missile = new MissileProjectile(0,
-					0, 1.5f, .375f, 2f, projectileTexture,
+					0, 1.5f, .375f, 5f, projectileTexture,
 					this.getBody().getAngle(),
 					new Vector2((float) Math.cos((double) this.getHeight()),
 							(float) Math.sin((double) this.getWidth())),

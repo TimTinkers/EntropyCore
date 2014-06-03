@@ -28,7 +28,7 @@ public class LaserProjectile extends Part{
 	public void update() {
 		lifeTime++;
 		
-		if(lifeTime == 240) {
+		if(lifeTime == 180) {
 			this.getBody().getWorld().destroyBody(this.getBody());
 		}
 	}
