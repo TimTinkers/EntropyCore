@@ -184,6 +184,7 @@ public class ShipEditor extends ScreenAdapter {
 								(image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f);
 					}
 					partImages.add(image);
+					totalCost += image.getPart().getCost();
 				}
 			}
 			loading = false;
@@ -267,8 +268,7 @@ public class ShipEditor extends ScreenAdapter {
 
 				// If we aren't deleting pieces of the ship
 				if (!deleteMode) {
-					if (button == Buttons.LEFT
-							&& !(contains(tabbed, screenX, screenY) || contains(info, screenX, screenY))) {
+					if (button == Buttons.LEFT && !(contains(selections, screenX, screenY))) {
 						System.out.println("Click! at " + gridX + " " + gridY);
 						if (activePart != null) {
 							if (partImages.isEmpty() && !(activePart instanceof Cockpit)) {
