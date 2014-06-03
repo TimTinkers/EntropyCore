@@ -113,6 +113,21 @@ public class MainMenu implements Screen {
 		});
 		buttonTest.pad(15);
 
+		TextButton buttonDuel = new TextButton("Space Battle", skin, "default");
+		buttonDuel.addListener(new ClickListener() {
+			@Override
+			public void clicked(InputEvent event, float x, float y) {
+				stage.addAction(sequence(moveTo(0, -stage.getHeight(), .5f), run(new Runnable() {
+
+					@Override
+					public void run() {
+						((Game) Gdx.app.getApplicationListener()).setScreen(new DuelLobby());
+					}
+				})));
+			}
+		});
+		buttonTest.pad(15);
+
 		TextButton buttonSettings = new TextButton("SETTINGS", skin);
 		buttonSettings.addListener(new ClickListener() {
 
@@ -154,6 +169,7 @@ public class MainMenu implements Screen {
 		table.add(heading).spaceBottom(100).row();
 		table.add(buttonEditor).spaceBottom(15).row();
 		table.add(buttonTest).spaceBottom(15).row();
+		table.add(buttonDuel).spaceBottom(15).row();
 		table.add(buttonSettings).spaceBottom(15).row();
 		table.add(buttonExit);
 
