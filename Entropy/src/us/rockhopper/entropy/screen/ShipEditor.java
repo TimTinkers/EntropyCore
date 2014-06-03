@@ -267,8 +267,7 @@ public class ShipEditor extends ScreenAdapter {
 
 				// If we aren't deleting pieces of the ship
 				if (!deleteMode) {
-					if (button == Buttons.LEFT
-							&& !(contains(tabbed, screenX, screenY) || contains(info, screenX, screenY))) {
+					if (button == Buttons.LEFT && !(contains(selections, screenX, screenY))) {
 						System.out.println("Click! at " + gridX + " " + gridY);
 						if (activePart != null) {
 							if (partImages.isEmpty() && !(activePart instanceof Cockpit)) {
