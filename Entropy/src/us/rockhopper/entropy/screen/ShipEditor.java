@@ -58,7 +58,7 @@ import com.google.gson.GsonBuilder;
 public class ShipEditor extends ScreenAdapter {
 
 	private TiledDrawable background;
-	private boolean initialLoad;
+	private boolean loading;
 	private String shipName;
 
 	private Stage stage;
@@ -97,22 +97,22 @@ public class ShipEditor extends ScreenAdapter {
 
 	public ShipEditor(String shipName) {
 		this.shipName = shipName;
-		initialLoad = true;
+		loading = true;
 	}
 
 	@Override
 	public void render(float delta) {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		camera.update();
-		stage.act(delta);
 
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
 		// Draw background
 		background.draw(batch, -sWidth / 2, -sHeight / 2, sWidth, sHeight);
-		for (Image image : partImages) {
-			image.draw(batch, 1f);
+		if (!loading) {
+			for (Image image : partImages) {
+				image.draw(batch, 1f);
+			}
 		}
 		batch.end();
 		stage.draw();
@@ -129,19 +129,12 @@ public class ShipEditor extends ScreenAdapter {
 
 		Table.drawDebug(stage);
 
-		// When loading, align the pieces
-		if (initialLoad) {
-			for (PartImage image : partImages) {
-				image.setGridX(image.getPart().getGridX());
-				image.setGridY(image.getPart().getGridY());
-			}
-			initialLoad = false;
-		}
-
 		// Refresh the deletion warning dialog
 		if (loadDialog != null) {
 			loadDialog.refresh();
 		}
+		camera.update();
+		stage.act(delta);
 	}
 
 	@Override
@@ -168,7 +161,7 @@ public class ShipEditor extends ScreenAdapter {
 				GsonBuilder gson1 = new GsonBuilder();
 				gson1.registerTypeAdapter(Part.class, new PartClassAdapter());
 				Ship ship = gson1.create().fromJson(shipJSON, Ship.class);
-
+				occupiedTiles.clear();
 				for (Part part : ship.getParts()) {
 					parts.add(part);
 					PartImage image = new PartImage(part, new Texture(part.getSprite()));
@@ -176,9 +169,24 @@ public class ShipEditor extends ScreenAdapter {
 					image.setGridX(part.getGridX());
 					image.setGridY(part.getGridY());
 					image.setRotation(part.getRotation());
+					image.getPart().setGridPosition(image.getGridX(), image.getGridY());
+					for (Vector2 vector : image.getOccupiedCells()) {
+						image.getPart().setOccupiedCells(image.getOccupiedCells());
+						occupiedTiles.add(vector);
+					}
+					// Reposition the image.
+					int rotIndex = (int) (Math.abs(image.getRotation()) / 90) % 4;
+					if ((image.getWidth() != image.getHeight()) && (rotIndex == 1 || rotIndex == 3)) {
+						image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f + image.getWidth()
+								/ 2f, (image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f - image.getHeight() / 4f);
+					} else {
+						image.setPosition((image.getGridX() * 16) - Gdx.graphics.getWidth() / 2f,
+								(image.getGridY() * 16) - Gdx.graphics.getHeight() / 2f);
+					}
 					partImages.add(image);
 				}
 			}
+			loading = false;
 		}
 
 		// Sprite rendering
