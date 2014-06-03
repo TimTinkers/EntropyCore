@@ -11,24 +11,32 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 
 public class LaserProjectile extends Part{
 
+	private int lifeTime;
 	private float angle;
-	private Vector2 position;
+	private Vector2 position = new Vector2();
 	private World world;
 	
 	public LaserProjectile(int gridX, int gridY, float height, float width,
-			float density, String sprite, float angle, Vector2 pos) {
+			float density, String sprite, float angle, Vector2 pos, World world) {
 		super(gridX, gridY, height, width, density, sprite);
 		this.angle = angle;
 		position.set(pos);
+		this.world = world;
+		lifeTime = 0;
 	}
 	
 	public void update() {
+		lifeTime++;
+		
+		if(lifeTime == 240) {
+			this.getBody().getWorld().destroyBody(this.getBody());
+		}
 	}
 	
 	public void create() {
 		Body body;
 		BodyDef bodyDef = new BodyDef();
-		bodyDef.type = BodyType.KinematicBody;
+		bodyDef.type = BodyType.DynamicBody;
 		bodyDef.active = true;
 		bodyDef.fixedRotation = true;
 		bodyDef.position.set(position);
@@ -38,7 +46,7 @@ public class LaserProjectile extends Part{
 		FixtureDef fixtureDef = new FixtureDef();
 		fixtureDef.restitution = 0;
 		fixtureDef.friction = 0;
-		fixtureDef.density = 0;
+		fixtureDef.density = .01f;
 		fixtureDef.filter.categoryBits = 2;
 		fixtureDef.filter.maskBits = ~2;
 		
@@ -51,9 +59,14 @@ public class LaserProjectile extends Part{
 				new Box2DSprite(new Sprite(new Texture(this.getSprite()))));
 		this.setBody(body);
 		
-		this.getBody().applyAngularImpulse(40, true);
+		this.getBody().applyForceToCenter(
+				new Vector2((float) Math.sin(this.getBody().getAngle())
+						* 10, (float) Math.cos(this.getBody()
+						.getAngle()) * 10), true);
 		
 		shape.dispose();
+		
+		System.out.println("A laser beam has been created!");
 	}
 	
 	public void setWorld(World world) {

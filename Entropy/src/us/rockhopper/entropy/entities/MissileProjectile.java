@@ -13,14 +13,15 @@ public class MissileProjectile extends Part{
 
 	private float angle;
 	private final float THRUST = 40;
-	private Vector2 position;
+	private Vector2 position = new Vector2();
 	private World world;
 	
 	public MissileProjectile(int gridX, int gridY, float height, float width,
-			float density, String sprite, float angle, Vector2 pos) {
+			float density, String sprite, float angle, Vector2 pos, World world) {
 		super(gridX, gridY, height, width, density, sprite);
 		this.angle = angle;
 		position.set(pos);
+		this.world = world;
 	}
 	
 	public void update() {
