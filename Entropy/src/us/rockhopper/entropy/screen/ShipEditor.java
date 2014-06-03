@@ -129,6 +129,15 @@ public class ShipEditor extends ScreenAdapter {
 
 		Table.drawDebug(stage);
 
+		// When loading, align the pieces
+		if (initialLoad) {
+			for (PartImage image : partImages) {
+				image.setGridX(image.getPart().getGridX());
+				image.setGridY(image.getPart().getGridY());
+			}
+			initialLoad = false;
+		}
+
 		// Refresh the deletion warning dialog
 		if (loadDialog != null) {
 			loadDialog.refresh();
@@ -163,9 +172,11 @@ public class ShipEditor extends ScreenAdapter {
 				for (Part part : ship.getParts()) {
 					parts.add(part);
 					PartImage image = new PartImage(part, new Texture(part.getSprite()));
-					partImages.add(image);
+					image.setOrigin(image.getWidth() / 2f, image.getHeight() / 2f);
 					image.setGridX(part.getGridX());
 					image.setGridY(part.getGridY());
+					image.setRotation(part.getRotation());
+					partImages.add(image);
 				}
 			}
 		}
