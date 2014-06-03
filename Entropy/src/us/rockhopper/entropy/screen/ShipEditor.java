@@ -58,11 +58,14 @@ import com.google.gson.GsonBuilder;
 public class ShipEditor extends ScreenAdapter {
 
 	private TiledDrawable background;
+	private boolean initialLoad;
+	private String shipName;
 
 	private Stage stage;
 	private Skin skin;
 	private OrthographicCamera camera;
 	private SpriteBatch batch;
+	private ShipLoadDialog loadDialog;
 
 	private Table selections;
 	private Table tabbed;
@@ -88,6 +91,14 @@ public class ShipEditor extends ScreenAdapter {
 	ArrayList<Part> parts = new ArrayList<Part>();
 	private Image activeImage;
 	private ClickListener itemChooseListener;
+
+	public ShipEditor() {
+	}
+
+	public ShipEditor(String shipName) {
+		this.shipName = shipName;
+		initialLoad = true;
+	}
 
 	@Override
 	public void render(float delta) {
@@ -117,6 +128,11 @@ public class ShipEditor extends ScreenAdapter {
 		batch.end();
 
 		Table.drawDebug(stage);
+
+		// Refresh the deletion warning dialog
+		if (loadDialog != null) {
+			loadDialog.refresh();
+		}
 	}
 
 	@Override
@@ -133,6 +149,27 @@ public class ShipEditor extends ScreenAdapter {
 
 	@Override
 	public void show() {
+
+		if (shipName != null) {
+			// If loading, show the ship.
+			// Deserialize and get ship from file
+			String filePath = defaultFolder + "/ships/" + shipName + ".json";
+			if (FileIO.exists(filePath)) {
+				String shipJSON = FileIO.read(filePath);
+				GsonBuilder gson1 = new GsonBuilder();
+				gson1.registerTypeAdapter(Part.class, new PartClassAdapter());
+				Ship ship = gson1.create().fromJson(shipJSON, Ship.class);
+
+				for (Part part : ship.getParts()) {
+					parts.add(part);
+					PartImage image = new PartImage(part, new Texture(part.getSprite()));
+					partImages.add(image);
+					image.setGridX(part.getGridX());
+					image.setGridY(part.getGridY());
+				}
+			}
+		}
+
 		// Sprite rendering
 		background = new TiledDrawable(new TextureRegion(new Texture("assets/img/grid.png")));
 		batch = new SpriteBatch();
@@ -265,9 +302,7 @@ public class ShipEditor extends ScreenAdapter {
 									for (int i = 0; i < 4; ++i) {
 										ArrayList<PartImage> temp = getAdjacent(image, i);
 										if (!temp.isEmpty()) {
-											System.out.println("Found " + temp.size() + " pieces in direction " + i);
 											for (PartImage part : temp) {
-												System.out.println("There is a part here, " + part.getPart().getName());
 												adjacentImages.add(part);
 												directions.add(i);
 											}
@@ -385,11 +420,7 @@ public class ShipEditor extends ScreenAdapter {
 								occupiedTiles.remove(vector);
 							}
 
-						}// TODO seems like all of this is working. Now you need to figure out how to make it delete
-							// everything left unattached to the primary command module. If the primary module is
-							// deleted,
-							// delete everything. Unless there's another command module, in which case, make that the
-							// primary command module. And then check to delete anything not attached to it.
+						}
 						deleted = null;
 					}
 				}
@@ -841,6 +872,7 @@ public class ShipEditor extends ScreenAdapter {
 						ships.add(ship);
 					}
 					ShipLoadDialog dialog = new ShipLoadDialog("", skin, ships);
+					loadDialog = dialog;
 					dialog.show(stage);
 				}
 			}

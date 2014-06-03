@@ -232,7 +232,7 @@ public class Ship extends InputAdapter implements Json.Serializable {
 	public String getName() {
 		return this.name;
 	}
-	
+
 	private ArrayList<Part> getAdjacent(Part basePart, int direction) {
 		// Instantiate the list
 		ArrayList<Part> list = new ArrayList<>();
@@ -329,6 +329,10 @@ public class Ship extends InputAdapter implements Json.Serializable {
 			}
 		}
 		return list;
+	}
+
+	public ArrayList<Part> getParts() {
+		return this.parts;
 	}
 
 	@Override
