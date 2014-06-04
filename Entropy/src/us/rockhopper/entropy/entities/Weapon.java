@@ -75,14 +75,16 @@ public class Weapon extends Part {
 			missile.create();
 			reload = 0;
 		} else if (reload == reloadTime) {
-			LaserProjectile laser = new LaserProjectile(0, 0, 1.125f, .125f, 0,
-					projectileTexture, this.getBody().getAngle(),
+			LaserProjectile laser = new LaserProjectile(0, 0, 1.125f, .125f,
+					0.01f, projectileTexture, this.getBody().getAngle(),
 					this.getBody().getPosition().add(new Vector2(
 							(float) Math.cos((double) this.getHeight()),
 							(float) Math.sin((double) this.getWidth()))),
 							this.getBody().getWorld());
 			laser.create();
 			reload = 0;
+			
+			System.out.println("This weapon is pointing at " + Math.toDegrees(this.getBody().getAngle() % (Math.PI * 2)) + " degrees!");
 		}
 	}
 

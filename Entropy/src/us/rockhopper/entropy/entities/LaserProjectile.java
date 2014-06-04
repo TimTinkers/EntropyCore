@@ -4,7 +4,11 @@ import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
 import us.rockhopper.entropy.utility.Part;
 
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.FixtureDef;
+import com.badlogic.gdx.physics.box2d.PolygonShape;
+import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -46,7 +50,7 @@ public class LaserProjectile extends Part{
 		FixtureDef fixtureDef = new FixtureDef();
 		fixtureDef.restitution = 0;
 		fixtureDef.friction = 0;
-		fixtureDef.density = .01f;
+		fixtureDef.density = this.getDensity();
 		fixtureDef.filter.categoryBits = 2;
 		fixtureDef.filter.maskBits = ~2;
 		
@@ -66,7 +70,7 @@ public class LaserProjectile extends Part{
 		
 		shape.dispose();
 		
-		System.out.println("A laser beam has been created!");
+		System.out.println("A laser beam has been created at " + Math.toDegrees(this.getBody().getAngle() % (Math.PI * 2)) + " degrees!");
 	}
 	
 	public void setWorld(World world) {
