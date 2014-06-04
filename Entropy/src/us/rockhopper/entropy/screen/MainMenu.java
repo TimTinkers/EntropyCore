@@ -121,7 +121,7 @@ public class MainMenu implements Screen {
 
 					@Override
 					public void run() {
-						((Game) Gdx.app.getApplicationListener()).setScreen(new DuelLobby());
+						((Game) Gdx.app.getApplicationListener()).setScreen(new ConnectionScreen());
 					}
 				})));
 			}

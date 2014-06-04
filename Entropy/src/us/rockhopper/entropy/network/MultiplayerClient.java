@@ -30,7 +30,7 @@ public class MultiplayerClient {
 
 	private void registerPackets() {
 		Kryo kryo = client.getKryo();
-		kryo.register(Packet0Chat.class);
+		Network.register(kryo);
 	}
 
 	public void sendMessage(String message) {

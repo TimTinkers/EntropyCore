@@ -29,6 +29,6 @@ public class MultiplayerServer {
 
 	private void registerPackets() {
 		Kryo kryo = server.getKryo();
-		kryo.register(Packet0Chat.class);
+		Network.register(kryo);
 	}
 }

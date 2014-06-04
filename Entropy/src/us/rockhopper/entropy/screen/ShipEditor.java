@@ -53,7 +53,7 @@ import com.google.gson.GsonBuilder;
  * Allows ships to be created, edited, saved, loaded, tested, and deleted.
  * 
  * @author Tim Clancy
- * @version 5.31.14
+ * @version 6.4.14
  * 
  */
 public class ShipEditor extends ScreenAdapter {
