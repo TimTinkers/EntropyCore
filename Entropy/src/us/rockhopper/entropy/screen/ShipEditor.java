@@ -11,6 +11,7 @@ import us.rockhopper.entropy.entities.Cockpit;
 import us.rockhopper.entropy.entities.Gyroscope;
 import us.rockhopper.entropy.entities.Ship;
 import us.rockhopper.entropy.entities.Thruster;
+import us.rockhopper.entropy.entities.Weapon;
 import us.rockhopper.entropy.gui.PartImage;
 import us.rockhopper.entropy.gui.ShipLoadDialog;
 import us.rockhopper.entropy.gui.ShipSelectDialog;
@@ -210,6 +211,9 @@ public class ShipEditor extends ScreenAdapter {
 		final TextField nameField = new TextField("Ship Name", skin, "default");
 		final TextField forwardField = new TextField("Forward", skin, "default");
 		final TextField reverseField = new TextField("Reverse", skin, "default");
+		final TextField leftField = new TextField("Left", skin, "default");
+		final TextField rightField = new TextField("Right", skin, "default");
+		final TextField fireField = new TextField("Fire", skin, "default");
 		final Label cost = new Label("Total cost: " + totalCost, skin, "default");
 
 		// Initialize input processing
@@ -364,9 +368,12 @@ public class ShipEditor extends ScreenAdapter {
 												thruster.setForward(Keys.valueOf(forwardField.getText().toUpperCase()));
 											} else if (part instanceof Gyroscope) {
 												Gyroscope gyro = (Gyroscope) part;
-												gyro.setClockwise(Keys.valueOf(forwardField.getText().toUpperCase()));
-												gyro.setCounterClockwise(Keys.valueOf(reverseField.getText()
+												gyro.setClockwise(Keys.valueOf(rightField.getText().toUpperCase()));
+												gyro.setCounterClockwise(Keys.valueOf(leftField.getText()
 														.toUpperCase()));
+											} else if (part instanceof Weapon) {
+												Weapon weapon = (Weapon) part;
+												weapon.setFire(Keys.valueOf(fireField.getText().toUpperCase()));
 											}
 
 											// Now modify and add the part
@@ -730,8 +737,10 @@ public class ShipEditor extends ScreenAdapter {
 						info.add(reverseField);
 					}
 				} else if (activePart instanceof Gyroscope) {
-					info.add(forwardField).row();
-					info.add(reverseField);
+					info.add(rightField).row();
+					info.add(leftField);
+				} else if (activePart instanceof Weapon) {
+					info.add(fireField);
 				}
 			}
 		};
