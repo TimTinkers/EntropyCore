@@ -31,6 +31,7 @@ public class Weapon extends Part {
 		this.projectileTexture = projectileTexture;
 		this.reloadTime = reloadTime;
 		this.firedProjectiles = projectiles;
+		reload = reloadTime;
 		shouldFire = false;
 	}
 
@@ -108,8 +109,6 @@ public class Weapon extends Part {
 				laser.create();
 				firedProjectiles.add((Part) laser);
 				reload = 0;
-
-				System.out.println("This weapon is pointing at " + Math.toDegrees(this.getBody().getAngle() % (Math.PI * 2)) + " degrees!");
 			}
 		}
 	}

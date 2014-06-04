@@ -69,8 +69,6 @@ public class LaserProjectile extends Part{
 						.getAngle()) * 5), true);
 		
 		shape.dispose();
-		
-		System.out.println("A laser beam has been created at " + Math.toDegrees(this.getBody().getAngle() % (Math.PI * 2)) + " degrees!");
 	}
 
 	@Override
