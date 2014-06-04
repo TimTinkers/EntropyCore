@@ -41,6 +41,7 @@ public class Weapon extends Part {
 	@Override
 	public void update() {
 		if (shouldFire == true) {
+			System.out.println(reload);
 			reload++;
 		}
 		
@@ -74,7 +75,8 @@ public class Weapon extends Part {
 							this.getBody().getWorld());
 			missile.create();
 			reload = 0;
-		} else if (reload == reloadTime) {
+		} else if (reload > reloadTime) {
+			System.out.println(reload + " greater than " + reloadTime);
 			LaserProjectile laser = new LaserProjectile(1.125f, .125f, projectileTexture, this.getBody().getAngle(),
 					this.getBody()
 							.getPosition()
