@@ -13,18 +13,18 @@ import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 
-public class LaserProjectile extends Part{
+public class LaserProjectile extends Part {
 
 	private int lifeTime;
 	private float angle;
 	private Vector2 position = new Vector2();
 	private World world;
 	
-	public LaserProjectile(int gridX, int gridY, float height, float width,
-			float density, String sprite, float angle, Vector2 pos, World world) {
-		super(gridX, gridY, height, width, density, sprite);
+
+	public LaserProjectile(float height, float width, String sprite, float angle, Vector2 pos, World world) {
+		super(0, 0, height, width, 0, sprite);
 		this.angle = angle;
-		position.set(pos);
+		this.position = pos;
 		this.world = world;
 		lifeTime = 0;
 	}

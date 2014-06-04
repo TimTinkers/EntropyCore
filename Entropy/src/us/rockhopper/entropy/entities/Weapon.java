@@ -5,8 +5,7 @@ import com.badlogic.gdx.math.Vector2;
 import us.rockhopper.entropy.utility.Part;
 
 /**
- * The class for a weapon component, which is in turn capable of creating its
- * own type of weapon.
+ * The class for a weapon component, which is in turn capable of creating its own type of weapon.
  * 
  * @author Ian Tang
  * @author Tim Clancy
@@ -19,6 +18,7 @@ public class Weapon extends Part {
 	private int reload;
 	// The reload progress of the weapon, measured in 1/60 frame units.
 	private int reloadTime;
+
 	// The reload time of the weapon, measured in 1/60 frame units.
 	private boolean shouldFire;
 
@@ -75,12 +75,12 @@ public class Weapon extends Part {
 			missile.create();
 			reload = 0;
 		} else if (reload == reloadTime) {
-			LaserProjectile laser = new LaserProjectile(0, 0, 1.125f, .125f,
-					0.01f, projectileTexture, this.getBody().getAngle(),
-					this.getBody().getPosition().add(new Vector2(
-							(float) Math.cos((double) this.getHeight()),
-							(float) Math.sin((double) this.getWidth()))),
-							this.getBody().getWorld());
+			LaserProjectile laser = new LaserProjectile(1.125f, .125f, projectileTexture, this.getBody().getAngle(),
+					this.getBody()
+							.getPosition()
+							.add(new Vector2((float) Math.cos((double) this.getHeight()), (float) Math
+									.sin((double) this.getWidth()))), this.getBody().getWorld());
+
 			laser.create();
 			reload = 0;
 			
