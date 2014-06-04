@@ -15,58 +15,63 @@ import com.badlogic.gdx.math.Vector2;
 
 public class MissileProjectile extends Part{
 
+	private int lifeTime;
 	private float angle;
 	private final float THRUST = 40;
 	private Vector2 position = new Vector2();
 	private World world;
-	
+
 	public MissileProjectile(int gridX, int gridY, float height, float width,
 			float density, String sprite, float angle, Vector2 pos, World world) {
 		super(gridX, gridY, height, width, density, sprite);
 		this.angle = angle;
 		position.set(pos);
 		this.world = world;
+		lifeTime = 0;
 	}
-	
+
 	public void update() {
-			this.getBody().applyForceToCenter(
-					new Vector2((float) Math.sin(this.getBody().getAngle())
-							* -1 * THRUST, (float) Math.cos(this.getBody()
-							.getAngle()) * THRUST), true);
+		lifeTime++;
+		if (lifeTime == 600) {
+			this.getBody().getWorld().destroyBody(this.getBody());
+		}
+
+		this.getBody().applyForceToCenter(
+				new Vector2((float) Math.sin(this.getBody().getAngle())
+						* -1 * THRUST, (float) Math.cos(this.getBody()
+								.getAngle()) * THRUST), true);
 	}
-	
+
 	public void create() {
 		Body body;
 		BodyDef bodyDef = new BodyDef();
 		bodyDef.type = BodyType.DynamicBody;
 		bodyDef.active = true;
 		bodyDef.fixedRotation = false;
+		bodyDef.position.set(position);
 		bodyDef.angle = angle;
+		bodyDef.gravityScale = 0f;
 
 		FixtureDef fixtureDef = new FixtureDef();
 		fixtureDef.restitution = 0;
 		fixtureDef.friction = 0;
 		fixtureDef.density = this.getDensity();
-		
+
 		PolygonShape shape = new PolygonShape();
 		shape.setAsBox(this.getWidth()/2f,this.getHeight()/2f);
 		fixtureDef.shape = shape;
-		
+
 		body = world.createBody(bodyDef);
 		body.createFixture(fixtureDef).setUserData(
 				new Box2DSprite(new Sprite(new Texture(this.getSprite()))));
 		this.setBody(body);
-		
+
 		this.getBody().applyForceToCenter(
 				new Vector2((float) Math.sin(this.getBody().getAngle())
-						* -10, (float) Math.cos(this.getBody()
-						.getAngle()) * 10), true);
-		
+						* -100, (float) Math.cos(this.getBody()
+								.getAngle()) * 100), true);
+
 		shape.dispose();
-	}
-	
-	public void setWorld(World world) {
-		this.world = world;
 	}
 
 	@Override

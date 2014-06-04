@@ -1,5 +1,7 @@
 package us.rockhopper.entropy.entities;
 
+import java.util.ArrayList;
+
 import com.badlogic.gdx.math.Vector2;
 
 import us.rockhopper.entropy.utility.Part;
@@ -16,23 +18,22 @@ public class Weapon extends Part {
 	private String weaponType;
 	private String projectileTexture;
 	private int fire;
-	private int reload;
-	// The reload progress of the weapon, measured in 1/60 frame units.
-	private int reloadTime;
-	// The reload time of the weapon, measured in 1/60 frame units.
+	private int reload; // The reload progress of the weapon, measured in 1/60 frame units.
+	private int reloadTime; // The reload time of the weapon, measured in 1/60 frame units.
 	private boolean shouldFire;
+	private ArrayList<Part> firedProjectiles; // A registry of all projectiles fired by this weapon.
+	private final float RECOIL = 100;
 
 	public Weapon(int gridX, int gridY, int height, int width, float density,
-			String sprite, String weaponType, String projectileTexture,
-			int reloadTime) {
+			String sprite, String weaponType, String projectileTexture, int reloadTime, ArrayList<Part> projectiles) {
 		super(gridX, gridY, height, width, density, sprite);
 		this.weaponType = weaponType;
 		this.projectileTexture = projectileTexture;
 		this.reloadTime = reloadTime;
-		reload = 0;
+		this.firedProjectiles = projectiles;
 		shouldFire = false;
 	}
-	
+
 	public Weapon setFire(int key) {
 		this.fire = key;
 		return this;
@@ -40,51 +41,76 @@ public class Weapon extends Part {
 
 	@Override
 	public void update() {
-		if (shouldFire == true) {
+		if (reload < reloadTime) {
 			reload++;
 		}
-		
-		if (reload == reloadTime
-				&& (weaponType.equalsIgnoreCase("LargeMissileLauncher"))) {
-			MissileProjectile missile = new MissileProjectile(0,
-					0, 1.25f, .25f, 2f, projectileTexture,
-					this.getBody().getAngle(),
-					new Vector2((float) Math.cos((double) this.getHeight()),
-							(float) Math.sin((double) this.getWidth())),
-							this.getBody().getWorld());
-			missile.create();
-			reload = 0;
-		} else if (reload == reloadTime
-				&& (weaponType.equalsIgnoreCase("MissileLauncher"))) {
-			MissileProjectile missile = new MissileProjectile(0,
-					0, 1.25f, .25f, 2f, projectileTexture,
-					this.getBody().getAngle(),
-					new Vector2((float) Math.cos((double) this.getHeight()),
-							(float) Math.sin((double) this.getWidth())),
-							this.getBody().getWorld());
-			missile.create();
-			reload = 0;
-		} else if (reload == reloadTime
-				&& (weaponType.equalsIgnoreCase("TorpedoLauncher"))) {
-			MissileProjectile missile = new MissileProjectile(0,
-					0, 1.5f, .375f, 5f, projectileTexture,
-					this.getBody().getAngle(),
-					new Vector2((float) Math.cos((double) this.getHeight()),
-							(float) Math.sin((double) this.getWidth())),
-							this.getBody().getWorld());
-			missile.create();
-			reload = 0;
-		} else if (reload == reloadTime) {
-			LaserProjectile laser = new LaserProjectile(0, 0, 1.125f, .125f,
-					0.01f, projectileTexture, this.getBody().getAngle(),
-					this.getBody().getPosition().add(new Vector2(
-							(float) Math.cos((double) this.getHeight()),
-							(float) Math.sin((double) this.getWidth()))),
-							this.getBody().getWorld());
-			laser.create();
-			reload = 0;
-			
-			System.out.println("This weapon is pointing at " + Math.toDegrees(this.getBody().getAngle() % (Math.PI * 2)) + " degrees!");
+
+		for (Part projectile: firedProjectiles) {
+			projectile.update();
+		}
+
+		if (shouldFire == true) {
+			if (reload == reloadTime
+					&& (weaponType.equalsIgnoreCase("LargeMissileLauncher"))) {
+				MissileProjectile missile = new MissileProjectile(0,
+						0, 1.25f, .25f, 2f, projectileTexture, this.getBody().getAngle(),
+						this.getBody().getPosition().add(new Vector2(
+								(float) (-1 * Math.sin(this.getBody().getAngle()) * this.getHeight()),
+								(float) Math.cos(this.getBody().getAngle()) * this.getHeight())),
+								this.getBody().getWorld());
+				missile.create();
+				firedProjectiles.add((Part) missile);
+
+				this.getBody().applyForceToCenter(
+						new Vector2((float) Math.sin(this.getBody().getAngle())
+								* RECOIL, (float) Math.cos(this.getBody()
+										.getAngle()) * -1 * RECOIL), true);
+				reload = 0;
+			} else if (reload == reloadTime
+					&& (weaponType.equalsIgnoreCase("MissileLauncher"))) {
+				MissileProjectile missile = new MissileProjectile(0,
+						0, 1.25f, .25f, 2f, projectileTexture, this.getBody().getAngle(),
+						this.getBody().getPosition().add(new Vector2(
+								(float) (-1 * Math.sin(this.getBody().getAngle()) * this.getHeight()),
+								(float) Math.cos(this.getBody().getAngle()) * this.getHeight())),
+								this.getBody().getWorld());
+				missile.create();
+				firedProjectiles.add((Part) missile);
+
+				this.getBody().applyForceToCenter(
+						new Vector2((float) Math.sin(this.getBody().getAngle())
+								* RECOIL, (float) Math.cos(this.getBody()
+										.getAngle()) * -1 * RECOIL), true);
+				reload = 0;
+			} else if (reload == reloadTime
+					&& (weaponType.equalsIgnoreCase("TorpedoLauncher"))) {
+				MissileProjectile missile = new MissileProjectile(0,
+						0, 1.5f, .375f, 5f, projectileTexture, this.getBody().getAngle(),
+						this.getBody().getPosition().add(new Vector2(
+								(float) (-1 * Math.sin(this.getBody().getAngle()) * this.getHeight()),
+								(float) Math.cos(this.getBody().getAngle()) * this.getHeight())),
+								this.getBody().getWorld());
+				missile.create();
+				firedProjectiles.add((Part) missile);
+
+				this.getBody().applyForceToCenter(
+						new Vector2((float) Math.sin(this.getBody().getAngle())
+								* RECOIL, (float) Math.cos(this.getBody()
+										.getAngle()) * -1 * RECOIL), true);
+				reload = 0;
+			} else if (reload == reloadTime) {
+				LaserProjectile laser = new LaserProjectile(0, 0, 1.125f, .125f,
+						0.01f, projectileTexture, this.getBody().getAngle(),
+						this.getBody().getPosition().add(new Vector2(
+								(float) (-1 * Math.sin(this.getBody().getAngle()) * this.getHeight()),
+								(float) Math.cos(this.getBody().getAngle()) * this.getHeight())),
+								this.getBody().getWorld());
+				laser.create();
+				firedProjectiles.add((Part) laser);
+				reload = 0;
+
+				System.out.println("This weapon is pointing at " + Math.toDegrees(this.getBody().getAngle() % (Math.PI * 2)) + " degrees!");
+			}
 		}
 	}
 
@@ -96,16 +122,19 @@ public class Weapon extends Part {
 
 	@Override
 	public void trigger(int key) {
-		if (key == fire) {
-			shouldFire = true;
+		if (! this.weaponType.equalsIgnoreCase("RammingSpike")) {
+			if (key == fire) {
+				shouldFire = true;
+			}
 		}
 	}
 
 	@Override
 	public void unTrigger(int key) {
-		if (key == fire) {
-			shouldFire = false;
-			reload = 0;
+		if (! this.weaponType.equalsIgnoreCase("RammingSpike")) {
+			if (key == fire) {
+				shouldFire = false;
+			}
 		}
 	}
 }
