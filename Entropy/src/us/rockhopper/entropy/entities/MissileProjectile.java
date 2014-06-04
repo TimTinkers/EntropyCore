@@ -1,3 +1,4 @@
+
 package us.rockhopper.entropy.entities;
 
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
