@@ -65,7 +65,7 @@ public class LaserProjectile extends Part{
 		
 		this.getBody().applyForceToCenter(
 				new Vector2((float) Math.sin(this.getBody().getAngle())
-						* 10, (float) Math.cos(this.getBody()
+						* -10, (float) Math.cos(this.getBody()
 						.getAngle()) * 10), true);
 		
 		shape.dispose();
