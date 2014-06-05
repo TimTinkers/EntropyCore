@@ -18,14 +18,18 @@ public class MissileProjectile extends Part{
 	private int lifeTime;
 	private float angle;
 	private final float THRUST = 40;
+	
 	private Vector2 position = new Vector2();
+	private Vector2 launchVelocity;
 	private World world;
 
 	public MissileProjectile(int gridX, int gridY, float height, float width,
-			float density, String sprite, float angle, Vector2 pos, World world) {
+			float density, String sprite, float angle, Vector2 pos,  Vector2 launchVelocity,
+			World world, int damage) {
 		super(gridX, gridY, height, width, density, sprite);
 		this.angle = angle;
-		position.set(pos);
+		this.position.set(pos);
+		this.launchVelocity = launchVelocity;
 		this.world = world;
 		lifeTime = 0;
 	}
@@ -65,6 +69,7 @@ public class MissileProjectile extends Part{
 		body.createFixture(fixtureDef).setUserData(
 				new Box2DSprite(new Sprite(new Texture(this.getSprite()))));
 		this.setBody(body);
+		this.getBody().setLinearVelocity(launchVelocity);
 
 		this.getBody().applyForceToCenter(
 				new Vector2((float) Math.sin(this.getBody().getAngle())

@@ -19,6 +19,7 @@ public class LaserProjectile extends Part{
 	private float angle;
 	private float velocity;
 	private int damage;
+	
 	private Vector2 position = new Vector2();
 	private World world;
 	

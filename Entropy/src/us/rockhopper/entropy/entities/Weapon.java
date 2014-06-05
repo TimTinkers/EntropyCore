@@ -14,14 +14,15 @@ import us.rockhopper.entropy.utility.Part;
  */
 public class Weapon extends Part {
 
+	private final float RECOIL = 100;
 	private String weaponType;
 	private String projectileTexture;
 	private int fire; // The fire key associated with this weapon.
 	private int reload; // The reload progress of the weapon, measured in 1/60 frame units.
 	private int reloadTime; // The reload time of the weapon, measured in 1/60 frame units.
 	private boolean shouldFire;
+	
 	private ArrayList<Part> firedProjectiles; // A registry of all projectiles fired by this weapon.
-	private final float RECOIL = 100;
 
 	public Weapon(int gridX, int gridY, int height, int width, float density,
 			String sprite, String weaponType, String projectileTexture, int reloadTime, ArrayList<Part> projectiles) {
@@ -57,7 +58,7 @@ public class Weapon extends Part {
 						this.getBody().getPosition().add(new Vector2(
 								(float) (-1 * Math.sin(this.getBody().getAngle()) * this.getHeight()),
 								(float) Math.cos(this.getBody().getAngle()) * this.getHeight())),
-								this.getBody().getWorld());
+								this.getBody().getLinearVelocity(), this.getBody().getWorld(), 15);
 				missile.create();
 				firedProjectiles.add((Part) missile);
 
@@ -73,7 +74,7 @@ public class Weapon extends Part {
 						this.getBody().getPosition().add(new Vector2(
 								(float) (-1 * Math.sin(this.getBody().getAngle()) * this.getHeight()),
 								(float) Math.cos(this.getBody().getAngle()) * this.getHeight())),
-								this.getBody().getWorld());
+								this.getBody().getLinearVelocity(), this.getBody().getWorld(), 15);
 				missile.create();
 				firedProjectiles.add((Part) missile);
 
@@ -89,7 +90,7 @@ public class Weapon extends Part {
 						this.getBody().getPosition().add(new Vector2(
 								(float) (-1 * Math.sin(this.getBody().getAngle()) * this.getHeight()),
 								(float) Math.cos(this.getBody().getAngle()) * this.getHeight())),
-								this.getBody().getWorld());
+								this.getBody().getLinearVelocity(), this.getBody().getWorld(), 25);
 				missile.create();
 				firedProjectiles.add((Part) missile);
 
@@ -105,7 +106,7 @@ public class Weapon extends Part {
 						this.getBody().getPosition().add(new Vector2(
 								(float) (-1 * Math.sin(this.getBody().getAngle()) * this.getHeight()),
 								(float) Math.cos(this.getBody().getAngle()) * this.getHeight())),
-								this.getBody().getWorld(), 5f, 5);
+								this.getBody().getWorld(), 15f, 5);
 				laser.create();
 				firedProjectiles.add((Part) laser);
 				reload = 0;
@@ -116,7 +117,7 @@ public class Weapon extends Part {
 						this.getBody().getPosition().add(new Vector2(
 								(float) (-1 * Math.sin(this.getBody().getAngle()) * this.getHeight()),
 								(float) Math.cos(this.getBody().getAngle()) * this.getHeight())),
-								this.getBody().getWorld(), 10f, 10);
+								this.getBody().getWorld(), 30f, 10);
 				laser.create();
 				firedProjectiles.add((Part) laser);
 				reload = 0;
