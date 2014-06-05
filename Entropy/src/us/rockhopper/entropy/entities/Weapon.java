@@ -16,7 +16,7 @@ public class Weapon extends Part {
 
 	private String weaponType;
 	private String projectileTexture;
-	private int fire;
+	private int fire; // The fire key associated with this weapon.
 	private int reload; // The reload progress of the weapon, measured in 1/60 frame units.
 	private int reloadTime; // The reload time of the weapon, measured in 1/60 frame units.
 	private boolean shouldFire;
@@ -51,7 +51,7 @@ public class Weapon extends Part {
 
 		if (shouldFire == true) {
 			if (reload == reloadTime
-					&& (weaponType.equalsIgnoreCase("LargeMissileLauncher"))) {
+					&& weaponType.equalsIgnoreCase("LargeMissileLauncher")) {
 				MissileProjectile missile = new MissileProjectile(0,
 						0, 1.25f, .25f, 2f, projectileTexture, this.getBody().getAngle(),
 						this.getBody().getPosition().add(new Vector2(
@@ -67,7 +67,7 @@ public class Weapon extends Part {
 										.getAngle()) * -1 * RECOIL), true);
 				reload = 0;
 			} else if (reload == reloadTime
-					&& (weaponType.equalsIgnoreCase("MissileLauncher"))) {
+					&& weaponType.equalsIgnoreCase("MissileLauncher")) {
 				MissileProjectile missile = new MissileProjectile(0,
 						0, 1.25f, .25f, 2f, projectileTexture, this.getBody().getAngle(),
 						this.getBody().getPosition().add(new Vector2(
@@ -83,7 +83,7 @@ public class Weapon extends Part {
 										.getAngle()) * -1 * RECOIL), true);
 				reload = 0;
 			} else if (reload == reloadTime
-					&& (weaponType.equalsIgnoreCase("TorpedoLauncher"))) {
+					&& weaponType.equalsIgnoreCase("TorpedoLauncher")) {
 				MissileProjectile missile = new MissileProjectile(0,
 						0, 1.5f, .375f, 5f, projectileTexture, this.getBody().getAngle(),
 						this.getBody().getPosition().add(new Vector2(
@@ -98,13 +98,25 @@ public class Weapon extends Part {
 								* RECOIL, (float) Math.cos(this.getBody()
 										.getAngle()) * -1 * RECOIL), true);
 				reload = 0;
-			} else if (reload == reloadTime) {
+			} else if (reload == reloadTime
+					&& weaponType.equalsIgnoreCase("BasicLaser")) {
 				LaserProjectile laser = new LaserProjectile(0, 0, 1.125f, .125f,
 						0.01f, projectileTexture, this.getBody().getAngle(),
 						this.getBody().getPosition().add(new Vector2(
 								(float) (-1 * Math.sin(this.getBody().getAngle()) * this.getHeight()),
 								(float) Math.cos(this.getBody().getAngle()) * this.getHeight())),
-								this.getBody().getWorld());
+								this.getBody().getWorld(), 5f, 5);
+				laser.create();
+				firedProjectiles.add((Part) laser);
+				reload = 0;
+			} else if (reload == reloadTime
+					&& weaponType.equalsIgnoreCase("SnipeLaser")) {
+				LaserProjectile laser = new LaserProjectile(0, 0, 1.125f, .125f,
+						0.01f, projectileTexture, this.getBody().getAngle(),
+						this.getBody().getPosition().add(new Vector2(
+								(float) (-1 * Math.sin(this.getBody().getAngle()) * this.getHeight()),
+								(float) Math.cos(this.getBody().getAngle()) * this.getHeight())),
+								this.getBody().getWorld(), 10f, 10);
 				laser.create();
 				firedProjectiles.add((Part) laser);
 				reload = 0;
