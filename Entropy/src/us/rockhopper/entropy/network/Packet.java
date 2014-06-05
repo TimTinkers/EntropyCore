@@ -9,5 +9,9 @@ public class Packet {
 		public String ship;
 		public String name;
 	}
+
+	public static class Packet2InboundSize {
+		public int size;
+	}
 	// TODO add accounts with unique names to prevent any sort of name overlap from ever becoming problematic
 }

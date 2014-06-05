@@ -32,19 +32,17 @@ public class DuelLobby extends ScreenAdapter {
 	private Stage stage;
 	private Table table;
 	private Skin skin;
-	private HashMap<Label, Label> playerShipLabels;
 
 	private MultiplayerClient client;
 
-	private ArrayList<Ship> clientShips;
+	private ArrayList<String> playerNames;
 	private HashMap<String, Ship> allShips;
 	private String clientShipName = "";
 	private String clientPlayerName;
 
 	DuelLobby(MultiplayerClient client) {
-		clientShips = new ArrayList<Ship>();
 		allShips = new HashMap<String, Ship>();
-		playerShipLabels = new HashMap<Label, Label>();
+		playerNames = new ArrayList<String>();
 		this.client = client;
 		clientPlayerName = client.getUser().getName();
 	}
@@ -56,20 +54,20 @@ public class DuelLobby extends ScreenAdapter {
 
 		stage.act(delta);
 		stage.draw();
-		updateTable();
+
 		Table.drawDebug(stage);
+		updateTable();
 	}
 
 	public void updateTable() {
-		for (Label label : playerShipLabels.keySet()) {
-			if (table.findActor(label.getName()) == null) {
-				table.add(label);
-				table.add(playerShipLabels.get(label)).row();
-			} else {
-				Label shipLabel = (Label) table.findActor(label.getName() + "ship");
-				if (shipLabel != null) {
-					shipLabel.setText(label.getText());
-				}
+		for (String name : playerNames) {
+			if (table.findActor(name) == null) {
+				Label playerEntry = new Label(name, skin);
+				Label shipEntry = new Label("Hasn't Chosen", skin);
+				playerEntry.setName(name);
+				shipEntry.setName(name + "ship");
+				table.add(playerEntry);
+				table.add(shipEntry).row();
 			}
 		}
 	}
@@ -94,8 +92,11 @@ public class DuelLobby extends ScreenAdapter {
 		TextButton closeServer = new TextButton("Shutdown Server", skin, "default");
 
 		ClickListener shipSelectListener = new ClickListener() {
+			ArrayList<Ship> clientShips = new ArrayList<Ship>();
+
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
+				clientShips.clear();
 				// Load all ships into this list.
 				String shipPath = "data/ships/";
 				for (File file : FileIO.getFilesForFolder(new File(shipPath))) {
@@ -113,6 +114,7 @@ public class DuelLobby extends ScreenAdapter {
 							System.out.println(clientShipName);
 							System.out.println(FileIO.read("data/ships/" + clientShipName + ".json"));
 							client.sendShip(FileIO.read("data/ships/" + clientShipName + ".json"), clientPlayerName);
+							((Label) table.findActor(clientPlayerName + "ship")).setText(clientShipName);
 						}
 					};
 
@@ -161,10 +163,9 @@ public class DuelLobby extends ScreenAdapter {
 				if (o instanceof Packet0Player) {
 					// Add player labels to list upon them joining
 					Packet0Player player = (Packet0Player) o;
-					Label playerEntry = new Label(player.name, skin);
-					playerEntry.setName(player.name);
-					if (!playerShipLabels.containsKey(playerEntry)) {
-						playerShipLabels.put(playerEntry, new Label("No Ship Chosen", skin));
+					System.out.println("[CLIENT] " + clientPlayerName + " received information from " + player.name);
+					if (!playerNames.contains(player.name)) {
+						playerNames.add(player.name);
 					}
 				} else if (o instanceof Packet1Ship) {
 					// Grab ship information
@@ -174,15 +175,16 @@ public class DuelLobby extends ScreenAdapter {
 					GsonBuilder gson = new GsonBuilder();
 					gson.registerTypeAdapter(Part.class, new PartClassAdapter());
 					Ship ship = gson.create().fromJson(shipJSON, Ship.class);
+					System.out.println("[CLIENT] Received " + ship.getName() + " from " + playerName);
 					allShips.put(playerName, ship);
 
 					// Update ship labels
-					Label shipLabel = new Label(ship.getName(), skin);
-					shipLabel.setName(playerName + "ship");
-					playerShipLabels.put((Label) table.findActor(playerName), shipLabel);
+					((Label) table.findActor(playerName + "ship")).setText(ship.getName());
 				}
 			}
 		});
+
+		client.sendPlayer(clientPlayerName);
 	}
 
 	@Override

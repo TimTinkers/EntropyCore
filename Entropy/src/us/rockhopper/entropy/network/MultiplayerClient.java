@@ -1,9 +1,11 @@
 package us.rockhopper.entropy.network;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 import us.rockhopper.entropy.network.Packet.Packet0Player;
 import us.rockhopper.entropy.network.Packet.Packet1Ship;
+import us.rockhopper.entropy.network.Packet.Packet2InboundSize;
 import us.rockhopper.entropy.utility.Account;
 
 import com.badlogic.gdx.Gdx;
@@ -51,11 +53,20 @@ public class MultiplayerClient {
 	}
 
 	public void sendShip(String shipJSON, String name) {
+		try {
+			final int dataSize = shipJSON.getBytes("UTF-8").length;
+			System.out.println(dataSize);
+			Packet2InboundSize packetSize = new Packet2InboundSize();
+			packetSize.size = dataSize;
+			client.sendTCP(packetSize);
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+
 		Packet1Ship packet = new Packet1Ship();
 		packet.ship = shipJSON;
 		packet.name = name;
 		client.sendTCP(packet);
-		System.out.println("Sent");
 	}
 
 	public Account getUser() {

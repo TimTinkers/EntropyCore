@@ -3,7 +3,9 @@ package us.rockhopper.entropy.network;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import us.rockhopper.entropy.network.Packet.*;
+import us.rockhopper.entropy.network.Packet.Packet0Player;
+import us.rockhopper.entropy.network.Packet.Packet1Ship;
+import us.rockhopper.entropy.network.Packet.Packet2InboundSize;
 
 import com.badlogic.gdx.Gdx;
 import com.esotericsoftware.kryo.Kryo;
@@ -33,6 +35,7 @@ public class MultiplayerServer extends Listener {
 				Gdx.app.postRunnable(runnable);
 			}
 		});
+
 		try {
 			server.bind(7777);
 			server.start();
@@ -60,17 +63,21 @@ public class MultiplayerServer extends Listener {
 
 	@Override
 	public void received(Connection c, Object o) {
-		System.out.println("[SERVER] Received a packet from " + c.getID());
 		if (o instanceof Packet0Player) {
 			Packet0Player player = ((Packet0Player) o);
 			String name = player.name;
 			System.out.println("[SERVER] Player " + name + " received from connection " + c.getID() + ".");
 			players.add(player);
+			// TODO rework so that old players only get new players, and new players get a list of all players
 			for (Packet0Player playerOther : players) {
 				server.sendToAllTCP(playerOther);
 			}
 		} else if (o instanceof Packet1Ship) {
 			System.out.println("[SERVER] Received ship from connection " + c.getID());
+			server.sendToAllExceptTCP(c.getID(), o);
+		} else if (o instanceof Packet2InboundSize) {
+			System.out.println("[SERVER] Will try processing ship of size " + ((Packet2InboundSize) o).size + " from "
+					+ c.getID());
 			server.sendToAllExceptTCP(c.getID(), o);
 		}
 	}

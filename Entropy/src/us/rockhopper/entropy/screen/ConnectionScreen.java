@@ -69,7 +69,6 @@ public class ConnectionScreen extends ScreenAdapter {
 
 					@Override
 					public void run() {
-						client.sendPlayer(nameField.getText());
 						((Game) Gdx.app.getApplicationListener()).setScreen(new DuelLobby(client));
 					}
 				})));
@@ -82,7 +81,6 @@ public class ConnectionScreen extends ScreenAdapter {
 			public void clicked(InputEvent event, float x, float y) {
 				Account user = new Account(nameField.getText());
 				client = new MultiplayerClient(user, ip.getText());
-				client.sendPlayer(nameField.getText());
 				((Game) Gdx.app.getApplicationListener()).setScreen(new DuelLobby(client));
 			}
 		};
