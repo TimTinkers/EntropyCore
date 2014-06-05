@@ -7,8 +7,7 @@ import com.badlogic.gdx.math.Vector2;
 import us.rockhopper.entropy.utility.Part;
 
 /**
- * The class for a weapon component, which is in turn capable of creating its
- * own type of weapon.
+ * The class for a weapon component, which is in turn capable of creating its own type of weapon.
  * 
  * @author Ian Tang
  * @author Tim Clancy
