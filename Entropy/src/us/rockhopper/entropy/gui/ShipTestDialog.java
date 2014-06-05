@@ -18,7 +18,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 
-public class ShipSelectDialog extends Dialog {
+public class ShipTestDialog extends Dialog {
 	Skin skin;
 	ArrayList<Part> parts = new ArrayList<Part>();
 	String shipToPlay = "";
@@ -51,7 +51,7 @@ public class ShipSelectDialog extends Dialog {
 		}
 	};
 
-	public ShipSelectDialog(String title, Skin skin, ArrayList<Ship> ships, ArrayList<Part> parts) {
+	public ShipTestDialog(String title, Skin skin, ArrayList<Ship> ships, ArrayList<Part> parts) {
 		super(title, skin);
 		this.skin = skin;
 		this.getContentTable().defaults().fillX();
@@ -77,9 +77,5 @@ public class ShipSelectDialog extends Dialog {
 		if (result.equals("cancel")) {
 			this.addAction(sequence(alpha(1f), Actions.delay(0.3f), alpha(0f, 0.6f), Actions.removeActor()));
 		}
-	}
-
-	public String getShipName() {
-		return shipToPlay;
 	}
 }

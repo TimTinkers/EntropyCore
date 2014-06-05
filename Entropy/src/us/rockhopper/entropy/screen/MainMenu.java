@@ -8,7 +8,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 import us.rockhopper.entropy.entities.Ship;
-import us.rockhopper.entropy.gui.ShipSelectDialog;
+import us.rockhopper.entropy.gui.ShipTestDialog;
 import us.rockhopper.entropy.tween.ActorAccessor;
 import us.rockhopper.entropy.utility.FileIO;
 import us.rockhopper.entropy.utility.Part;
@@ -107,7 +107,7 @@ public class MainMenu implements Screen {
 					Ship ship = gson.create().fromJson(shipJSON, Ship.class);
 					ships.add(ship);
 				}
-				ShipSelectDialog dialog = new ShipSelectDialog("", skin, ships, null);
+				ShipTestDialog dialog = new ShipTestDialog("", skin, ships, null);
 				dialog.show(stage);
 			}
 		});

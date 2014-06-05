@@ -2,23 +2,26 @@ package us.rockhopper.entropy.network;
 
 import java.io.IOException;
 
-import us.rockhopper.entropy.network.Packet.Packet0Chat;
+import us.rockhopper.entropy.network.Packet.Packet0Player;
+import us.rockhopper.entropy.network.Packet.Packet1Ship;
+import us.rockhopper.entropy.utility.Account;
 
+import com.badlogic.gdx.Gdx;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Client;
+import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.minlog.Log;
 
 public class MultiplayerClient {
 	private Client client;
-	private NetworkClient nc;
+	private Account user;
 
-	public MultiplayerClient(String ip) {
+	public MultiplayerClient(Account user, String ip) {
 		Log.set(Log.LEVEL_DEBUG);
+		this.user = user;
 		client = new Client();
 		this.registerPackets();
-		nc = new NetworkClient();
-		nc.initialize(client);
-		client.addListener(nc);
+		// Client listening on its own thread.
 		new Thread(client).start();
 		try {
 			client.connect(5000, ip, 7777);
@@ -33,13 +36,29 @@ public class MultiplayerClient {
 		Network.register(kryo);
 	}
 
-	public void sendMessage(String message) {
-		Packet0Chat chat = new Packet0Chat();
-		chat.message = message;
-		client.sendTCP(chat);
+	public void addListener(Listener listener) {
+		client.addListener(new Listener.QueuedListener(listener) {
+			protected void queue(Runnable runnable) {
+				Gdx.app.postRunnable(runnable);
+			}
+		});
 	}
 
-	public String getLine() {
-		return nc.getLine();
+	public void sendPlayer(String name) {
+		Packet0Player packet = new Packet0Player();
+		packet.name = name;
+		client.sendTCP(packet);
+	}
+
+	public void sendShip(String shipJSON, String name) {
+		Packet1Ship packet = new Packet1Ship();
+		packet.ship = shipJSON;
+		packet.name = name;
+		client.sendTCP(packet);
+		System.out.println("Sent");
+	}
+
+	public Account getUser() {
+		return this.user;
 	}
 }
