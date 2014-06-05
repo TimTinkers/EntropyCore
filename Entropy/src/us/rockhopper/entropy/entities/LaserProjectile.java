@@ -17,15 +17,20 @@ public class LaserProjectile extends Part{
 
 	private int lifeTime;
 	private float angle;
+	private float velocity;
+	private int damage;
+	
 	private Vector2 position = new Vector2();
 	private World world;
 	
 	public LaserProjectile(int gridX, int gridY, float height, float width,
-			float density, String sprite, float angle, Vector2 pos, World world) {
+			float density, String sprite, float angle, Vector2 pos, World world, float velocity, int damage) {
 		super(gridX, gridY, height, width, density, sprite);
 		this.angle = angle;
 		position.set(pos);
 		this.world = world;
+		this.velocity = velocity;
+		this.damage = damage;
 		lifeTime = 0;
 	}
 	
@@ -65,8 +70,8 @@ public class LaserProjectile extends Part{
 		
 		this.getBody().applyForceToCenter(
 				new Vector2((float) Math.sin(this.getBody().getAngle())
-						* -5, (float) Math.cos(this.getBody()
-						.getAngle()) * 5), true);
+						* -1 * velocity, (float) Math.cos(this.getBody()
+						.getAngle()) * velocity), true);
 		
 		shape.dispose();
 	}

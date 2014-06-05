@@ -17,6 +17,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
@@ -37,6 +38,9 @@ public class TestFlight implements Screen {
 	private final float TIMESTEP = 1 / 60f;
 	private final int VELOCITYITERATIONS = 8, POSITIONITERATIONS = 3;
 
+	private float accumulator;
+	private float lastCamAngle;
+
 	private Ship ship;
 
 	public TestFlight(String shipName) {
@@ -46,16 +50,21 @@ public class TestFlight implements Screen {
 	// TODO implement DeWitters loop
 	@Override
 	public void render(float delta) {
+		delta = MathUtils.clamp(delta, 0, 0.030f);
+		accumulator += delta;
+
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		camera.position.y = ship.getCockpitPosition().y > camera.position.y ? ship.getCockpitPosition().y
-				: camera.position.y;
-		camera.position.x = ship.getCockpitPosition().x > camera.position.x ? ship.getCockpitPosition().x
-				: camera.position.x;
-		camera.update();
 
-		ship.update();
-		world.step(TIMESTEP, VELOCITYITERATIONS, POSITIONITERATIONS);
+		while(accumulator > TIMESTEP) {
+			accumulator -= TIMESTEP;
+			ship.update();
+			world.step(TIMESTEP, VELOCITYITERATIONS, POSITIONITERATIONS);
+		}
+		
+		camera.position.y = ship.getCockpitPosition().y;
+		camera.position.x = ship.getCockpitPosition().x;
+		camera.update();
 
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
@@ -92,6 +101,8 @@ public class TestFlight implements Screen {
 		ship = gson.create().fromJson(shipJSON, Ship.class);
 		ship.setWorld(world);
 		ship.create();
+		lastCamAngle = ship.getParts().get(0).getBody().getAngle();
+
 		Gdx.input.setInputProcessor(new InputMultiplexer(new InputAdapter() {
 
 			@Override
