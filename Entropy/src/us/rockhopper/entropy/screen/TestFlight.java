@@ -47,7 +47,6 @@ public class TestFlight implements Screen {
 		this.shipName = shipName;
 	}
 
-	// TODO implement DeWitters loop
 	@Override
 	public void render(float delta) {
 		delta = MathUtils.clamp(delta, 0, 0.030f);
