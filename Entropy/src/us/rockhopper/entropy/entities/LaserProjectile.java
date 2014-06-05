@@ -65,16 +65,10 @@ public class LaserProjectile extends Part{
 		
 		this.getBody().applyForceToCenter(
 				new Vector2((float) Math.sin(this.getBody().getAngle())
-						* -10, (float) Math.cos(this.getBody()
-						.getAngle()) * 10), true);
+						* -5, (float) Math.cos(this.getBody()
+						.getAngle()) * 5), true);
 		
 		shape.dispose();
-		
-		System.out.println("A laser beam has been created at " + Math.toDegrees(this.getBody().getAngle() % (Math.PI * 2)) + " degrees!");
-	}
-	
-	public void setWorld(World world) {
-		this.world = world;
 	}
 
 	@Override
