@@ -9,5 +9,6 @@ public class Network {
 		kryo.register(Packet0Player.class);
 		kryo.register(Packet1Ship.class);
 		kryo.register(Packet2InboundSize.class);
+		kryo.register(Packet3ShipCompleted.class);
 	}
 }

@@ -11,7 +11,13 @@ public class Packet {
 	}
 
 	public static class Packet2InboundSize {
+		public String name;
 		public int size;
+	}
+
+	public static class Packet3ShipCompleted {
+		public String name;
+		public boolean signal;
 	}
 	// TODO add accounts with unique names to prevent any sort of name overlap from ever becoming problematic
 }

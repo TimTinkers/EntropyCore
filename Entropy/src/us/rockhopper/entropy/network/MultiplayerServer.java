@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import us.rockhopper.entropy.network.Packet.Packet0Player;
 import us.rockhopper.entropy.network.Packet.Packet1Ship;
 import us.rockhopper.entropy.network.Packet.Packet2InboundSize;
+import us.rockhopper.entropy.network.Packet.Packet3ShipCompleted;
 
 import com.badlogic.gdx.Gdx;
 import com.esotericsoftware.kryo.Kryo;
@@ -24,6 +25,7 @@ import com.esotericsoftware.minlog.Log;
 public class MultiplayerServer extends Listener {
 	private Server server;
 	private ArrayList<Packet0Player> players;
+	private ArrayList<Packet1Ship> shipPackets;
 
 	public MultiplayerServer() {
 		Log.set(Log.LEVEL_DEBUG);
@@ -41,6 +43,7 @@ public class MultiplayerServer extends Listener {
 			server.start();
 			System.out.println("[SERVER] Started new server.");
 			players = new ArrayList<Packet0Player>();
+			shipPackets = new ArrayList<Packet1Ship>();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -65,20 +68,32 @@ public class MultiplayerServer extends Listener {
 	public void received(Connection c, Object o) {
 		if (o instanceof Packet0Player) {
 			Packet0Player player = ((Packet0Player) o);
-			String name = player.name;
-			System.out.println("[SERVER] Player " + name + " received from connection " + c.getID() + ".");
-			players.add(player);
-			// TODO rework so that old players only get new players, and new players get a list of all players
-			for (Packet0Player playerOther : players) {
-				server.sendToAllTCP(playerOther);
+			System.out.println("[SERVER] Player " + player.name + " received from connection " + c.getID() + ".");
+
+			if (!players.contains(player)) {
+				players.add(player);
+				server.sendToAllExceptTCP(c.getID(), player);
+				for (Packet0Player playerOther : players) {
+					server.sendToTCP(c.getID(), playerOther);
+				}
+				for (Packet1Ship shipData : shipPackets) {
+					server.sendToTCP(c.getID(), shipData);
+				}
 			}
+
+			// TODO rework so that old players only get new players, and new players get a list of all players
+
 		} else if (o instanceof Packet1Ship) {
-			System.out.println("[SERVER] Received ship from connection " + c.getID());
-			server.sendToAllExceptTCP(c.getID(), o);
+			shipPackets.add((Packet1Ship) o);
+			server.sendToAllTCP(o);
 		} else if (o instanceof Packet2InboundSize) {
 			System.out.println("[SERVER] Will try processing ship of size " + ((Packet2InboundSize) o).size + " from "
-					+ c.getID());
-			server.sendToAllExceptTCP(c.getID(), o);
+					+ ((Packet2InboundSize) o).name);
+			server.sendToAllTCP(o);
+		} else if (o instanceof Packet3ShipCompleted) {
+			System.out.println("[SERVER] " + ((Packet3ShipCompleted) o).name + " indicates that their ship sending is "
+					+ ((Packet3ShipCompleted) o).signal);
+			server.sendToAllTCP(o);
 		}
 	}
 }

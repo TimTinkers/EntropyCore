@@ -8,6 +8,8 @@ import us.rockhopper.entropy.entities.Ship;
 import us.rockhopper.entropy.network.MultiplayerClient;
 import us.rockhopper.entropy.network.Packet.Packet0Player;
 import us.rockhopper.entropy.network.Packet.Packet1Ship;
+import us.rockhopper.entropy.network.Packet.Packet2InboundSize;
+import us.rockhopper.entropy.network.Packet.Packet3ShipCompleted;
 import us.rockhopper.entropy.utility.FileIO;
 import us.rockhopper.entropy.utility.Part;
 import us.rockhopper.entropy.utility.PartClassAdapter;
@@ -111,10 +113,8 @@ public class DuelLobby extends ScreenAdapter {
 						@Override
 						public void clicked(final InputEvent event, float x, float y) {
 							clientShipName = event.getListenerActor().getName();
-							System.out.println(clientShipName);
-							System.out.println(FileIO.read("data/ships/" + clientShipName + ".json"));
 							client.sendShip(FileIO.read("data/ships/" + clientShipName + ".json"), clientPlayerName);
-							((Label) table.findActor(clientPlayerName + "ship")).setText(clientShipName);
+							// ((Label) table.findActor(clientPlayerName + "ship")).setText(clientShipName);
 						}
 					};
 
@@ -142,12 +142,15 @@ public class DuelLobby extends ScreenAdapter {
 
 		selectShip.addListener(shipSelectListener);
 		closeServer.addListener(serverCloseListener);
+		table.defaults().fillX();
 		table.add(selectShip);
 		table.add(closeServer);
 		stage.addActor(table);
 
 		// Client listeners
 		this.client.addListener(new Listener() {
+			HashMap<String, String> shipStrings = new HashMap<String, String>();
+
 			@Override
 			public void connected(Connection arg0) {
 				System.out.println("[CLIENT] You connected.");
@@ -170,16 +173,26 @@ public class DuelLobby extends ScreenAdapter {
 				} else if (o instanceof Packet1Ship) {
 					// Grab ship information
 					Packet1Ship packet = ((Packet1Ship) o);
-					String shipJSON = packet.ship;
-					String playerName = packet.name;
+					String shipJSON = shipStrings.get(packet.name);
+					shipJSON += packet.ship;
+					shipStrings.put(packet.name, shipJSON);
+					// System.out.println(index + " " + (index * 256));
+				} else if (o instanceof Packet2InboundSize) {
+					Packet2InboundSize packetSize = ((Packet2InboundSize) o);
+					System.out.println("[CLIENT] Attempting to read ship of size " + packetSize.size + " from "
+							+ packetSize.name);
+					shipStrings.put(packetSize.name, "");
+				} else if (o instanceof Packet3ShipCompleted) {
+					Packet3ShipCompleted packetComplete = ((Packet3ShipCompleted) o);
+					String playerName = packetComplete.name;
 					GsonBuilder gson = new GsonBuilder();
 					gson.registerTypeAdapter(Part.class, new PartClassAdapter());
-					Ship ship = gson.create().fromJson(shipJSON, Ship.class);
-					System.out.println("[CLIENT] Received " + ship.getName() + " from " + playerName);
+					Ship ship = gson.create().fromJson(shipStrings.get(playerName), Ship.class);
+					System.out.println("[CLIENT] Received entire " + ship.getName() + " from " + playerName);
 					allShips.put(playerName, ship);
 
 					// Update ship labels
-					((Label) table.findActor(playerName + "ship")).setText(ship.getName());
+					((Label) table.findActor(playerName + "ship")).setText(ship.getName() + " Cost: " + ship.getCost());
 				}
 			}
 		});

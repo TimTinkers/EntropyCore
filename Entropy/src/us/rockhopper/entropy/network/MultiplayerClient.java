@@ -2,10 +2,12 @@ package us.rockhopper.entropy.network;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 
 import us.rockhopper.entropy.network.Packet.Packet0Player;
 import us.rockhopper.entropy.network.Packet.Packet1Ship;
 import us.rockhopper.entropy.network.Packet.Packet2InboundSize;
+import us.rockhopper.entropy.network.Packet.Packet3ShipCompleted;
 import us.rockhopper.entropy.utility.Account;
 
 import com.badlogic.gdx.Gdx;
@@ -13,6 +15,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.minlog.Log;
+import com.google.common.primitives.Bytes;
 
 public class MultiplayerClient {
 	private Client client;
@@ -54,19 +57,38 @@ public class MultiplayerClient {
 
 	public void sendShip(String shipJSON, String name) {
 		try {
-			final int dataSize = shipJSON.getBytes("UTF-8").length;
-			System.out.println(dataSize);
+			byte[] data = shipJSON.getBytes("UTF-8");
+			List<Byte> originalList = Bytes.asList(data);
+
+			// Tell server how large the incoming String is
+			int dataSize = data.length;
+			System.out.println("[CLIENT] Sending ship string of size " + dataSize);
 			Packet2InboundSize packetSize = new Packet2InboundSize();
 			packetSize.size = dataSize;
+			packetSize.name = name;
 			client.sendTCP(packetSize);
+
+			// Partition the out-bound String
+			int partitionSize = 256;
+			for (int i = 0; i < originalList.size(); i += partitionSize) {
+				List<Byte> subList = originalList.subList(i, i + Math.min(partitionSize, originalList.size() - i));
+				byte[] byteArray = Bytes.toArray(subList);
+				String shipPiece = new String(byteArray);
+				Packet1Ship packet = new Packet1Ship();
+				packet.name = name;
+				packet.ship = shipPiece;
+				client.sendTCP(packet);
+			}
+
+			// TODO add check here to see if the ship was actually entirely sent
+			// Notify other clients that the ship was completely sent.
+			Packet3ShipCompleted packetComplete = new Packet3ShipCompleted();
+			packetComplete.name = name;
+			packetComplete.signal = true;
+			client.sendTCP(packetComplete);
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
-
-		Packet1Ship packet = new Packet1Ship();
-		packet.ship = shipJSON;
-		packet.name = name;
-		client.sendTCP(packet);
 	}
 
 	public Account getUser() {

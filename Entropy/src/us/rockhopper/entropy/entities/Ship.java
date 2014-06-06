@@ -335,6 +335,14 @@ public class Ship extends InputAdapter implements Json.Serializable {
 		return this.parts;
 	}
 
+	public int getCost() {
+		int cost = 0;
+		for (Part part : parts) {
+			cost += part.getCost();
+		}
+		return cost;
+	}
+
 	@Override
 	public void write(Json json) {
 	}
