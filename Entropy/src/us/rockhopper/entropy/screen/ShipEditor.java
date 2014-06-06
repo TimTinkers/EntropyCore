@@ -14,7 +14,7 @@ import us.rockhopper.entropy.entities.Thruster;
 import us.rockhopper.entropy.entities.Weapon;
 import us.rockhopper.entropy.gui.PartImage;
 import us.rockhopper.entropy.gui.ShipLoadDialog;
-import us.rockhopper.entropy.gui.ShipSelectDialog;
+import us.rockhopper.entropy.gui.ShipTestDialog;
 import us.rockhopper.entropy.utility.FileIO;
 import us.rockhopper.entropy.utility.Part;
 import us.rockhopper.entropy.utility.PartClassAdapter;
@@ -886,7 +886,7 @@ public class ShipEditor extends ScreenAdapter {
 						Ship ship = gson.create().fromJson(shipJSON, Ship.class);
 						ships.add(ship);
 					}
-					ShipSelectDialog dialog = new ShipSelectDialog("", skin, ships, parts);
+					ShipTestDialog dialog = new ShipTestDialog("", skin, ships, parts);
 					dialog.show(stage);
 				} else if (event.getListenerActor() == buttonLoad) {
 					final ArrayList<Ship> ships = new ArrayList<Ship>();

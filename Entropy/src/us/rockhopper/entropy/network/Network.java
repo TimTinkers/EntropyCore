@@ -1,11 +1,14 @@
 package us.rockhopper.entropy.network;
 
-import us.rockhopper.entropy.network.Packet.Packet0Chat;
+import us.rockhopper.entropy.network.Packet.*;
 
 import com.esotericsoftware.kryo.Kryo;
 
 public class Network {
 	public static void register(Kryo kryo) {
-		kryo.register(Packet0Chat.class);
+		kryo.register(Packet0Player.class);
+		kryo.register(Packet1Ship.class);
+		kryo.register(Packet2InboundSize.class);
+		kryo.register(Packet3ShipCompleted.class);
 	}
 }

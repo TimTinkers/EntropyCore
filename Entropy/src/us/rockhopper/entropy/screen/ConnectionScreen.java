@@ -5,7 +5,9 @@ import static com.badlogic.gdx.scenes.scene2d.actions.Actions.run;
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
 import us.rockhopper.entropy.network.MultiplayerClient;
 import us.rockhopper.entropy.network.MultiplayerServer;
+import us.rockhopper.entropy.utility.Account;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
@@ -23,7 +25,6 @@ public class ConnectionScreen extends ScreenAdapter {
 	private Stage stage;
 	private Table table;
 	private Skin skin;
-	private MultiplayerServer server;
 	private MultiplayerClient client;
 
 	@Override
@@ -54,34 +55,40 @@ public class ConnectionScreen extends ScreenAdapter {
 		Gdx.input.setInputProcessor(stage);
 
 		final TextField ip = new TextField("Enter an IP", skin);
+		final TextField nameField = new TextField("Your name?", skin);
 
 		TextButton serverStartButton = new TextButton("Host a Game", skin, "default");
 		ClickListener serverStartListener = new ClickListener() {
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
-				server = new MultiplayerServer();
-				client = new MultiplayerClient("localhost");
+				new MultiplayerServer();
+				// TODO move logging in to the very first post-Splash page
+				Account user = new Account(nameField.getText());
+				client = new MultiplayerClient(user, "localhost");
 				stage.addAction(sequence(alpha(1f), alpha(0f, .6f), run(new Runnable() {
 
 					@Override
 					public void run() {
-						table.clear();
+						((Game) Gdx.app.getApplicationListener()).setScreen(new DuelLobby(client));
 					}
 				})));
 			}
 		};
-
+		// TODO connecting properly, try figuring out how to list ships
 		TextButton clientStartButton = new TextButton("Join a Game", skin, "default");
 		ClickListener clientStartListener = new ClickListener() {
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
-				client = new MultiplayerClient(ip.getText());
+				Account user = new Account(nameField.getText());
+				client = new MultiplayerClient(user, ip.getText());
+				((Game) Gdx.app.getApplicationListener()).setScreen(new DuelLobby(client));
 			}
 		};
 
 		serverStartButton.addListener(serverStartListener);
 		clientStartButton.addListener(clientStartListener);
 		table.add(ip);
+		table.add(nameField);
 		table.add(clientStartButton).row();
 		table.add(serverStartButton).row();
 
