@@ -6,16 +6,19 @@ public class Packet {
 	}
 
 	public static class Packet1Ship {
-		public String ship;
+		public String shipName;
 		public String name;
+		public String ship;
 	}
 
 	public static class Packet2InboundSize {
+		public String shipName;
 		public String name;
 		public int size;
 	}
 
 	public static class Packet3ShipCompleted {
+		public String shipName;
 		public String name;
 		public boolean signal;
 	}

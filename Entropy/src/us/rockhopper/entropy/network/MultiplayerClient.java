@@ -23,8 +23,8 @@ public class MultiplayerClient {
 
 	public MultiplayerClient(Account user, String ip) {
 		Log.set(Log.LEVEL_DEBUG);
-		this.user = user;
 		client = new Client();
+		this.user = user;
 		this.registerPackets();
 		// Client listening on its own thread.
 		new Thread(client).start();
@@ -55,7 +55,7 @@ public class MultiplayerClient {
 		client.sendTCP(packet);
 	}
 
-	public void sendShip(String shipJSON, String name) {
+	public void sendShip(String shipJSON, String name, String shipName) {
 		try {
 			byte[] data = shipJSON.getBytes("UTF-8");
 			List<Byte> originalList = Bytes.asList(data);
@@ -66,8 +66,12 @@ public class MultiplayerClient {
 			Packet2InboundSize packetSize = new Packet2InboundSize();
 			packetSize.size = dataSize;
 			packetSize.name = name;
+			packetSize.shipName = shipName;
 			client.sendTCP(packetSize);
 
+			// Wait for the server to okay sending the rest of the ship data
+			// if (clearedToSend) {
+			// clearedToSend = false;
 			// Partition the out-bound String
 			int partitionSize = 256;
 			for (int i = 0; i < originalList.size(); i += partitionSize) {
@@ -77,6 +81,7 @@ public class MultiplayerClient {
 				Packet1Ship packet = new Packet1Ship();
 				packet.name = name;
 				packet.ship = shipPiece;
+				packet.shipName = shipName;
 				client.sendTCP(packet);
 			}
 
@@ -85,7 +90,10 @@ public class MultiplayerClient {
 			Packet3ShipCompleted packetComplete = new Packet3ShipCompleted();
 			packetComplete.name = name;
 			packetComplete.signal = true;
+			packetComplete.shipName = shipName;
 			client.sendTCP(packetComplete);
+
+			// }
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}

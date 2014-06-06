@@ -58,7 +58,6 @@ public class DuelLobby extends ScreenAdapter {
 		stage.draw();
 
 		Table.drawDebug(stage);
-		updateTable();
 	}
 
 	public void updateTable() {
@@ -112,9 +111,13 @@ public class DuelLobby extends ScreenAdapter {
 					ClickListener shipChosen = new ClickListener() {
 						@Override
 						public void clicked(final InputEvent event, float x, float y) {
-							clientShipName = event.getListenerActor().getName();
-							client.sendShip(FileIO.read("data/ships/" + clientShipName + ".json"), clientPlayerName);
-							// ((Label) table.findActor(clientPlayerName + "ship")).setText(clientShipName);
+							// Prevent spamming ship requests
+							if (!clientShipName.equals(event.getListenerActor().getName())) {
+								clientShipName = event.getListenerActor().getName();
+								client.sendShip(FileIO.read("data/ships/" + clientShipName + ".json"),
+										clientPlayerName, clientShipName);
+								// ((Label) table.findActor(clientPlayerName + "ship")).setText(clientShipName);
+							}
 						}
 					};
 
@@ -170,30 +173,39 @@ public class DuelLobby extends ScreenAdapter {
 					if (!playerNames.contains(player.name)) {
 						playerNames.add(player.name);
 					}
+					updateTable();
 				} else if (o instanceof Packet1Ship) {
 					// Grab ship information
 					Packet1Ship packet = ((Packet1Ship) o);
 					String shipJSON = shipStrings.get(packet.name);
 					shipJSON += packet.ship;
 					shipStrings.put(packet.name, shipJSON);
-					// System.out.println(index + " " + (index * 256));
+					System.out.println(packet.name + " " + shipJSON);
+
 				} else if (o instanceof Packet2InboundSize) {
+					// TODO I don't think we even care about the size of the ship string...
 					Packet2InboundSize packetSize = ((Packet2InboundSize) o);
 					System.out.println("[CLIENT] Attempting to read ship of size " + packetSize.size + " from "
 							+ packetSize.name);
 					shipStrings.put(packetSize.name, "");
 				} else if (o instanceof Packet3ShipCompleted) {
 					Packet3ShipCompleted packetComplete = ((Packet3ShipCompleted) o);
+
 					String playerName = packetComplete.name;
 					GsonBuilder gson = new GsonBuilder();
 					gson.registerTypeAdapter(Part.class, new PartClassAdapter());
+					System.out.println(shipStrings.get(playerName));
 					Ship ship = gson.create().fromJson(shipStrings.get(playerName), Ship.class);
 					System.out.println("[CLIENT] Received entire " + ship.getName() + " from " + playerName);
 					allShips.put(playerName, ship);
 
 					// Update ship labels
 					((Label) table.findActor(playerName + "ship")).setText(ship.getName() + " Cost: " + ship.getCost());
+
 				}
+				// else if (o instanceof Packet4Continue) {
+				// client.setCleared(((Packet4Continue) o).flag);
+				// }
 			}
 		});
 
