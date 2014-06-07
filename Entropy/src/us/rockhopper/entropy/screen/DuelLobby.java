@@ -1,5 +1,9 @@
 package us.rockhopper.entropy.screen;
 
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.moveTo;
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.run;
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,10 +14,12 @@ import us.rockhopper.entropy.network.Packet.Packet0Player;
 import us.rockhopper.entropy.network.Packet.Packet1Ship;
 import us.rockhopper.entropy.network.Packet.Packet2InboundSize;
 import us.rockhopper.entropy.network.Packet.Packet3ShipCompleted;
+import us.rockhopper.entropy.network.Packet.Packet4Ready;
 import us.rockhopper.entropy.utility.FileIO;
 import us.rockhopper.entropy.utility.Part;
 import us.rockhopper.entropy.utility.PartClassAdapter;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
@@ -37,14 +43,15 @@ public class DuelLobby extends ScreenAdapter {
 
 	private MultiplayerClient client;
 
-	private ArrayList<String> playerNames;
+	private HashMap<String, Boolean> players;
 	private HashMap<String, Ship> allShips;
 	private String clientShipName = "";
 	private String clientPlayerName;
+	private boolean isReady = false;
 
 	DuelLobby(MultiplayerClient client) {
 		allShips = new HashMap<String, Ship>();
-		playerNames = new ArrayList<String>();
+		players = new HashMap<String, Boolean>();
 		this.client = client;
 		clientPlayerName = client.getUser().getName();
 	}
@@ -61,7 +68,7 @@ public class DuelLobby extends ScreenAdapter {
 	}
 
 	public void updateTable() {
-		for (String name : playerNames) {
+		for (String name : players.keySet()) {
 			if (table.findActor(name) == null) {
 				Label playerEntry = new Label(name, skin);
 				Label shipEntry = new Label("Hasn't Chosen", skin);
@@ -90,7 +97,7 @@ public class DuelLobby extends ScreenAdapter {
 		Gdx.input.setInputProcessor(stage);
 
 		TextButton selectShip = new TextButton("Select a Ship", skin, "default");
-		TextButton closeServer = new TextButton("Shutdown Server", skin, "default");
+		TextButton toggleReady = new TextButton("Ready", skin, "default");
 
 		ClickListener shipSelectListener = new ClickListener() {
 			ArrayList<Ship> clientShips = new ArrayList<Ship>();
@@ -116,7 +123,6 @@ public class DuelLobby extends ScreenAdapter {
 								clientShipName = event.getListenerActor().getName();
 								client.sendShip(FileIO.read("data/ships/" + clientShipName + ".json"),
 										clientPlayerName, clientShipName);
-								// ((Label) table.findActor(clientPlayerName + "ship")).setText(clientShipName);
 							}
 						}
 					};
@@ -136,18 +142,31 @@ public class DuelLobby extends ScreenAdapter {
 				}.show(stage);
 			}
 		};
+		// TODO add server close listener
 		ClickListener serverCloseListener = new ClickListener() {
 			@Override
 			public void clicked(final InputEvent event, float x, float y) {
-				// TODO close server. Also close clients when they disconnect from server
+				if (isReady) {
+					isReady = false;
+					table.findActor(clientPlayerName).setColor(1, 1, 1, 1);
+					TextButton button = (TextButton) event.getListenerActor();
+					button.setText("Go Ready");
+					client.sendReady(isReady);
+				} else {
+					isReady = true;
+					table.findActor(clientPlayerName).setColor(0, 1, 0, 1);
+					TextButton button = (TextButton) event.getListenerActor();
+					button.setText("Unready");
+					client.sendReady(isReady);
+				}
 			}
 		};
 
 		selectShip.addListener(shipSelectListener);
-		closeServer.addListener(serverCloseListener);
+		toggleReady.addListener(serverCloseListener);
 		table.defaults().fillX();
 		table.add(selectShip);
-		table.add(closeServer);
+		table.add(toggleReady);
 		stage.addActor(table);
 
 		// Client listeners
@@ -170,8 +189,8 @@ public class DuelLobby extends ScreenAdapter {
 					// Add player labels to list upon them joining
 					Packet0Player player = (Packet0Player) o;
 					System.out.println("[CLIENT] " + clientPlayerName + " received information from " + player.name);
-					if (!playerNames.contains(player.name)) {
-						playerNames.add(player.name);
+					if (!players.keySet().contains(player.name)) {
+						players.put(player.name, false);
 					}
 					updateTable();
 				} else if (o instanceof Packet1Ship) {
@@ -201,11 +220,33 @@ public class DuelLobby extends ScreenAdapter {
 
 					// Update ship labels
 					((Label) table.findActor(playerName + "ship")).setText(ship.getName() + " Cost: " + ship.getCost());
+				} else if (o instanceof Packet4Ready) {
+					Packet4Ready packet = (Packet4Ready) o;
+					System.out.println("[CLIENT] " + packet.name + " is ready " + packet.ready);
+					players.put(packet.name, packet.ready);
+					// Set color of all player slots to indicate readiness.
+					if (packet.ready) {
+						table.findActor(packet.name).setColor(0, 1, 0, 1);
+					} else {
+						table.findActor(packet.name).setColor(1, 1, 1, 1);
+					}
+					// If every player is ready
+					boolean ready = true;
+					for (String playerName : players.keySet()) {
+						if (!players.get(playerName)) {
+							ready = false;
+						}
+					}
+					if (ready) {
+						stage.addAction(sequence(moveTo(0, -stage.getHeight(), .5f), run(new Runnable() {
 
+							@Override
+							public void run() {
+								((Game) Gdx.app.getApplicationListener()).setScreen(new Duel());
+							}
+						})));
+					}
 				}
-				// else if (o instanceof Packet4Continue) {
-				// client.setCleared(((Packet4Continue) o).flag);
-				// }
 			}
 		});
 

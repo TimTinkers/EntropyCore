@@ -8,6 +8,7 @@ import us.rockhopper.entropy.network.Packet.Packet0Player;
 import us.rockhopper.entropy.network.Packet.Packet1Ship;
 import us.rockhopper.entropy.network.Packet.Packet2InboundSize;
 import us.rockhopper.entropy.network.Packet.Packet3ShipCompleted;
+import us.rockhopper.entropy.network.Packet.Packet4Ready;
 import us.rockhopper.entropy.utility.Account;
 
 import com.badlogic.gdx.Gdx;
@@ -55,6 +56,13 @@ public class MultiplayerClient {
 		client.sendTCP(packet);
 	}
 
+	public void sendReady(boolean ready) {
+		Packet4Ready packet = new Packet4Ready();
+		packet.name = user.getName();
+		packet.ready = ready;
+		client.sendTCP(packet);
+	}
+
 	public void sendShip(String shipJSON, String name, String shipName) {
 		try {
 			byte[] data = shipJSON.getBytes("UTF-8");
@@ -70,9 +78,6 @@ public class MultiplayerClient {
 			client.sendTCP(packetSize);
 
 			// Wait for the server to okay sending the rest of the ship data
-			// if (clearedToSend) {
-			// clearedToSend = false;
-			// Partition the out-bound String
 			int partitionSize = 256;
 			for (int i = 0; i < originalList.size(); i += partitionSize) {
 				List<Byte> subList = originalList.subList(i, i + Math.min(partitionSize, originalList.size() - i));
@@ -92,8 +97,6 @@ public class MultiplayerClient {
 			packetComplete.signal = true;
 			packetComplete.shipName = shipName;
 			client.sendTCP(packetComplete);
-
-			// }
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}

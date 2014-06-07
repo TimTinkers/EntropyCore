@@ -2,11 +2,13 @@ package us.rockhopper.entropy.network;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import us.rockhopper.entropy.network.Packet.Packet0Player;
 import us.rockhopper.entropy.network.Packet.Packet1Ship;
 import us.rockhopper.entropy.network.Packet.Packet2InboundSize;
 import us.rockhopper.entropy.network.Packet.Packet3ShipCompleted;
+import us.rockhopper.entropy.network.Packet.Packet4Ready;
 
 import com.badlogic.gdx.Gdx;
 import com.esotericsoftware.kryo.Kryo;
@@ -24,7 +26,7 @@ import com.esotericsoftware.minlog.Log;
  */
 public class MultiplayerServer extends Listener {
 	private Server server;
-	private ArrayList<Packet0Player> players;
+	private HashMap<String, Boolean> players;
 	private ArrayList<Packet1Ship> shipPackets;
 	private ArrayList<Packet2InboundSize> shipSizePackets;
 	private ArrayList<Packet3ShipCompleted> shipCompletedPackets;
@@ -44,7 +46,7 @@ public class MultiplayerServer extends Listener {
 			server.bind(7777);
 			server.start();
 			System.out.println("[SERVER] Started new server.");
-			players = new ArrayList<Packet0Player>();
+			players = new HashMap<String, Boolean>();
 			shipPackets = new ArrayList<Packet1Ship>();
 			shipSizePackets = new ArrayList<Packet2InboundSize>();
 			shipCompletedPackets = new ArrayList<Packet3ShipCompleted>();
@@ -74,12 +76,18 @@ public class MultiplayerServer extends Listener {
 			Packet0Player player = ((Packet0Player) o);
 			System.out.println("[SERVER] Player " + player.name + " received from connection " + c.getID() + ".");
 			// If this is a player just entering the lobby
-			if (!players.contains(player)) {
-				players.add(player);
+			if (!players.keySet().contains(player.name)) {
+				players.put(player.name, false);
 				server.sendToAllExceptTCP(c.getID(), player);
 				System.out.println("[SERVER] Getting " + player.name + " up to speed.");
-				for (Packet0Player playerOther : players) {
+				for (String playerOtherName : players.keySet()) {
+					Packet0Player playerOther = new Packet0Player();
+					playerOther.name = playerOtherName;
 					server.sendToTCP(c.getID(), playerOther);
+					Packet4Ready readyPacket = new Packet4Ready();
+					readyPacket.name = playerOtherName;
+					readyPacket.ready = players.get(playerOtherName);
+					server.sendToTCP(c.getID(), readyPacket);
 				}
 				String currentShip = "";
 				int j = 0;
@@ -91,7 +99,6 @@ public class MultiplayerServer extends Listener {
 					while (j < shipPackets.size() && shipPackets.get(j).name.equals(start.name)
 							&& shipPackets.get(j).shipName.equals(currentShip)) {
 						server.sendToTCP(c.getID(), shipPackets.get(j));
-						// System.out.println(shipPackets.get(j).ship);
 						++j;
 					}
 					Packet3ShipCompleted packetComplete = shipCompletedPackets.get(i);
@@ -99,8 +106,6 @@ public class MultiplayerServer extends Listener {
 				}
 			}
 		} else if (o instanceof Packet1Ship) {
-			// Packet1Ship packet = (Packet1Ship) o;
-			// if(packet.name)
 			shipPackets.add((Packet1Ship) o);
 			server.sendToAllTCP(o);
 		} else if (o instanceof Packet2InboundSize) {
@@ -108,38 +113,17 @@ public class MultiplayerServer extends Listener {
 			System.out.println("[SERVER] Will try processing ship of size " + packet.size + " from " + packet.name);
 			shipSizePackets.add((Packet2InboundSize) o);
 			// // TODO ideally this would check for duplicate packets, and if they are found, then the sending would be
-			// // cancelled--including the sending of the following ship packets and shipCompleted packet.
-			// for (int i = 0; i < shipSizePackets.size(); ++i) {
-			// Packet2InboundSize startPacket = shipSizePackets.get(i);
-			// // If we are receiving a new ship from a player, replace the header on record
-			// if (packet.name.equals(startPacket.name)) {
-			// shipSizePackets.set(i, packet);
-			// // Remove the player's previous ship from record.
-			// for (Packet1Ship shipPacket : shipPackets) {
-			// if (shipPacket.name.equals(packet.name)) {
-			// shipPackets.remove(shipPacket);
-			// }
-			// }
-			// // Remove the marker for the shipEnd from record, as a new one will be sent.
-			// for (int j = 0; j < shipCompletedPackets.size(); ++j) {
-			// Packet3ShipCompleted endPacket = shipCompletedPackets.get(j);
-			// if (endPacket.name.equals(packet.name)) {
-			// shipCompletedPackets.remove(endPacket);
-			// break;
-			// }
-			// }
-			// break;
-			// }
-			// }
-			// Packet4Continue continuePacket = new Packet4Continue();
-			// continuePacket.flag = true;
-			// server.sendToTCP(c.getID(), continuePacket);
 			server.sendToAllTCP(o);
 		} else if (o instanceof Packet3ShipCompleted) {
 			System.out.println("[SERVER] " + ((Packet3ShipCompleted) o).name + " indicates that their ship sending is "
 					+ ((Packet3ShipCompleted) o).signal);
 			shipCompletedPackets.add((Packet3ShipCompleted) o);
 			server.sendToAllTCP(o);
+		} else if (o instanceof Packet4Ready) {
+			Packet4Ready packet = (Packet4Ready) o;
+			System.out.println("[SERVER] " + packet.name + " is ready " + packet.ready);
+			players.put(packet.name, packet.ready);
+			server.sendToAllExceptTCP(c.getID(), o);
 		}
 	}
 }

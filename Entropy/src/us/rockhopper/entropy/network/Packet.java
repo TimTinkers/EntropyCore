@@ -22,5 +22,10 @@ public class Packet {
 		public String name;
 		public boolean signal;
 	}
+
+	public static class Packet4Ready {
+		public String name;
+		public boolean ready;
+	}
 	// TODO add accounts with unique names to prevent any sort of name overlap from ever becoming problematic
 }
