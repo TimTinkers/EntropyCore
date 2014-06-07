@@ -115,6 +115,8 @@ public class DuelLobby extends ScreenAdapter {
 					clientShips.add(ship);
 				}
 				new Dialog("", skin) {
+					// TODO minimize packet spam, cleanup comments and Syso's, and finally move onto the duel screen
+					// proper.
 					ClickListener shipChosen = new ClickListener() {
 						@Override
 						public void clicked(final InputEvent event, float x, float y) {
