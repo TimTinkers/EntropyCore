@@ -9,6 +9,7 @@ import us.rockhopper.entropy.network.Packet.Packet1Ship;
 import us.rockhopper.entropy.network.Packet.Packet2InboundSize;
 import us.rockhopper.entropy.network.Packet.Packet3ShipCompleted;
 import us.rockhopper.entropy.network.Packet.Packet4Ready;
+import us.rockhopper.entropy.network.Packet.Packet6Key;
 import us.rockhopper.entropy.utility.Account;
 
 import com.badlogic.gdx.Gdx;
@@ -102,6 +103,14 @@ public class MultiplayerClient {
 		}
 	}
 
+	public void sendKey(int keycode, boolean isDown) {
+		Packet6Key packet = new Packet6Key();
+		packet.name = user.getName();
+		packet.keyPress = keycode;
+		packet.isDown = isDown;
+		client.sendTCP(packet);
+	}
+	
 	public Account getUser() {
 		return this.user;
 	}

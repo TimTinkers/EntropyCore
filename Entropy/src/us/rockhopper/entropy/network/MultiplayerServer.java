@@ -9,6 +9,8 @@ import us.rockhopper.entropy.network.Packet.Packet1Ship;
 import us.rockhopper.entropy.network.Packet.Packet2InboundSize;
 import us.rockhopper.entropy.network.Packet.Packet3ShipCompleted;
 import us.rockhopper.entropy.network.Packet.Packet4Ready;
+import us.rockhopper.entropy.network.Packet.Packet5GameStart;
+import us.rockhopper.entropy.network.Packet.Packet6Key;
 
 import com.badlogic.gdx.Gdx;
 import com.esotericsoftware.kryo.Kryo;
@@ -124,6 +126,20 @@ public class MultiplayerServer extends Listener {
 			System.out.println("[SERVER] " + packet.name + " is ready " + packet.ready);
 			players.put(packet.name, packet.ready);
 			server.sendToAllExceptTCP(c.getID(), o);
+
+			// If every player is ready
+			boolean ready = true;
+			for (String playerName : players.keySet()) {
+				if (!players.get(playerName)) {
+					ready = false;
+				}
+			}
+			if (ready) {
+				server.sendToAllTCP(new Packet5GameStart());
+			}
+		} else if (o instanceof Packet6Key) {
+			// server.sendToAllExceptTCP(c.getID(), o);
+			server.sendToAllTCP(o);
 		}
 	}
 }
