@@ -33,7 +33,7 @@ public class MultiplayerServer extends Listener {
 	private ArrayList<Packet2InboundSize> shipSizePackets;
 	private ArrayList<Packet3ShipCompleted> shipCompletedPackets;
 
-	public MultiplayerServer() {
+	public MultiplayerServer(String port) {
 		Log.set(Log.LEVEL_DEBUG);
 		server = new Server();
 		this.registerPackets();
@@ -45,7 +45,7 @@ public class MultiplayerServer extends Listener {
 		});
 
 		try {
-			server.bind(7777);
+			server.bind(Integer.parseInt(port));
 			server.start();
 			System.out.println("[SERVER] Started new server.");
 			players = new HashMap<String, Boolean>();

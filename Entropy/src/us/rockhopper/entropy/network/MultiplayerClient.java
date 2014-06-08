@@ -23,15 +23,16 @@ public class MultiplayerClient {
 	private Client client;
 	private Account user;
 
-	public MultiplayerClient(Account user, String ip) {
+	public MultiplayerClient(Account user, String ip, String port) {
 		Log.set(Log.LEVEL_DEBUG);
 		client = new Client();
 		this.user = user;
 		this.registerPackets();
 		// Client listening on its own thread.
 		new Thread(client).start();
+
 		try {
-			client.connect(5000, ip, 7777);
+			client.connect(5000, ip, Integer.parseInt(port));
 		} catch (IOException e) {
 			e.printStackTrace();
 			client.stop();
@@ -110,7 +111,7 @@ public class MultiplayerClient {
 		packet.isDown = isDown;
 		client.sendTCP(packet);
 	}
-	
+
 	public Account getUser() {
 		return this.user;
 	}

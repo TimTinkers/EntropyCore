@@ -1,10 +1,12 @@
 package us.rockhopper.entropy.screen;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
 import us.rockhopper.entropy.entities.Ship;
 import us.rockhopper.entropy.network.MultiplayerClient;
+import us.rockhopper.entropy.network.Packet;
 import us.rockhopper.entropy.network.Packet.Packet6Key;
 import us.rockhopper.entropy.utility.Part;
 
@@ -39,6 +41,9 @@ public class Duel extends ScreenAdapter {
 	private MultiplayerClient client;
 	private Ship ship;
 
+	protected ConcurrentLinkedQueue<Packet> clientMessageQueue;
+
+	
 	Duel(HashMap<String, Ship> ships, MultiplayerClient client) {
 		allShips = ships;
 		this.client = client;

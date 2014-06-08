@@ -56,15 +56,16 @@ public class ConnectionScreen extends ScreenAdapter {
 
 		final TextField ip = new TextField("Enter an IP", skin);
 		final TextField nameField = new TextField("Your name?", skin);
+		final TextField portField = new TextField("Port", skin);
 
 		TextButton serverStartButton = new TextButton("Host a Game", skin, "default");
 		ClickListener serverStartListener = new ClickListener() {
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
-				new MultiplayerServer();
+				new MultiplayerServer(portField.getText());
 				// TODO move logging in to the very first post-Splash page
 				Account user = new Account(nameField.getText());
-				client = new MultiplayerClient(user, "localhost");
+				client = new MultiplayerClient(user, ip.getText(), portField.getText());
 				stage.addAction(sequence(alpha(1f), alpha(0f, .6f), run(new Runnable() {
 
 					@Override
@@ -80,7 +81,7 @@ public class ConnectionScreen extends ScreenAdapter {
 			@Override
 			public void clicked(InputEvent event, float x, float y) {
 				Account user = new Account(nameField.getText());
-				client = new MultiplayerClient(user, ip.getText());
+				client = new MultiplayerClient(user, ip.getText(), portField.getText());
 				((Game) Gdx.app.getApplicationListener()).setScreen(new DuelLobby(client));
 			}
 		};
@@ -88,6 +89,7 @@ public class ConnectionScreen extends ScreenAdapter {
 		serverStartButton.addListener(serverStartListener);
 		clientStartButton.addListener(clientStartListener);
 		table.add(ip);
+		table.add(portField);
 		table.add(nameField);
 		table.add(clientStartButton).row();
 		table.add(serverStartButton).row();
