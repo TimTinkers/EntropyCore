@@ -33,8 +33,10 @@ public class Gyroscope extends Part {
 	@Override
 	public void update() {
 		if (clockwiseThrust) {
+			System.out.println("Is twisting right");
 			this.getBody().applyTorque(strength * -1, true);
 		} else if (counterClockwiseThrust) {
+			System.out.println("Is twisting left");
 			this.getBody().applyTorque(strength * 1, true);
 		}
 	}

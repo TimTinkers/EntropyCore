@@ -21,6 +21,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.utils.TiledDrawable;
 import com.esotericsoftware.kryonet.Connection;
@@ -33,13 +34,15 @@ public class Duel extends ScreenAdapter {
 	private SpriteBatch batch;
 	private OrthographicCamera camera;
 
-	private final float TIMESTEP = 1 / 60f;
-	private final int VELOCITYITERATIONS = 8, POSITIONITERATIONS = 3;
+	private final float TIMESTEP = 1 / 66.6667f;
+	// private final int VELOCITYITERATIONS = 8, POSITIONITERATIONS = 3;
 	private float accumulator;
 
 	private HashMap<String, Ship> allShips;
 	private MultiplayerClient client;
 	private Ship ship;
+
+	private Box2DDebugRenderer debugRenderer;
 
 	protected ConcurrentLinkedQueue<Packet6Key> clientMessageQueue;
 	protected ConcurrentLinkedQueue<Packet7PositionUpdate> positionUpdateQueue;
@@ -48,12 +51,13 @@ public class Duel extends ScreenAdapter {
 		allShips = ships;
 		this.client = client;
 		this.ship = allShips.get(client.getUser().getName());
+		this.ship.setClient(client);
 		this.clientMessageQueue = new ConcurrentLinkedQueue<Packet6Key>();
 		this.positionUpdateQueue = new ConcurrentLinkedQueue<Packet7PositionUpdate>();
 	}
 
 	@Override
-	public void render(float delta) {
+	public void render(float delta) { // TODO add interpolation to the DeWitter's loop (do so in all screens)
 		delta = MathUtils.clamp(delta, 0, 0.030f);
 		accumulator += delta;
 
@@ -74,14 +78,16 @@ public class Duel extends ScreenAdapter {
 
 		while (accumulator > TIMESTEP) {
 			accumulator -= TIMESTEP;
-			processLocalKeys();
-			for (String playerName : allShips.keySet()) {
-				Ship ship = allShips.get(playerName);
-				ship.update();
-			}
-			world.step(TIMESTEP, VELOCITYITERATIONS, POSITIONITERATIONS);
+			// processLocalKeys();
+			// for (String playerName : allShips.keySet()) {
+			// Ship ship = allShips.get(playerName);
+			// ship.update();
+			// }
+			// world.step(TIMESTEP, VELOCITYITERATIONS, POSITIONITERATIONS);
 			processNewPositions();
 		}
+
+		debugRenderer.render(world, camera.combined);
 	}
 
 	public void processNewPositions() {
@@ -96,21 +102,19 @@ public class Duel extends ScreenAdapter {
 		}
 	}
 
-	public void processLocalKeys() {
-		Packet6Key msg;
-		while ((msg = clientMessageQueue.poll()) != null) {
-			Ship keyedShip = allShips.get(msg.name);
-			System.out.println("[CLIENT] Received key from " + msg.name + " for ship " + keyedShip.getName()
-					+ " at time " + System.nanoTime());
-			for (Part part : keyedShip.getParts()) {
-				if (msg.isDown) {
-					part.trigger(msg.keyPress);
-				} else {
-					part.unTrigger(msg.keyPress);
-				}
-			}
-		}
-	}
+	// public void processLocalKeys() {
+	// Packet6Key msg;
+	// while ((msg = clientMessageQueue.poll()) != null) {
+	// Ship keyedShip = allShips.get(msg.name);
+	// for (Part part : keyedShip.getParts()) {
+	// if (msg.isDown) {
+	// part.trigger(msg.keyPress);
+	// } else {
+	// part.unTrigger(msg.keyPress);
+	// }
+	// }
+	// }
+	// }
 
 	@Override
 	public void resize(int width, int height) {
@@ -120,6 +124,8 @@ public class Duel extends ScreenAdapter {
 
 	@Override
 	public void show() {
+		debugRenderer = new Box2DDebugRenderer();
+
 		background = new TiledDrawable(new TextureRegion(new Texture("assets/img/grid.png")));
 
 		world = new World(new Vector2(0, 0), true);
@@ -142,7 +148,8 @@ public class Duel extends ScreenAdapter {
 			}
 
 		},
-		// ship,
+		// ship, //TODO make the ships able to allow for client-side interpolation/prediction, for now just rely on the
+		// server
 				new InputAdapter() {
 					@Override
 					public boolean keyDown(int keycode) {
@@ -165,11 +172,12 @@ public class Duel extends ScreenAdapter {
 			// then sending them to the clients at the same time
 			@Override
 			public void received(Connection c, Object o) {
-				if (o instanceof Packet6Key) {
-					// If an incoming key press is detected, act on it.
-					Packet6Key keyPress = (Packet6Key) o;
-					clientMessageQueue.add(keyPress);
-				} else if (o instanceof Packet7PositionUpdate) {
+				// if (o instanceof Packet6Key) {
+				// // If an incoming key press is detected, act on it.
+				// Packet6Key keyPress = (Packet6Key) o;
+				// clientMessageQueue.add(keyPress);
+				// } else
+				if (o instanceof Packet7PositionUpdate) {
 					// If the server indicates that we should update the position...
 					Packet7PositionUpdate packet = (Packet7PositionUpdate) o;
 					positionUpdateQueue.add(packet);
@@ -179,11 +187,5 @@ public class Duel extends ScreenAdapter {
 
 		// Tell the server to initialize its ships
 		client.sendDuelStart();
-	}
-	
-	@Override
-	public void pause() {
-		System.out.println("Paused");
-		Gdx.app.getApplicationListener().resume();
 	}
 }
