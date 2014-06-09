@@ -8,6 +8,7 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import us.rockhopper.entropy.entities.Ship;
+import us.rockhopper.entropy.entities.Weapon;
 import us.rockhopper.entropy.network.Packet.Packet0Player;
 import us.rockhopper.entropy.network.Packet.Packet1Ship;
 import us.rockhopper.entropy.network.Packet.Packet2InboundSize;
@@ -17,6 +18,7 @@ import us.rockhopper.entropy.network.Packet.Packet5GameStart;
 import us.rockhopper.entropy.network.Packet.Packet6Key;
 import us.rockhopper.entropy.network.Packet.Packet7PositionUpdate;
 import us.rockhopper.entropy.network.Packet.Packet8DuelStart;
+import us.rockhopper.entropy.network.Packet.Packet9Projectile;
 import us.rockhopper.entropy.utility.Part;
 import us.rockhopper.entropy.utility.PartClassAdapter;
 
@@ -31,10 +33,10 @@ import com.esotericsoftware.minlog.Log;
 import com.google.gson.GsonBuilder;
 
 /**
- * The multiplayer server. Dumb as a sack of potatoes.
+ * The multiplayer server. Simulates the game world and sends updates to the clients.
  * 
  * @author Tim Clancy
- * @version 6.5.14
+ * @version 6.9.14
  * 
  */
 public class MultiplayerServer extends Listener {
@@ -51,6 +53,7 @@ public class MultiplayerServer extends Listener {
 	private final float TIMESTEP = 1 / 60f;
 	private final int VELOCITYITERATIONS = 8, POSITIONITERATIONS = 3;
 
+	private boolean start;
 	private boolean gameLogic;
 
 	public MultiplayerServer(String port) {
@@ -73,35 +76,49 @@ public class MultiplayerServer extends Listener {
 
 			// TODO wtf is with all these threads this can probably be fixed
 			// Start the server listening for input
-			// TODO make server keep running when it loses focus
 			new Thread(server).start();
 
 			// Start the server gameloop
 			Timer t = new Timer();
-			t.schedule(new TimerTask() {
+			// Thanks to @mobidevelop
+			final Runnable runnable = new Runnable() {
 				int step = 0;
-
-				Runnable runnable = new Runnable() {
-
-					@Override
-					public void run() {
-						++step;
-						processKeyPresses();
-						updateShips();
-						if (step == 2) {
-							step = 0;
-							shipToClient();
-						}
-					}
-				};
 
 				@Override
 				public void run() {
-					if (gameLogic) {
+
+					if (!gameLogic) { // Create the ships on the first tick of game logic...this ensures they remain
+										// properly aligned.
+						for (String playerName : allShips.keySet()) {
+							Ship ship = allShips.get(playerName);
+							ship.setWorld(world);
+							ship.create();
+							ship.release();
+						}
+						gameLogic = true;
+					}
+
+					++step;
+					processKeyPresses();
+					updateShips();
+					// TODO currently sending the position updates 66.66 time a second without any clientside
+					// interpolation
+					if (step == 1) {
+						step = 0;
+						shipToClient();
+						projectilesToClient();
+					}
+				}
+			};
+			t.schedule(new TimerTask() {
+
+				@Override
+				public void run() {
+					if (start) {
 						Gdx.app.postRunnable(runnable);
 					}
 				}
-			}, 0L, 16);
+			}, 0L, 15);
 
 			System.out.println("[SERVER] Started new server.");
 			players = new HashMap<String, Boolean>();
@@ -110,6 +127,31 @@ public class MultiplayerServer extends Listener {
 			shipCompletedPackets = new ArrayList<Packet3ShipCompleted>();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	public void projectilesToClient() { // TODO mother of god...triple for loop
+		for (String playerName : allShips.keySet()) {
+			Ship ship = allShips.get(playerName);
+			for (Part part : ship.getParts()) {
+				if (part instanceof Weapon) {
+					Weapon weapon = (Weapon) part;
+					for (Part bullet : weapon.getProjectiles()) {
+						Packet9Projectile projectile = new Packet9Projectile();
+						projectile.name = playerName;
+					}
+				}
+
+				Packet7PositionUpdate updatePacket = new Packet7PositionUpdate();
+				updatePacket.name = playerName;
+				updatePacket.partNumber = part.getNumber();
+				updatePacket.x = part.getBody().getPosition().x;
+				updatePacket.y = part.getBody().getPosition().y;
+				updatePacket.angle = part.getBody().getAngle();
+
+				// TODO create the render-update packet?
+				server.sendToAllTCP(updatePacket);
+			}
 		}
 	}
 
@@ -142,16 +184,18 @@ public class MultiplayerServer extends Listener {
 	public void processKeyPresses() {
 		Packet6Key msg;
 		while ((msg = clientMessageQueue.poll()) != null) {
-			System.out.println("[SERVER] Sending " + msg.keyPress + " from " + msg.name);
-
 			Ship keyedShip = allShips.get(msg.name);
-			System.out.println("[CLIENT] Received key from " + msg.name + " for ship " + keyedShip.getName()
-					+ " at time " + System.nanoTime());
 			for (Part part : keyedShip.getParts()) {
 				if (msg.isDown) {
 					part.trigger(msg.keyPress);
 				} else {
 					part.unTrigger(msg.keyPress);
+				}
+
+				// If this part was a weapon, this was a projectile-action, and clients need to be notified that they
+				// should also fire a projectile.
+				if (part instanceof Weapon) {
+
 				}
 			}
 		}
@@ -257,16 +301,10 @@ public class MultiplayerServer extends Listener {
 				server.sendToAllTCP(new Packet5GameStart());
 			}
 		} else if (o instanceof Packet6Key) {
-			// server.sendToAllExceptTCP(c.getID(), o);
 			this.clientMessageQueue.add((Packet6Key) o);
+			server.sendToAllTCP(o);
 		} else if (o instanceof Packet8DuelStart) {
-			// create all ships
-			for (String playerName : allShips.keySet()) {
-				Ship ship = allShips.get(playerName);
-				ship.setWorld(world);
-				ship.create();
-			}
-			gameLogic = true;
+			start = true;
 		}
 	}
 }

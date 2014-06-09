@@ -94,6 +94,7 @@ public class TestFlight extends ScreenAdapter {
 		ship = gson.create().fromJson(shipJSON, Ship.class);
 		ship.setWorld(world);
 		ship.create();
+		ship.release();
 
 		Gdx.input.setInputProcessor(new InputMultiplexer(new InputAdapter() {
 

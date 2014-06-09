@@ -15,5 +15,6 @@ public class Network {
 		kryo.register(Packet6Key.class);
 		kryo.register(Packet7PositionUpdate.class);
 		kryo.register(Packet8DuelStart.class);
+		kryo.register(Packet9Projectile.class);
 	}
 }

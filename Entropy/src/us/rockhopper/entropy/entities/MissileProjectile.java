@@ -75,6 +75,8 @@ public class MissileProjectile extends Part{
 				new Vector2((float) Math.sin(this.getBody().getAngle())
 						* -100, (float) Math.cos(this.getBody()
 								.getAngle()) * 100), true);
+		
+		System.out.println("Created missile");
 
 		shape.dispose();
 	}

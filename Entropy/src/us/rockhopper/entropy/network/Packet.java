@@ -49,5 +49,9 @@ public class Packet {
 	// TODO combine with the other useless packet for a signal
 	public static class Packet8DuelStart {
 	}
+	
+	public static class Packet9Projectile {
+		public String name;
+	}
 	// TODO add accounts with unique names to prevent any sort of name overlap from ever becoming problematic
 }
