@@ -23,6 +23,7 @@ public abstract class Part implements Cloneable {
 	private int[] attachmentNodes;
 	private int rotation;
 	private ArrayList<Vector2> occupiedTiles = new ArrayList<Vector2>();
+	private int number;
 
 	public Part(int gridX, int gridY, float height, float width, float density, String sprite) {
 		this.gridX = gridX;
@@ -206,6 +207,14 @@ public abstract class Part implements Cloneable {
 	 */
 	public void setRotation(int rotation) {
 		this.rotation = rotation;
+	}
+
+	public int getNumber() {
+		return this.number;
+	}
+
+	public void setNumber(int number) {
+		this.number = number;
 	}
 
 	public void clearRotation() {

@@ -9,6 +9,8 @@ import us.rockhopper.entropy.network.Packet.Packet1Ship;
 import us.rockhopper.entropy.network.Packet.Packet2InboundSize;
 import us.rockhopper.entropy.network.Packet.Packet3ShipCompleted;
 import us.rockhopper.entropy.network.Packet.Packet4Ready;
+import us.rockhopper.entropy.network.Packet.Packet6Key;
+import us.rockhopper.entropy.network.Packet.Packet8DuelStart;
 import us.rockhopper.entropy.utility.Account;
 
 import com.badlogic.gdx.Gdx;
@@ -22,15 +24,16 @@ public class MultiplayerClient {
 	private Client client;
 	private Account user;
 
-	public MultiplayerClient(Account user, String ip) {
+	public MultiplayerClient(Account user, String ip, String port) {
 		Log.set(Log.LEVEL_DEBUG);
 		client = new Client();
 		this.user = user;
 		this.registerPackets();
 		// Client listening on its own thread.
 		new Thread(client).start();
+
 		try {
-			client.connect(5000, ip, 7777);
+			client.connect(5000, ip, Integer.parseInt(port));
 		} catch (IOException e) {
 			e.printStackTrace();
 			client.stop();
@@ -100,6 +103,19 @@ public class MultiplayerClient {
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void sendKey(int keycode, boolean isDown) {
+		Packet6Key packet = new Packet6Key();
+		packet.name = user.getName();
+		packet.keyPress = keycode;
+		packet.isDown = isDown;
+		client.sendTCP(packet);
+		System.out.println("[CLIENT] Sent key " + packet.keyPress + " from " + packet.name);
+	}
+
+	public void sendDuelStart() {
+		client.sendTCP(new Packet8DuelStart());
 	}
 
 	public Account getUser() {

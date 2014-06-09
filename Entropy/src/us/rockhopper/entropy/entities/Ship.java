@@ -147,8 +147,6 @@ public class Ship extends InputAdapter implements Json.Serializable {
 					/ 2f);
 		}
 
-		System.out.println("Cockpit with info: " + cockpit.getGridX() + " " + cockpit.getGridY() + " rotation "
-				+ cockpit.getRotation());
 		PolygonShape shape = new PolygonShape();
 		shape.setAsBox(cockpit.getWidth() / 2f, cockpit.getHeight() / 2f);
 		fixtureDef.density = cockpit.getDensity();
@@ -156,13 +154,16 @@ public class Ship extends InputAdapter implements Json.Serializable {
 		body = world.createBody(bodyDef);
 		body.createFixture(fixtureDef).setUserData(new Box2DSprite(new Sprite(new Texture(cockpit.getSprite()))));
 		cockpit.setBody(body);
+		cockpit.setNumber(0);
 		parts.get(0).setBody(body);
+		parts.get(0).setNumber(0);
 		shape.dispose();
 
 		// Creating and attaching remaining parts to Ship.
 		for (int i = 1; i < parts.size(); ++i) {
 			if (parts.get(i) != null) {
 				Part part = parts.get(i);
+				part.setNumber(i);
 				bodyDef.angle = (float) Math.toRadians(part.getRotation());
 				// Reposition the image.
 				rotIndex = (int) (Math.abs(part.getRotation()) / 90) % 4;
@@ -191,15 +192,10 @@ public class Ship extends InputAdapter implements Json.Serializable {
 		// Weld all adjacent parts together.
 		System.out.println(parts.size());
 		for (Part part : parts) {
-			System.out.println("Looking at " + part + " " + part.getGridX() + " " + part.getGridY());
 			for (int i = 0; i < 4; ++i) {
 				ArrayList<Part> adjacents = getAdjacent(part, i);
 				if (!adjacents.isEmpty()) {
 					for (Part adjacent : adjacents) {
-						System.out.println(part);
-						System.out.println(adjacent);
-						System.out.println(part.getBody().getPosition());
-						System.out.println(adjacent.getBody().getPosition());
 						weldJointDef.initialize(adjacent.getBody(), part.getBody(), new Vector2((part.getBody()
 								.getPosition().x + adjacent.getBody().getPosition().x) / 2, (part.getBody()
 								.getPosition().y + adjacent.getBody().getPosition().y) / 2));

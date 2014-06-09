@@ -11,5 +11,9 @@ public class Network {
 		kryo.register(Packet2InboundSize.class);
 		kryo.register(Packet3ShipCompleted.class);
 		kryo.register(Packet4Ready.class);
+		kryo.register(Packet5GameStart.class);
+		kryo.register(Packet6Key.class);
+		kryo.register(Packet7PositionUpdate.class);
+		kryo.register(Packet8DuelStart.class);
 	}
 }
