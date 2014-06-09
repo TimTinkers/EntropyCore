@@ -35,7 +35,7 @@ public class Duel extends ScreenAdapter {
 	private OrthographicCamera camera;
 
 	private final float TIMESTEP = 1 / 66.6667f;
-	// private final int VELOCITYITERATIONS = 8, POSITIONITERATIONS = 3;
+	private final int VELOCITYITERATIONS = 8, POSITIONITERATIONS = 3;
 	private float accumulator;
 
 	private HashMap<String, Ship> allShips;
@@ -78,12 +78,12 @@ public class Duel extends ScreenAdapter {
 
 		while (accumulator > TIMESTEP) {
 			accumulator -= TIMESTEP;
-			// processLocalKeys();
-			// for (String playerName : allShips.keySet()) {
-			// Ship ship = allShips.get(playerName);
-			// ship.update();
-			// }
-			// world.step(TIMESTEP, VELOCITYITERATIONS, POSITIONITERATIONS);
+			processLocalKeys();
+			for (String playerName : allShips.keySet()) {
+				Ship ship = allShips.get(playerName);
+				ship.update();
+			}
+			world.step(TIMESTEP, VELOCITYITERATIONS, POSITIONITERATIONS);
 			processNewPositions();
 		}
 
@@ -102,19 +102,19 @@ public class Duel extends ScreenAdapter {
 		}
 	}
 
-	// public void processLocalKeys() {
-	// Packet6Key msg;
-	// while ((msg = clientMessageQueue.poll()) != null) {
-	// Ship keyedShip = allShips.get(msg.name);
-	// for (Part part : keyedShip.getParts()) {
-	// if (msg.isDown) {
-	// part.trigger(msg.keyPress);
-	// } else {
-	// part.unTrigger(msg.keyPress);
-	// }
-	// }
-	// }
-	// }
+	public void processLocalKeys() {
+		Packet6Key msg;
+		while ((msg = clientMessageQueue.poll()) != null) {
+			Ship keyedShip = allShips.get(msg.name);
+			for (Part part : keyedShip.getParts()) {
+				if (msg.isDown) {
+					part.trigger(msg.keyPress);
+				} else {
+					part.unTrigger(msg.keyPress);
+				}
+			}
+		}
+	}
 
 	@Override
 	public void resize(int width, int height) {
@@ -172,12 +172,11 @@ public class Duel extends ScreenAdapter {
 			// then sending them to the clients at the same time
 			@Override
 			public void received(Connection c, Object o) {
-				// if (o instanceof Packet6Key) {
-				// // If an incoming key press is detected, act on it.
-				// Packet6Key keyPress = (Packet6Key) o;
-				// clientMessageQueue.add(keyPress);
-				// } else
-				if (o instanceof Packet7PositionUpdate) {
+				if (o instanceof Packet6Key) {
+					// If an incoming key press is detected, act on it.
+					Packet6Key keyPress = (Packet6Key) o;
+					clientMessageQueue.add(keyPress);
+				} else if (o instanceof Packet7PositionUpdate) {
 					// If the server indicates that we should update the position...
 					Packet7PositionUpdate packet = (Packet7PositionUpdate) o;
 					positionUpdateQueue.add(packet);

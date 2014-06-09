@@ -191,6 +191,12 @@ public class MultiplayerServer extends Listener {
 				} else {
 					part.unTrigger(msg.keyPress);
 				}
+
+				// If this part was a weapon, this was a projectile-action, and clients need to be notified that they
+				// should also fire a projectile.
+				if (part instanceof Weapon) {
+
+				}
 			}
 		}
 	}
@@ -296,6 +302,7 @@ public class MultiplayerServer extends Listener {
 			}
 		} else if (o instanceof Packet6Key) {
 			this.clientMessageQueue.add((Packet6Key) o);
+			server.sendToAllTCP(o);
 		} else if (o instanceof Packet8DuelStart) {
 			start = true;
 		}
