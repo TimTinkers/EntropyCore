@@ -154,13 +154,16 @@ public class Ship extends InputAdapter implements Json.Serializable {
 		body = world.createBody(bodyDef);
 		body.createFixture(fixtureDef).setUserData(new Box2DSprite(new Sprite(new Texture(cockpit.getSprite()))));
 		cockpit.setBody(body);
+		cockpit.setNumber(0);
 		parts.get(0).setBody(body);
+		parts.get(0).setNumber(0);
 		shape.dispose();
 
 		// Creating and attaching remaining parts to Ship.
 		for (int i = 1; i < parts.size(); ++i) {
 			if (parts.get(i) != null) {
 				Part part = parts.get(i);
+				part.setNumber(i);
 				bodyDef.angle = (float) Math.toRadians(part.getRotation());
 				// Reposition the image.
 				rotIndex = (int) (Math.abs(part.getRotation()) / 90) % 4;

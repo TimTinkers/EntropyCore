@@ -10,6 +10,7 @@ import us.rockhopper.entropy.network.Packet.Packet2InboundSize;
 import us.rockhopper.entropy.network.Packet.Packet3ShipCompleted;
 import us.rockhopper.entropy.network.Packet.Packet4Ready;
 import us.rockhopper.entropy.network.Packet.Packet6Key;
+import us.rockhopper.entropy.network.Packet.Packet8DuelStart;
 import us.rockhopper.entropy.utility.Account;
 
 import com.badlogic.gdx.Gdx;
@@ -110,6 +111,11 @@ public class MultiplayerClient {
 		packet.keyPress = keycode;
 		packet.isDown = isDown;
 		client.sendTCP(packet);
+		System.out.println("[CLIENT] Sent key " + packet.keyPress + " from " + packet.name);
+	}
+
+	public void sendDuelStart() {
+		client.sendTCP(new Packet8DuelStart());
 	}
 
 	public Account getUser() {

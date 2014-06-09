@@ -202,8 +202,6 @@ public class DuelLobby extends ScreenAdapter {
 					String shipJSON = shipStrings.get(packet.name);
 					shipJSON += packet.ship;
 					shipStrings.put(packet.name, shipJSON);
-					System.out.println(packet.name + " " + shipJSON);
-
 				} else if (o instanceof Packet2InboundSize) {
 					// TODO I don't think we even care about the size of the ship string...
 					Packet2InboundSize packetSize = ((Packet2InboundSize) o);

@@ -13,5 +13,7 @@ public class Network {
 		kryo.register(Packet4Ready.class);
 		kryo.register(Packet5GameStart.class);
 		kryo.register(Packet6Key.class);
+		kryo.register(Packet7PositionUpdate.class);
+		kryo.register(Packet8DuelStart.class);
 	}
 }

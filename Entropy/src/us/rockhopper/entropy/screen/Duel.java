@@ -6,8 +6,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
 import us.rockhopper.entropy.entities.Ship;
 import us.rockhopper.entropy.network.MultiplayerClient;
-import us.rockhopper.entropy.network.Packet;
 import us.rockhopper.entropy.network.Packet.Packet6Key;
+import us.rockhopper.entropy.network.Packet.Packet7PositionUpdate;
 import us.rockhopper.entropy.utility.Part;
 
 import com.badlogic.gdx.Gdx;
@@ -41,13 +41,15 @@ public class Duel extends ScreenAdapter {
 	private MultiplayerClient client;
 	private Ship ship;
 
-	protected ConcurrentLinkedQueue<Packet> clientMessageQueue;
+	protected ConcurrentLinkedQueue<Packet6Key> clientMessageQueue;
+	protected ConcurrentLinkedQueue<Packet7PositionUpdate> positionUpdateQueue;
 
-	
 	Duel(HashMap<String, Ship> ships, MultiplayerClient client) {
 		allShips = ships;
 		this.client = client;
 		this.ship = allShips.get(client.getUser().getName());
+		this.clientMessageQueue = new ConcurrentLinkedQueue<Packet6Key>();
+		this.positionUpdateQueue = new ConcurrentLinkedQueue<Packet7PositionUpdate>();
 	}
 
 	@Override
@@ -57,15 +59,6 @@ public class Duel extends ScreenAdapter {
 
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-		while (accumulator > TIMESTEP) {
-			accumulator -= TIMESTEP;
-			for (String playerName : allShips.keySet()) {
-				Ship ship = allShips.get(playerName);
-				ship.update();
-			}
-			world.step(TIMESTEP, VELOCITYITERATIONS, POSITIONITERATIONS);
-		}
 
 		camera.position.y = ship.getCockpitPosition().y;
 		camera.position.x = ship.getCockpitPosition().x;
@@ -78,6 +71,45 @@ public class Duel extends ScreenAdapter {
 				Gdx.graphics.getWidth() * 8, Gdx.graphics.getHeight() * 8);
 		Box2DSprite.draw(batch, world);
 		batch.end();
+
+		while (accumulator > TIMESTEP) {
+			accumulator -= TIMESTEP;
+			processLocalKeys();
+			for (String playerName : allShips.keySet()) {
+				Ship ship = allShips.get(playerName);
+				ship.update();
+			}
+			world.step(TIMESTEP, VELOCITYITERATIONS, POSITIONITERATIONS);
+			processNewPositions();
+		}
+	}
+
+	public void processNewPositions() {
+		Packet7PositionUpdate msg;
+		while ((msg = positionUpdateQueue.poll()) != null) {
+			Ship keyedShip = allShips.get(msg.name);
+			for (Part part : keyedShip.getParts()) {
+				if (part.getNumber() == msg.partNumber) {
+					part.getBody().setTransform(new Vector2(msg.x, msg.y), msg.angle);
+				}
+			}
+		}
+	}
+
+	public void processLocalKeys() {
+		Packet6Key msg;
+		while ((msg = clientMessageQueue.poll()) != null) {
+			Ship keyedShip = allShips.get(msg.name);
+			System.out.println("[CLIENT] Received key from " + msg.name + " for ship " + keyedShip.getName()
+					+ " at time " + System.nanoTime());
+			for (Part part : keyedShip.getParts()) {
+				if (msg.isDown) {
+					part.trigger(msg.keyPress);
+				} else {
+					part.unTrigger(msg.keyPress);
+				}
+			}
+		}
 	}
 
 	@Override
@@ -129,16 +161,6 @@ public class Duel extends ScreenAdapter {
 
 		this.client.addListener(new Listener() {
 
-			@Override
-			public void connected(Connection arg0) {
-				System.out.println("[CLIENT] You connected.");
-			}
-
-			@Override
-			public void disconnected(Connection arg0) {
-				System.out.println("[CLIENT] You disconnected.");
-			}
-
 			// TODO need to figure out a proper solution for this...the server needs to handle processing updates and
 			// then sending them to the clients at the same time
 			@Override
@@ -146,20 +168,22 @@ public class Duel extends ScreenAdapter {
 				if (o instanceof Packet6Key) {
 					// If an incoming key press is detected, act on it.
 					Packet6Key keyPress = (Packet6Key) o;
-					Ship keyedShip = allShips.get(keyPress.name);
-					System.out.println("[CLIENT] Received key from " + keyPress.name + " for ship "
-							+ keyedShip.getName());
-					System.out.println("the size of this list is " + keyedShip.getParts().size());
-					for (Part part : keyedShip.getParts()) {
-						System.out.println("Checking a part for " + keyedShip.getName());
-						if (keyPress.isDown) {
-							part.trigger(keyPress.keyPress);
-						} else {
-							part.unTrigger(keyPress.keyPress);
-						}
-					}
+					clientMessageQueue.add(keyPress);
+				} else if (o instanceof Packet7PositionUpdate) {
+					// If the server indicates that we should update the position...
+					Packet7PositionUpdate packet = (Packet7PositionUpdate) o;
+					positionUpdateQueue.add(packet);
 				}
 			}
 		});
+
+		// Tell the server to initialize its ships
+		client.sendDuelStart();
+	}
+	
+	@Override
+	public void pause() {
+		System.out.println("Paused");
+		Gdx.app.getApplicationListener().resume();
 	}
 }
