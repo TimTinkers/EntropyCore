@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
+import us.rockhopper.entropy.network.MultiplayerClient;
 import us.rockhopper.entropy.utility.Part;
 
 import com.badlogic.gdx.InputAdapter;
@@ -25,14 +26,15 @@ import com.badlogic.gdx.utils.JsonValue;
  * 
  * @author Tim Clancy
  * @author Ian Tang
- * @version 5.21.14
+ * @version 6.9.14
  */
 public class Ship extends InputAdapter implements Json.Serializable {
 
 	private String name;
-	private World world;
+	private World world; // TODO see if this could be made transient
 	private ArrayList<Part> parts = new ArrayList<Part>();
 	private HashMap<Integer, ArrayList<Part>> keyActions = new HashMap<Integer, ArrayList<Part>>();
+	private transient MultiplayerClient client;
 
 	/**
 	 * Creates a ship object, which contains all information it would need to later render itself.
@@ -75,6 +77,9 @@ public class Ship extends InputAdapter implements Json.Serializable {
 			for (Part trigger : keyActions.get(keycode)) {
 				System.out.println("The keyaction hashmap contains the code " + keycode);
 				trigger.trigger(keycode);
+				if (client != null) {
+					client.sendKey(keycode, true);
+				}
 			}
 			return true;
 		} else {
@@ -94,6 +99,9 @@ public class Ship extends InputAdapter implements Json.Serializable {
 		if (keyActions.containsKey(keycode)) {
 			for (Part trigger : keyActions.get(keycode)) {
 				trigger.unTrigger(keycode);
+				if (client != null) {
+					client.sendKey(keycode, false);
+				}
 			}
 			return true;
 		} else {
@@ -111,6 +119,25 @@ public class Ship extends InputAdapter implements Json.Serializable {
 		this.world = world;
 	}
 
+	/**
+	 * Sets the client for the ship. Must be done before calling create().
+	 * 
+	 * @param client
+	 *            The client controller to send input from this ship.
+	 */
+	public void setClient(MultiplayerClient client) {
+		this.client = client;
+	}
+
+	/**
+	 * Makes all bodies in this ship dynamic so that it can begin being controlled
+	 */
+	public void release() {
+		for (Part part : parts) {
+			part.getBody().setType(BodyType.DynamicBody);
+		}
+	}
+
 	public Vector2 getCockpitPosition() {
 		return new Vector2(parts.get(0).getBody().getPosition().x, parts.get(0).getBody().getPosition().y);
 	}
@@ -123,7 +150,7 @@ public class Ship extends InputAdapter implements Json.Serializable {
 		// Things that don't need to change.
 		Body body;
 		BodyDef bodyDef = new BodyDef();
-		bodyDef.type = BodyType.DynamicBody;
+		bodyDef.type = BodyType.StaticBody; // Bodies are static during creation to prevent misalignment
 		bodyDef.fixedRotation = false;
 
 		FixtureDef fixtureDef = new FixtureDef();
@@ -147,8 +174,6 @@ public class Ship extends InputAdapter implements Json.Serializable {
 					/ 2f);
 		}
 
-		System.out.println("Cockpit with info: " + cockpit.getGridX() + " " + cockpit.getGridY() + " rotation "
-				+ cockpit.getRotation());
 		PolygonShape shape = new PolygonShape();
 		shape.setAsBox(cockpit.getWidth() / 2f, cockpit.getHeight() / 2f);
 		fixtureDef.density = cockpit.getDensity();
@@ -156,13 +181,17 @@ public class Ship extends InputAdapter implements Json.Serializable {
 		body = world.createBody(bodyDef);
 		body.createFixture(fixtureDef).setUserData(new Box2DSprite(new Sprite(new Texture(cockpit.getSprite()))));
 		cockpit.setBody(body);
+		cockpit.setNumber(0);
+		body.setUserData(cockpit);
 		parts.get(0).setBody(body);
+		parts.get(0).setNumber(0);
 		shape.dispose();
 
 		// Creating and attaching remaining parts to Ship.
 		for (int i = 1; i < parts.size(); ++i) {
 			if (parts.get(i) != null) {
 				Part part = parts.get(i);
+				part.setNumber(i);
 				bodyDef.angle = (float) Math.toRadians(part.getRotation());
 				// Reposition the image.
 				rotIndex = (int) (Math.abs(part.getRotation()) / 90) % 4;
@@ -184,6 +213,7 @@ public class Ship extends InputAdapter implements Json.Serializable {
 				body = world.createBody(bodyDef);
 				body.createFixture(fixtureDef).setUserData(new Box2DSprite(new Sprite(new Texture(part.getSprite()))));
 				part.setBody(body);
+				body.setUserData(part);
 				shape.dispose();
 			}
 		}
@@ -191,15 +221,10 @@ public class Ship extends InputAdapter implements Json.Serializable {
 		// Weld all adjacent parts together.
 		System.out.println(parts.size());
 		for (Part part : parts) {
-			System.out.println("Looking at " + part + " " + part.getGridX() + " " + part.getGridY());
 			for (int i = 0; i < 4; ++i) {
 				ArrayList<Part> adjacents = getAdjacent(part, i);
 				if (!adjacents.isEmpty()) {
 					for (Part adjacent : adjacents) {
-						System.out.println(part);
-						System.out.println(adjacent);
-						System.out.println(part.getBody().getPosition());
-						System.out.println(adjacent.getBody().getPosition());
 						weldJointDef.initialize(adjacent.getBody(), part.getBody(), new Vector2((part.getBody()
 								.getPosition().x + adjacent.getBody().getPosition().x) / 2, (part.getBody()
 								.getPosition().y + adjacent.getBody().getPosition().y) / 2));

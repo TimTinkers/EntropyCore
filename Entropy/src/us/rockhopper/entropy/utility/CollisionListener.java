@@ -1,60 +1,43 @@
 package us.rockhopper.entropy.utility;
 
-import us.rockhopper.entropy.entities.MissileProjectile;
-import us.rockhopper.entropy.entities.LaserProjectile;
+import us.rockhopper.entropy.entities.Projectile;
 
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
 import com.badlogic.gdx.physics.box2d.ContactListener;
-import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.Manifold;
 
-public class CollisionListener implements ContactListener{
+public class CollisionListener implements ContactListener {
 
+	public CollisionListener() {
+	}
+
+	@Override
 	public void beginContact(Contact contact) {
-		Part partA = null;
-		Part partB = null;
+		Part partA = (Part) contact.getFixtureA().getBody().getUserData();
+		Part partB = (Part) contact.getFixtureB().getBody().getUserData();
 
-		for (Fixture fixture: contact.getFixtureA().getBody().getFixtureList()) {
-			if (fixture.getUserData() instanceof Part) {
-				partA = (Part) fixture.getUserData();
-			}
-		}
-		
-		for (Fixture fixture: contact.getFixtureB().getBody().getFixtureList()) {
-			if (fixture.getUserData() instanceof Part) {
-				partB = (Part) fixture.getUserData();
-			}
-		}
-
-		LaserProjectile laser;
-		MissileProjectile missile;
-
-		if (partA instanceof LaserProjectile) {
-			laser = (LaserProjectile) partA;
-			partB.setHealth((int) Math.round(partB.getHealth() - laser.getDamage() * (0.75 + Math.random() * 0.5)));
-			laser.getBody().getWorld().destroyBody(laser.getBody());
-		} else if (partA instanceof MissileProjectile) {
-			missile = (MissileProjectile) partA;
-			partB.setHealth((int) Math.round(partB.getHealth() - missile.getDamage() * (0.75 + Math.random() * 0.5)));
-			missile.getBody().getWorld().destroyBody(missile.getBody());
-		} else if (partB instanceof LaserProjectile) {
-			laser = (LaserProjectile) partB;
-			partA.setHealth((int) Math.round(partB.getHealth() - laser.getDamage() * (0.75 + Math.random() * 0.5)));
-			laser.getBody().getWorld().destroyBody(laser.getBody());
-		} else if (partB instanceof MissileProjectile) {
-			missile = (MissileProjectile) partB;
-			partA.setHealth((int) Math.round(partB.getHealth() - missile.getDamage() * (0.75 + Math.random() * 0.5)));
-			missile.getBody().getWorld().destroyBody(missile.getBody());
+		// Handle projectiles
+		if (partA instanceof Projectile && !(partB instanceof Projectile)) {
+			Projectile projectile = (Projectile) partA;
+			partB.setHealth(partB.getHealth() - projectile.getDamage());
+			projectile.remove();
+		} else if (partB instanceof Projectile && !(partA instanceof Projectile)) {
+			Projectile projectile = (Projectile) partB;
+			partA.setHealth(partA.getHealth() - projectile.getDamage());
+			projectile.remove();
 		}
 	}
 
+	@Override
 	public void endContact(Contact contact) {
 	}
 
-	public void preSolve(Contact contact, Manifold manifold) {
+	@Override
+	public void preSolve(Contact contact, Manifold oldManifold) {
 	}
 
+	@Override
 	public void postSolve(Contact contact, ContactImpulse impulse) {
 	}
 }

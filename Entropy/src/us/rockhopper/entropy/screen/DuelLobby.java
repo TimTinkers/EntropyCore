@@ -15,6 +15,7 @@ import us.rockhopper.entropy.network.Packet.Packet1Ship;
 import us.rockhopper.entropy.network.Packet.Packet2InboundSize;
 import us.rockhopper.entropy.network.Packet.Packet3ShipCompleted;
 import us.rockhopper.entropy.network.Packet.Packet4Ready;
+import us.rockhopper.entropy.network.Packet.Packet5GameStart;
 import us.rockhopper.entropy.utility.FileIO;
 import us.rockhopper.entropy.utility.Part;
 import us.rockhopper.entropy.utility.PartClassAdapter;
@@ -201,8 +202,6 @@ public class DuelLobby extends ScreenAdapter {
 					String shipJSON = shipStrings.get(packet.name);
 					shipJSON += packet.ship;
 					shipStrings.put(packet.name, shipJSON);
-					System.out.println(packet.name + " " + shipJSON);
-
 				} else if (o instanceof Packet2InboundSize) {
 					// TODO I don't think we even care about the size of the ship string...
 					Packet2InboundSize packetSize = ((Packet2InboundSize) o);
@@ -232,22 +231,13 @@ public class DuelLobby extends ScreenAdapter {
 					} else {
 						table.findActor(packet.name).setColor(1, 1, 1, 1);
 					}
-					// If every player is ready
-					boolean ready = true;
-					for (String playerName : players.keySet()) {
-						if (!players.get(playerName)) {
-							ready = false;
+				} else if (o instanceof Packet5GameStart) {
+					stage.addAction(sequence(moveTo(0, -stage.getHeight(), .5f), run(new Runnable() {
+						@Override
+						public void run() {
+							((Game) Gdx.app.getApplicationListener()).setScreen(new Duel(allShips, client));
 						}
-					}
-					if (ready) {
-						stage.addAction(sequence(moveTo(0, -stage.getHeight(), .5f), run(new Runnable() {
-
-							@Override
-							public void run() {
-								((Game) Gdx.app.getApplicationListener()).setScreen(new Duel());
-							}
-						})));
-					}
+					})));
 				}
 			}
 		});

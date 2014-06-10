@@ -11,7 +11,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.InputMultiplexer;
-import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -19,18 +19,16 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.utils.TiledDrawable;
 import com.google.gson.GsonBuilder;
 
-public class TestFlight implements Screen {
+public class TestFlight extends ScreenAdapter {
 
 	private TiledDrawable background;
 
 	private String defaultFolder = "data";
 	private World world;
-	private Box2DDebugRenderer debugRenderer;
 	private SpriteBatch batch;
 	private OrthographicCamera camera;
 	private String shipName;
@@ -39,7 +37,6 @@ public class TestFlight implements Screen {
 	private final int VELOCITYITERATIONS = 8, POSITIONITERATIONS = 3;
 
 	private float accumulator;
-	private float lastCamAngle;
 
 	private Ship ship;
 
@@ -55,12 +52,12 @@ public class TestFlight implements Screen {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-		while(accumulator > TIMESTEP) {
+		while (accumulator > TIMESTEP) {
 			accumulator -= TIMESTEP;
 			ship.update();
 			world.step(TIMESTEP, VELOCITYITERATIONS, POSITIONITERATIONS);
 		}
-		
+
 		camera.position.y = ship.getCockpitPosition().y;
 		camera.position.x = ship.getCockpitPosition().x;
 		camera.update();
@@ -72,8 +69,6 @@ public class TestFlight implements Screen {
 				Gdx.graphics.getWidth() * 8, Gdx.graphics.getHeight() * 8);
 		Box2DSprite.draw(batch, world);
 		batch.end();
-
-		//debugRenderer.render(world, camera.combined);
 	}
 
 	@Override
@@ -87,7 +82,6 @@ public class TestFlight implements Screen {
 		background = new TiledDrawable(new TextureRegion(new Texture("assets/img/grid.png")));
 
 		world = new World(new Vector2(0, 0), true);
-		debugRenderer = new Box2DDebugRenderer();
 		batch = new SpriteBatch();
 
 		camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -100,7 +94,7 @@ public class TestFlight implements Screen {
 		ship = gson.create().fromJson(shipJSON, Ship.class);
 		ship.setWorld(world);
 		ship.create();
-		lastCamAngle = ship.getParts().get(0).getBody().getAngle();
+		ship.release();
 
 		Gdx.input.setInputProcessor(new InputMultiplexer(new InputAdapter() {
 
@@ -129,17 +123,7 @@ public class TestFlight implements Screen {
 	}
 
 	@Override
-	public void pause() {
-	}
-
-	@Override
-	public void resume() {
-	}
-
-	@Override
 	public void dispose() {
 		world.dispose();
-		debugRenderer.dispose();
 	}
-
 }
