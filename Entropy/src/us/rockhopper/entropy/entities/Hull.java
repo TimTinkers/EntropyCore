@@ -10,10 +10,6 @@ public class Hull extends Part {
 	}
 
 	@Override
-	public void update() {
-	}
-
-	@Override
 	public int[] getKeys() {
 		return null;
 	}

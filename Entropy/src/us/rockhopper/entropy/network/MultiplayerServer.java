@@ -18,13 +18,16 @@ import us.rockhopper.entropy.network.Packet.Packet5GameStart;
 import us.rockhopper.entropy.network.Packet.Packet6Key;
 import us.rockhopper.entropy.network.Packet.Packet7PositionUpdate;
 import us.rockhopper.entropy.network.Packet.Packet8DuelStart;
-import us.rockhopper.entropy.network.Packet.Packet9Projectile;
+import us.rockhopper.entropy.utility.CollisionListener;
 import us.rockhopper.entropy.utility.Part;
 import us.rockhopper.entropy.utility.PartClassAdapter;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.JointEdge;
 import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.utils.Array;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
@@ -95,6 +98,9 @@ public class MultiplayerServer extends Listener {
 							ship.create();
 							ship.release();
 						}
+
+						world.setContactListener(new CollisionListener());
+
 						gameLogic = true;
 					}
 
@@ -106,8 +112,10 @@ public class MultiplayerServer extends Listener {
 					if (step == 1) {
 						step = 0;
 						shipToClient();
-						projectilesToClient();
+						// projectilesToClient();
 					}
+					// Remove bodies flagged for deletion
+					sweepDeadBodies();
 				}
 			};
 			t.schedule(new TimerTask() {
@@ -130,30 +138,30 @@ public class MultiplayerServer extends Listener {
 		}
 	}
 
-	public void projectilesToClient() { // TODO mother of god...triple for loop
-		for (String playerName : allShips.keySet()) {
-			Ship ship = allShips.get(playerName);
-			for (Part part : ship.getParts()) {
-				if (part instanceof Weapon) {
-					Weapon weapon = (Weapon) part;
-					for (Part bullet : weapon.getProjectiles()) {
-						Packet9Projectile projectile = new Packet9Projectile();
-						projectile.name = playerName;
-					}
-				}
-
-				Packet7PositionUpdate updatePacket = new Packet7PositionUpdate();
-				updatePacket.name = playerName;
-				updatePacket.partNumber = part.getNumber();
-				updatePacket.x = part.getBody().getPosition().x;
-				updatePacket.y = part.getBody().getPosition().y;
-				updatePacket.angle = part.getBody().getAngle();
-
-				// TODO create the render-update packet?
-				server.sendToAllTCP(updatePacket);
-			}
-		}
-	}
+	// public void projectilesToClient() { // TODO mother of god...triple for loop
+	// for (String playerName : allShips.keySet()) {
+	// Ship ship = allShips.get(playerName);
+	// for (Part part : ship.getParts()) {
+	// if (part instanceof Weapon) {
+	// Weapon weapon = (Weapon) part;
+	// for (Part bullet : weapon.getProjectiles()) {
+	// Packet9Projectile projectile = new Packet9Projectile();
+	// projectile.name = playerName;
+	// }
+	// }
+	//
+	// Packet7PositionUpdate updatePacket = new Packet7PositionUpdate();
+	// updatePacket.name = playerName;
+	// updatePacket.partNumber = part.getNumber();
+	// updatePacket.x = part.getBody().getPosition().x;
+	// updatePacket.y = part.getBody().getPosition().y;
+	// updatePacket.angle = part.getBody().getAngle();
+	//
+	// // TODO create the render-update packet?
+	// server.sendToAllTCP(updatePacket);
+	// }
+	// }
+	// }
 
 	public void shipToClient() {
 		for (String playerName : allShips.keySet()) {
@@ -199,6 +207,31 @@ public class MultiplayerServer extends Listener {
 				}
 			}
 		}
+	}
+
+	public void sweepDeadBodies() {
+		Array<Body> tempBodies = new Array<Body>();
+		world.getBodies(tempBodies);
+		for (Body body : tempBodies) {
+			if (body != null) {
+				Part part = (Part) body.getUserData();
+				if (part.isDead() && !world.isLocked()) {
+					body.setUserData(null);
+					removeBodySafely(body);
+					body = null;
+				}
+			}
+		}
+	}
+
+	public void removeBodySafely(Body body) {
+		// to prevent some obscure c assertion that happened randomly once in a blue moon
+		final Array<JointEdge> list = body.getJointList();
+		while (list.size > 0) {
+			world.destroyJoint(list.get(0).joint);
+		}
+		// actual remove
+		world.destroyBody(body);
 	}
 
 	private void registerPackets() {

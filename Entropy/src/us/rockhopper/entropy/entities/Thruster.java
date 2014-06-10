@@ -13,8 +13,7 @@ public class Thruster extends Part {
 	private boolean shouldForward;
 	private boolean shouldReverse;
 
-	public Thruster(int gridX, int gridY, int height, int width, float density,
-			String sprite) {
+	public Thruster(int gridX, int gridY, int height, int width, float density, String sprite) {
 		super(gridX, gridY, height, width, density, sprite);
 		shouldForward = false;
 	}
@@ -44,15 +43,14 @@ public class Thruster extends Part {
 	}
 
 	public void update() {
+		super.update();
 		if (shouldForward) {
 			this.getBody().applyForceToCenter(
-					new Vector2((float) Math.sin(this.getBody().getAngle())
-							* -1 * strength, (float) Math.cos(this.getBody()
-							.getAngle()) * strength), true);
+					new Vector2((float) Math.sin(this.getBody().getAngle()) * -1 * strength, (float) Math.cos(this
+							.getBody().getAngle()) * strength), true);
 		} else if (canReverse && shouldReverse) {
 			this.getBody().applyForceToCenter(
-					new Vector2((float) Math.sin(this.getBody().getAngle())
-							* strength, (float) Math.cos(this.getBody()
+					new Vector2((float) Math.sin(this.getBody().getAngle()) * strength, (float) Math.cos(this.getBody()
 							.getAngle()) * -1 * strength), true);
 		}
 	}
