@@ -1,10 +1,11 @@
 package us.rockhopper.entropy.screen;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import net.dermetfan.utils.libgdx.graphics.Box2DSprite;
+import us.rockhopper.entropy.entities.Cockpit;
 import us.rockhopper.entropy.entities.Ship;
 import us.rockhopper.entropy.network.MultiplayerClient;
 import us.rockhopper.entropy.network.Packet.Packet6Key;
@@ -16,29 +17,41 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Texture.TextureWrap;
+import com.badlogic.gdx.graphics.g2d.ParticleEffect;
+import com.badlogic.gdx.graphics.g2d.ParticleEmitter;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.JointEdge;
 import com.badlogic.gdx.physics.box2d.World;
-import com.badlogic.gdx.scenes.scene2d.utils.TiledDrawable;
 import com.badlogic.gdx.utils.Array;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 
 public class Duel extends ScreenAdapter {
 
-	private TiledDrawable background;
-	private World world;
+	Texture starfield = new Texture("assets/img/starfield.png");
+	// Texture nebula = new Texture("assets/img/nebula1.png");
+	private Sprite starfieldSprite = new Sprite(starfield);
+	// private Sprite nebulaSprite = new Sprite(nebula);
 	private SpriteBatch batch;
 	private OrthographicCamera camera;
+	private SpriteBatch backgroundBatch;
+	private OrthographicCamera backgroundCam;
 
+	private Vector2 starScrollTimer = new Vector2(0, 0);
+	// private Vector2 nebulaScrollTimer = new Vector2(0, 0);
+	private Vector2 cockpitVelocity = new Vector2(0, 0);
+
+	private World world;
 	private final float TIMESTEP = 1 / 66.6667f;
 	private final int VELOCITYITERATIONS = 8, POSITIONITERATIONS = 3;
 	private float accumulator;
@@ -51,6 +64,8 @@ public class Duel extends ScreenAdapter {
 
 	protected ConcurrentLinkedQueue<Packet6Key> clientMessageQueue;
 	protected ConcurrentLinkedQueue<Packet7PositionUpdate> positionUpdateQueue;
+
+	private ParticleEffect effect;
 
 	Duel(HashMap<String, Ship> ships, MultiplayerClient client) {
 		allShips = ships;
@@ -73,43 +88,104 @@ public class Duel extends ScreenAdapter {
 		camera.position.x = ship.getCockpitPosition().x;
 		camera.update();
 
+		// Draw background
+		starfield.setWrap(TextureWrap.Repeat, TextureWrap.Repeat);
+		backgroundBatch.setProjectionMatrix(backgroundCam.combined);
+		backgroundBatch.begin();
+		renderBackground();
+		backgroundBatch.end();
+
+		// Draw ship parts
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
-		// Draw background
-		background.draw(batch, -Gdx.graphics.getWidth() / 2, -Gdx.graphics.getHeight() / 2,
-				Gdx.graphics.getWidth() * 8, Gdx.graphics.getHeight() * 8);
 		Box2DSprite.draw(batch, world);
+		effect.draw(batch, delta);
 		batch.end();
 
+		// Take care of physics simulation
 		while (accumulator > TIMESTEP) {
 			accumulator -= TIMESTEP;
 			processLocalKeys();
 			for (String playerName : allShips.keySet()) {
 				Ship ship = allShips.get(playerName);
 				ship.update();
+				// System.out.println(ship.getParts().get(0) + " " +
+				// ship.getParts().get(0).getBody().getLinearVelocity()
+				// + " " + ship.getParts().get(0).getBody().getPosition());
 			}
 			world.step(TIMESTEP, VELOCITYITERATIONS, POSITIONITERATIONS);
 			processNewPositions();
+
+			// Get the linear velocity of the cockpit
+			// cockpitVelocity = ship.getParts().get(0).getBody().getLinearVelocity();
+			// System.out.println(cockpitVelocity);
+
+			// Remove bodies that need deletion
 			sweepDeadBodies();
 		}
 
+		// Draw debug boxes
 		debugRenderer.render(world, camera.combined);
+	}
+
+	private void renderBackground() {
+		backgroundBatch.disableBlending();
+		starScrollTimer.add(0.00005f * cockpitVelocity.x, -0.00005f * cockpitVelocity.y); // Move texture
+		// nebulaScrollTimer.add(0.0001f * cockpitVelocity.x, -0.0001f * cockpitVelocity.y);
+
+		if (starScrollTimer.x > 1.0f)
+			starScrollTimer.x = 0.0f;
+		if (starScrollTimer.y > 1.0f)
+			starScrollTimer.y = 0.0f;
+		starfieldSprite.setU(starScrollTimer.x);
+		starfieldSprite.setU2(starScrollTimer.x + 1);
+		starfieldSprite.setV(starScrollTimer.y);
+		starfieldSprite.setV2(starScrollTimer.y + 1);
+
+		// if (nebulaScrollTimer.x > 1.0f)
+		// nebulaScrollTimer.x = 0.0f;
+		// if (nebulaScrollTimer.y > 1.0f)
+		// nebulaScrollTimer.y = 0.0f;
+		// starfieldSprite.setU(nebulaScrollTimer.x);
+		// starfieldSprite.setU2(nebulaScrollTimer.x + 1);
+		// starfieldSprite.setV(nebulaScrollTimer.y);
+		// starfieldSprite.setV2(nebulaScrollTimer.y + 1);
+
+		backgroundBatch.draw(starfieldSprite, -Gdx.graphics.getWidth(), -Gdx.graphics.getHeight());
+		// backgroundBatch.draw(nebulaSprite, -Gdx.graphics.getWidth(), -Gdx.graphics.getHeight());
+
+		backgroundBatch.enableBlending();
 	}
 
 	// TODO more effectively merge the client with the server here...this method is duplicated
 	public void sweepDeadBodies() {
 		Array<Body> tempBodies = new Array<Body>();
 		world.getBodies(tempBodies);
-		for (Body body : tempBodies) {
-			if (body != null) {
-				Part part = (Part) body.getUserData();
-				if (part.isDead() && !world.isLocked()) {
-					body.setUserData(null);
-					removeBodySafely(body);
-					body = null;
+		Iterator<Body> i = tempBodies.iterator();
+		if (!world.isLocked()) {
+			while (i.hasNext()) {
+				Body b = i.next();
+				if (b != null) {
+					Part part = (Part) b.getUserData();
+					if (part.isDead()) {
+						b.setUserData(null);
+						removeBodySafely(b);
+						b = null;
+						i.remove();
+					}
 				}
 			}
 		}
+		// for (Body body : tempBodies) {
+		// if (body != null) {
+		// Part part = (Part) body.getUserData();
+		// if (part.isDead() && !world.isLocked()) {
+		// body.setUserData(null);
+		// removeBodySafely(body);
+		// body = null;
+		// }
+		// }
+		// }
 	}
 
 	public void removeBodySafely(Body body) {
@@ -120,6 +196,26 @@ public class Duel extends ScreenAdapter {
 		}
 		// actual remove
 		world.destroyBody(body);
+		effect.setPosition(body.getPosition().x, body.getPosition().y);
+
+		// Scale the particle effect to a proper size.
+		float pScale = 0.2f;
+
+		for (ParticleEmitter emitter : effect.getEmitters()) {
+			float scaling = emitter.getScale().getHighMax();
+			emitter.getScale().setHigh(scaling * pScale);
+
+			scaling = emitter.getScale().getLowMax();
+			emitter.getScale().setLow(scaling * pScale);
+
+			scaling = emitter.getVelocity().getHighMax();
+			emitter.getVelocity().setHigh(scaling * pScale);
+
+			scaling = emitter.getVelocity().getLowMax();
+			emitter.getVelocity().setLow(scaling * pScale);
+		}
+
+		effect.start();
 	}
 
 	public void processNewPositions() {
@@ -129,6 +225,11 @@ public class Duel extends ScreenAdapter {
 			for (Part part : keyedShip.getParts()) {
 				if (part.getNumber() == msg.partNumber) {
 					part.getBody().setTransform(new Vector2(msg.x, msg.y), msg.angle);
+					if (msg.name.equals(client.getUser().getName()) && part instanceof Cockpit) {
+						cockpitVelocity.x = msg.linearX;
+						cockpitVelocity.y = msg.linearY;
+						System.out.println("Cockpit linear velocity " + cockpitVelocity.x + " " + cockpitVelocity.y);
+					}
 				}
 			}
 		}
@@ -150,27 +251,35 @@ public class Duel extends ScreenAdapter {
 
 	@Override
 	public void resize(int width, int height) {
+		backgroundBatch.setProjectionMatrix(camera.combined);
 		camera.viewportWidth = width / 25f;
 		camera.viewportHeight = height / 25f;
+		backgroundCam.viewportWidth = width;
+		backgroundCam.viewportHeight = height;
 	}
 
 	@Override
 	public void show() {
 		debugRenderer = new Box2DDebugRenderer();
 
-		background = new TiledDrawable(new TextureRegion(new Texture("assets/img/grid.png")));
-
 		world = new World(new Vector2(0, 0), true);
 		world.setContactListener(new CollisionListener());
-		batch = new SpriteBatch();
 
+		batch = new SpriteBatch();
 		camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		backgroundBatch = new SpriteBatch();
+		backgroundCam = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		effect = new ParticleEffect();
+		effect.load(new FileHandle("assets/effects/explosion.p"), new FileHandle("assets/effects"));
 
 		// TODO move all ships to appropriate coordinates, currently they are just their ShipEditor coords
+		int position = 0;
 		for (String playerName : allShips.keySet()) {
 			Ship ship = allShips.get(playerName);
 			ship.setWorld(world);
+			ship.moveTo(position * 10, position * 10);
 			ship.create();
+			++position;
 		}
 		Gdx.input.setInputProcessor(new InputMultiplexer(new InputAdapter() {
 

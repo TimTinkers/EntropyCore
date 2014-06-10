@@ -46,7 +46,7 @@ public class MissileProjectile extends Part implements Projectile {
 	public void update() {
 		lifeTime++;
 		if (lifeTime == 600) {
-			this.getBody().getWorld().destroyBody(this.getBody());
+			this.die();
 		}
 
 		this.getBody().applyForceToCenter(

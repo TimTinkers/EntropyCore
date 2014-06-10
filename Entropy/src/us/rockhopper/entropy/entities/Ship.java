@@ -61,6 +61,7 @@ public class Ship extends InputAdapter implements Json.Serializable {
 	public void update() {
 		for (Part part : parts) {
 			part.update();
+			// System.out.println(part.getName() + " " + part.getBody().getLinearVelocity());
 		}
 	}
 
@@ -251,6 +252,16 @@ public class Ship extends InputAdapter implements Json.Serializable {
 					}
 				}
 			}
+		}
+	}
+
+	public void moveTo(int x, int y) {
+		int currentX = parts.get(0).getGridX();
+		int currentY = parts.get(0).getGridY();
+		int dX = x - currentX;
+		int dY = y - currentY;
+		for (Part part : parts) {
+			part.setGridPosition(part.getGridX() + dX, part.getGridY() + dY);
 		}
 	}
 

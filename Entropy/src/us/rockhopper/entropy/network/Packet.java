@@ -44,12 +44,14 @@ public class Packet {
 		public float x;
 		public float y;
 		public float angle;
+		public float linearX;
+		public float linearY;
 	}
 
 	// TODO combine with the other useless packet for a signal
 	public static class Packet8DuelStart {
 	}
-	
+
 	public static class Packet9Projectile {
 		public String name;
 	}

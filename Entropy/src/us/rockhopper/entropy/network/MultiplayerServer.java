@@ -3,12 +3,12 @@ package us.rockhopper.entropy.network;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import us.rockhopper.entropy.entities.Ship;
-import us.rockhopper.entropy.entities.Weapon;
 import us.rockhopper.entropy.network.Packet.Packet0Player;
 import us.rockhopper.entropy.network.Packet.Packet1Ship;
 import us.rockhopper.entropy.network.Packet.Packet2InboundSize;
@@ -174,6 +174,8 @@ public class MultiplayerServer extends Listener {
 				updatePacket.x = part.getBody().getPosition().x;
 				updatePacket.y = part.getBody().getPosition().y;
 				updatePacket.angle = part.getBody().getAngle();
+				updatePacket.linearX = part.getBody().getLinearVelocity().x;
+				updatePacket.linearY = part.getBody().getLinearVelocity().y;
 
 				// TODO create the render-update packet?
 				server.sendToAllTCP(updatePacket);
@@ -199,12 +201,6 @@ public class MultiplayerServer extends Listener {
 				} else {
 					part.unTrigger(msg.keyPress);
 				}
-
-				// If this part was a weapon, this was a projectile-action, and clients need to be notified that they
-				// should also fire a projectile.
-				if (part instanceof Weapon) {
-
-				}
 			}
 		}
 	}
@@ -212,16 +208,31 @@ public class MultiplayerServer extends Listener {
 	public void sweepDeadBodies() {
 		Array<Body> tempBodies = new Array<Body>();
 		world.getBodies(tempBodies);
-		for (Body body : tempBodies) {
-			if (body != null) {
-				Part part = (Part) body.getUserData();
-				if (part.isDead() && !world.isLocked()) {
-					body.setUserData(null);
-					removeBodySafely(body);
-					body = null;
+		Iterator<Body> i = tempBodies.iterator();
+		if (!world.isLocked()) {
+			while (i.hasNext()) {
+				Body b = i.next();
+				if (b != null) {
+					Part part = (Part) b.getUserData();
+					if (part.isDead()) {
+						b.setUserData(null);
+						removeBodySafely(b);
+						b = null;
+						i.remove();
+					}
 				}
 			}
 		}
+		// for (Body body : tempBodies) {
+		// if (body != null) {
+		// Part part = (Part) body.getUserData();
+		// if (part.isDead() && !world.isLocked()) {
+		// body.setUserData(null);
+		// removeBodySafely(body);
+		// body = null;
+		// }
+		// }
+		// }
 	}
 
 	public void removeBodySafely(Body body) {
