@@ -6,7 +6,15 @@ import java.util.UUID;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 
-public abstract class Part implements Cloneable {
+/**
+ * The cornerstone of Entropy: the part. A component which ships are constructed from, and which holds all relevant data
+ * about any individual module.
+ * 
+ * @author Tim Clancy
+ * @version 6.9.2014
+ * 
+ */
+public abstract class Part implements Cloneable { // TODO mark irrelevant data as transient
 
 	private int gridX;
 	private int gridY;
@@ -24,6 +32,7 @@ public abstract class Part implements Cloneable {
 	private int rotation;
 	private ArrayList<Vector2> occupiedTiles = new ArrayList<Vector2>();
 	private int number;
+	private boolean isDead;
 
 	public Part(int gridX, int gridY, float height, float width, float density, String sprite) {
 		this.gridX = gridX;
@@ -245,7 +254,19 @@ public abstract class Part implements Cloneable {
 		return null;
 	}
 
-	public abstract void update();
+	public boolean isDead() {
+		return this.isDead;
+	}
+
+	public void die() {
+		this.isDead = true;
+	}
+
+	public void update() {
+		if (this.health < 0) {
+			this.isDead = true;
+		}
+	}
 
 	public abstract int[] getKeys();
 

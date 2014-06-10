@@ -182,6 +182,7 @@ public class Ship extends InputAdapter implements Json.Serializable {
 		body.createFixture(fixtureDef).setUserData(new Box2DSprite(new Sprite(new Texture(cockpit.getSprite()))));
 		cockpit.setBody(body);
 		cockpit.setNumber(0);
+		body.setUserData(cockpit);
 		parts.get(0).setBody(body);
 		parts.get(0).setNumber(0);
 		shape.dispose();
@@ -212,6 +213,7 @@ public class Ship extends InputAdapter implements Json.Serializable {
 				body = world.createBody(bodyDef);
 				body.createFixture(fixtureDef).setUserData(new Box2DSprite(new Sprite(new Texture(part.getSprite()))));
 				part.setBody(body);
+				body.setUserData(part);
 				shape.dispose();
 			}
 		}

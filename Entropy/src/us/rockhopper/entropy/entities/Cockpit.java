@@ -15,9 +15,6 @@ public class Cockpit extends Part {
 		this.setRotation(part.getRotation());
 	}
 
-	public void update() {
-	}
-
 	@Override
 	public int[] getKeys() {
 		return null;

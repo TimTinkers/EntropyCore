@@ -44,6 +44,7 @@ public class Weapon extends Part {
 
 	@Override
 	public void update() {
+		super.update();
 		if (reload < reloadTime) {
 			reload++;
 		}

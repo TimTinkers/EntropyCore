@@ -1,5 +1,6 @@
 package us.rockhopper.entropy.screen;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -8,6 +9,7 @@ import us.rockhopper.entropy.entities.Ship;
 import us.rockhopper.entropy.network.MultiplayerClient;
 import us.rockhopper.entropy.network.Packet.Packet6Key;
 import us.rockhopper.entropy.network.Packet.Packet7PositionUpdate;
+import us.rockhopper.entropy.utility.CollisionListener;
 import us.rockhopper.entropy.utility.Part;
 
 import com.badlogic.gdx.Gdx;
@@ -21,9 +23,12 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.badlogic.gdx.physics.box2d.JointEdge;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.utils.TiledDrawable;
+import com.badlogic.gdx.utils.Array;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 
@@ -85,9 +90,36 @@ public class Duel extends ScreenAdapter {
 			}
 			world.step(TIMESTEP, VELOCITYITERATIONS, POSITIONITERATIONS);
 			processNewPositions();
+			sweepDeadBodies();
 		}
 
 		debugRenderer.render(world, camera.combined);
+	}
+
+	// TODO more effectively merge the client with the server here...this method is duplicated
+	public void sweepDeadBodies() {
+		Array<Body> tempBodies = new Array<Body>();
+		world.getBodies(tempBodies);
+		for (Body body : tempBodies) {
+			if (body != null) {
+				Part part = (Part) body.getUserData();
+				if (part.isDead() && !world.isLocked()) {
+					body.setUserData(null);
+					removeBodySafely(body);
+					body = null;
+				}
+			}
+		}
+	}
+
+	public void removeBodySafely(Body body) {
+		// to prevent some obscure c assertion that happened randomly once in a blue moon
+		final Array<JointEdge> list = body.getJointList();
+		while (list.size > 0) {
+			world.destroyJoint(list.get(0).joint);
+		}
+		// actual remove
+		world.destroyBody(body);
 	}
 
 	public void processNewPositions() {
@@ -129,6 +161,7 @@ public class Duel extends ScreenAdapter {
 		background = new TiledDrawable(new TextureRegion(new Texture("assets/img/grid.png")));
 
 		world = new World(new Vector2(0, 0), true);
+		world.setContactListener(new CollisionListener());
 		batch = new SpriteBatch();
 
 		camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
