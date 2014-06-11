@@ -45,8 +45,9 @@ public class MissileProjectile extends Part implements Projectile {
 
 	public void update() {
 		lifeTime++;
+		
 		if (lifeTime == 600) {
-			this.getBody().getWorld().destroyBody(this.getBody());
+			this.remove();
 		}
 
 		this.getBody().applyForceToCenter(
@@ -82,8 +83,6 @@ public class MissileProjectile extends Part implements Projectile {
 		this.getBody().applyForceToCenter(
 				new Vector2((float) Math.sin(this.getBody().getAngle()) * -100, (float) Math.cos(this.getBody()
 						.getAngle()) * 100), true);
-
-		System.out.println("Created missile");
 
 		shape.dispose();
 	}
