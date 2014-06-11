@@ -13,7 +13,7 @@ import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 
-public class LaserProjectile extends Part{
+public class LaserProjectile extends Part implements Projectile {
 
 	private int lifeTime;
 	private float angle;
@@ -38,7 +38,7 @@ public class LaserProjectile extends Part{
 		lifeTime++;
 		
 		if(lifeTime == 180) {
-			this.getBody().getWorld().destroyBody(this.getBody());
+			this.remove();
 		}
 	}
 	
@@ -87,5 +87,15 @@ public class LaserProjectile extends Part{
 
 	@Override
 	public void unTrigger(int key) {
+	}
+
+	@Override
+	public void remove() {
+		this.die();
+	}
+
+	@Override
+	public int getDamage() {
+		return this.damage;
 	}
 }
