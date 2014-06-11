@@ -263,7 +263,7 @@ public abstract class Part implements Cloneable { // TODO mark irrelevant data a
 	}
 
 	public void update() {
-		if (this.health < 0) {
+		if (this.health <= 0) {
 			this.isDead = true;
 		}
 	}
